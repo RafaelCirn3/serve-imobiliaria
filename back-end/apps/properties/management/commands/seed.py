@@ -29,12 +29,12 @@ class Command(BaseCommand):
         else:
             self.stdout.write("Admin ja existe.")
 
-        Region.objects.get_or_create(
+        bessa, _ = Region.objects.get_or_create(
             nome="Bessa",
             cidade="João Pessoa",
             defaults={"descricao": "Região valorizada, próxima à praia e serviços.", "ativo": True},
         )
-        Region.objects.get_or_create(
+        altiplano, _ = Region.objects.get_or_create(
             nome="Altiplano",
             cidade="João Pessoa",
             defaults={"descricao": "Bairro verticalizado, com condomínios modernos.", "ativo": True},
@@ -51,6 +51,7 @@ class Command(BaseCommand):
                 "valor": Decimal("650000.00"),
                 "valor_condominio": Decimal("580.00"),
                 "valor_iptu": Decimal("1200.00"),
+                "regiao": bessa,
                 "cidade": "João Pessoa",
                 "bairro": "Bessa",
                 "endereco": "Rua exemplo, 100",
@@ -82,6 +83,7 @@ class Command(BaseCommand):
                 "valor": Decimal("1250000.00"),
                 "valor_condominio": Decimal("900.00"),
                 "valor_iptu": Decimal("2400.00"),
+                "regiao": altiplano,
                 "cidade": "João Pessoa",
                 "bairro": "Altiplano",
                 "endereco": "Condomínio exemplo",

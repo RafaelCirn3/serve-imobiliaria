@@ -67,14 +67,14 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="property",
-            index=models.Index(fields=["status", "destaque"], name="properties__status_2bc53e_idx"),
+            index=models.Index(fields=["status", "destaque"], name="properties__status_81673a_idx"),
         ),
         migrations.AddIndex(
             model_name="property",
-            index=models.Index(fields=["cidade", "bairro"], name="properties__cidade_37f492_idx"),
+            index=models.Index(fields=["cidade", "bairro"], name="properties__cidade_eacd12_idx"),
         ),
         migrations.AddIndex(
             model_name="property",
-            index=models.Index(fields=["tipo", "finalidade"], name="properties__tipo_14bafd_idx"),
+            index=models.Index(fields=["tipo", "finalidade"], name="properties__tipo_f432bf_idx"),
         ),
     ]

@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
-import { PaginatedResponse, Property, PropertyFilters, PropertyImage } from '../models/api.models';
+import { PaginatedResponse, Property, PropertyFilters, PropertyImage, PropertyPayload } from '../models/api.models';
 import { toHttpParams } from './api-utils';
 
 @Injectable({ providedIn: 'root' })
@@ -37,11 +37,11 @@ export class PropertyService {
     return this.http.get<Property>(`${this.adminUrl}/${id}/`);
   }
 
-  createProperty(payload: Partial<Property>): Observable<Property> {
+  createProperty(payload: PropertyPayload): Observable<Property> {
     return this.http.post<Property>(`${this.adminUrl}/`, payload);
   }
 
-  updateProperty(id: number | string, payload: Partial<Property>): Observable<Property> {
+  updateProperty(id: number | string, payload: Partial<PropertyPayload>): Observable<Property> {
     return this.http.patch<Property>(`${this.adminUrl}/${id}/`, payload);
   }
 

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Region } from '@core/models/api.models';
+import { Region, RegionPayload } from '@core/models/api.models';
 import { NotificationService } from '@core/services/notification.service';
 import { RegionService } from '@core/services/region.service';
 
@@ -75,7 +75,7 @@ export class AdminRegionsComponent implements OnInit {
   }
 
   save(): void {
-    const payload: Partial<Region> = { ...this.form.getRawValue() };
+    const payload: RegionPayload = { ...this.form.getRawValue() };
     if (this.imageFile) {
       payload.imagem = this.imageFile;
     }

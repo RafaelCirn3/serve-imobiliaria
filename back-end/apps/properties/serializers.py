@@ -26,6 +26,7 @@ class PublicPropertySerializer(serializers.ModelSerializer):
             "valor",
             "valor_condominio",
             "valor_iptu",
+            "regiao",
             "cidade",
             "bairro",
             "endereco",
@@ -54,6 +55,17 @@ class PublicPropertySerializer(serializers.ModelSerializer):
 class AdminPropertySerializer(serializers.ModelSerializer):
     imagens = PropertyImageSerializer(many=True, read_only=True)
 
+    def validate(self, attrs):
+        finalidade = attrs.get("finalidade", getattr(self.instance, "finalidade", None))
+        status = attrs.get("status", getattr(self.instance, "status", None))
+
+        if finalidade == Property.Finalidade.VENDA and status == Property.Status.ALUGADO:
+            raise serializers.ValidationError({"status": "Imóvel com finalidade de venda não pode ter status alugado."})
+        if finalidade == Property.Finalidade.ALUGUEL and status == Property.Status.VENDIDO:
+            raise serializers.ValidationError({"status": "Imóvel com finalidade de aluguel não pode ter status vendido."})
+
+        return attrs
+
     class Meta:
         model = Property
         fields = [
@@ -68,6 +80,7 @@ class AdminPropertySerializer(serializers.ModelSerializer):
             "valor",
             "valor_condominio",
             "valor_iptu",
+            "regiao",
             "cidade",
             "bairro",
             "endereco",

@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
@@ -33,6 +34,13 @@ class Property(models.Model):
     valor = models.DecimalField(max_digits=14, decimal_places=2)
     valor_condominio = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     valor_iptu = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    regiao = models.ForeignKey(
+        "locations.Region",
+        related_name="imoveis",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
     cidade = models.CharField(max_length=120)
     bairro = models.CharField(max_length=120)
     endereco = models.CharField(max_length=255, blank=True)
@@ -68,11 +76,19 @@ class Property(models.Model):
     def __str__(self):
         return self.titulo
 
+    def clean(self):
+        super().clean()
+        if self.finalidade == self.Finalidade.VENDA and self.status == self.Status.ALUGADO:
+            raise ValidationError({"status": "Imóvel com finalidade de venda não pode ter status alugado."})
+        if self.finalidade == self.Finalidade.ALUGUEL and self.status == self.Status.VENDIDO:
+            raise ValidationError({"status": "Imóvel com finalidade de aluguel não pode ter status vendido."})
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = self._build_unique_slug()
         if self.status == self.Status.PUBLICADO and self.publicado_em is None:
             self.publicado_em = timezone.now()
+        self.clean()
         super().save(*args, **kwargs)
 
     def _build_unique_slug(self):

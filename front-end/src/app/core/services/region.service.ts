@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
-import { PaginatedResponse, Region } from '../models/api.models';
+import { PaginatedResponse, Region, RegionPayload } from '../models/api.models';
 import { toFormData } from './api-utils';
 
 @Injectable({ providedIn: 'root' })
@@ -13,11 +13,11 @@ export class RegionService {
     return this.http.get<PaginatedResponse<Region>>(`${environment.apiUrl}/${admin ? 'admin/' : ''}regioes/`);
   }
 
-  createRegion(payload: Partial<Region>): Observable<Region> {
+  createRegion(payload: RegionPayload): Observable<Region> {
     return this.http.post<Region>(`${environment.apiUrl}/admin/regioes/`, this.toPayload(payload));
   }
 
-  updateRegion(id: number, payload: Partial<Region>): Observable<Region> {
+  updateRegion(id: number, payload: RegionPayload): Observable<Region> {
     return this.http.patch<Region>(`${environment.apiUrl}/admin/regioes/${id}/`, this.toPayload(payload));
   }
 
@@ -25,7 +25,7 @@ export class RegionService {
     return this.http.delete<void>(`${environment.apiUrl}/admin/regioes/${id}/`);
   }
 
-  private toPayload(payload: Partial<Region>): Partial<Region> | FormData {
+  private toPayload(payload: RegionPayload): RegionPayload | FormData {
     return payload.imagem instanceof File ? toFormData(payload as Record<string, unknown>) : payload;
   }
 }

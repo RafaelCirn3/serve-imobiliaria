@@ -1,9 +1,10 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Property, PropertyImage } from '@core/models/api.models';
+import { PropertyImage, PropertyPayload, Region } from '@core/models/api.models';
 import { NotificationService } from '@core/services/notification.service';
 import { PropertyService } from '@core/services/property.service';
+import { RegionService } from '@core/services/region.service';
 import { ImageUploaderComponent } from '@shared/components/image-uploader.component';
 
 @Component({
@@ -41,6 +42,14 @@ import { ImageUploaderComponent } from '@shared/components/image-uploader.compon
 
         @if (tab === 'location') {
           <div class="form-grid">
+            <label class="field full">Região
+              <select formControlName="regiao" (change)="applyRegion($event)">
+                <option [ngValue]="null">Sem região vinculada</option>
+                @for (region of regions; track region.id) {
+                  <option [value]="region.id">{{ region.nome }} · {{ region.cidade }}</option>
+                }
+              </select>
+            </label>
             <label class="field">Cidade<input formControlName="cidade"></label>
             <label class="field">Bairro<input formControlName="bairro"></label>
             <label class="field full">Endereco<input formControlName="endereco"></label>
@@ -129,11 +138,13 @@ export class PropertyFormComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly propertiesService = inject(PropertyService);
+  private readonly regionsService = inject(RegionService);
   private readonly notification = inject(NotificationService);
 
   propertyId: string | null = null;
   tab = 'basic';
   images: PropertyImage[] = [];
+  regions: Region[] = [];
   readonly tabs = [
     { id: 'basic', label: 'Informações básicas' },
     { id: 'location', label: 'Localização' },
@@ -152,6 +163,7 @@ export class PropertyFormComponent implements OnInit {
     valor: [0, Validators.required],
     valor_condominio: [null as number | null],
     valor_iptu: [null as number | null],
+    regiao: [null as number | null],
     cidade: ['João Pessoa', Validators.required],
     bairro: ['', Validators.required],
     endereco: [''],
@@ -175,6 +187,7 @@ export class PropertyFormComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.regionsService.listRegions(true).subscribe((response) => (this.regions = response.results));
     this.propertyId = this.route.snapshot.paramMap.get('id');
     if (this.propertyId) {
       this.propertiesService.getAdminProperty(this.propertyId).subscribe((property) => {
@@ -184,13 +197,26 @@ export class PropertyFormComponent implements OnInit {
     }
   }
 
+  applyRegion(event: Event): void {
+    const regionId = Number((event.target as HTMLSelectElement).value);
+    const region = this.regions.find((item) => item.id === regionId);
+    if (!region) {
+      return;
+    }
+    this.form.patchValue({
+      regiao: region.id,
+      cidade: region.cidade,
+      bairro: region.nome,
+    });
+  }
+
   save(): void {
     if (this.form.invalid) {
       this.notification.show({ type: 'error', text: 'Preencha os campos obrigatorios.' });
       return;
     }
 
-    const payload = this.form.getRawValue() as Partial<Property>;
+    const payload = this.form.getRawValue() as PropertyPayload;
     const request = this.propertyId
       ? this.propertiesService.updateProperty(this.propertyId, payload)
       : this.propertiesService.createProperty(payload);

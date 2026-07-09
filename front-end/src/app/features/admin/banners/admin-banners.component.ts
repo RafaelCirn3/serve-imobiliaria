@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Banner } from '@core/models/api.models';
+import { Banner, BannerPayload } from '@core/models/api.models';
 import { BannerService } from '@core/services/banner.service';
 import { NotificationService } from '@core/services/notification.service';
 
@@ -79,7 +79,7 @@ export class AdminBannersComponent implements OnInit {
   }
 
   save(): void {
-    const payload: Partial<Banner> = { ...this.form.getRawValue() };
+    const payload: BannerPayload = { ...this.form.getRawValue() };
     if (this.imageFile) {
       payload.imagem = this.imageFile;
     }

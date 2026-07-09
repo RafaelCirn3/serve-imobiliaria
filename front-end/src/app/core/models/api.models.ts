@@ -31,6 +31,7 @@ export interface Property {
   valor: string | number;
   valor_condominio?: string | number | null;
   valor_iptu?: string | number | null;
+  regiao?: number | null;
   cidade: string;
   bairro: string;
   endereco?: string;
@@ -56,6 +57,11 @@ export interface Property {
   publicado_em?: string | null;
   imagens: PropertyImage[];
 }
+
+export type PropertyPayload = Omit<
+  Property,
+  'id' | 'slug' | 'criado_em' | 'atualizado_em' | 'publicado_em' | 'imagens'
+>;
 
 export interface PropertyFilters {
   cidade?: string;
@@ -94,19 +100,37 @@ export interface Region {
   nome: string;
   cidade: string;
   descricao: string;
-  imagem?: string | File | null;
+  imagem?: string | null;
   ativo: boolean;
+}
+
+export interface RegionPayload {
+  nome?: string;
+  cidade?: string;
+  descricao?: string;
+  imagem?: File | null;
+  ativo?: boolean;
 }
 
 export interface Banner {
   id: number;
   titulo: string;
   subtitulo: string;
-  imagem: string | File;
+  imagem: string;
   botao_texto: string;
   botao_link: string;
   ativo: boolean;
   ordem: number;
+}
+
+export interface BannerPayload {
+  titulo?: string;
+  subtitulo?: string;
+  imagem?: File | null;
+  botao_texto?: string;
+  botao_link?: string;
+  ativo?: boolean;
+  ordem?: number;
 }
 
 export interface LoginResponse {
