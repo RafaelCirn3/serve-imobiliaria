@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+﻿import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { Lead, LeadStatus } from '@core/models/api.models';
 import { LeadService } from '@core/services/lead.service';
@@ -71,3 +71,5 @@ export class AdminLeadsComponent implements OnInit {
     });
   }
 }
+
+

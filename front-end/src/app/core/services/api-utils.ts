@@ -1,4 +1,4 @@
-import { HttpParams } from '@angular/common/http';
+﻿import { HttpParams } from '@angular/common/http';
 
 export function toHttpParams<T extends object>(filters: T = {} as T): HttpParams {
   let params = new HttpParams();
@@ -30,3 +30,5 @@ export function toFormData(payload: Record<string, unknown>): FormData {
 
   return formData;
 }
+
+

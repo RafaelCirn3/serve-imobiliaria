@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+﻿import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { BrandComponent } from './brand.component';
 
@@ -62,7 +62,7 @@ import { BrandComponent } from './brand.component';
       bottom: 1px;
       height: 2px;
       border-radius: 999px;
-      background: linear-gradient(90deg, transparent, #c9a24a, transparent);
+      background: linear-gradient(90deg, transparent, #ffffff, transparent);
       transform: scaleX(0);
       transform-origin: center;
       transition: transform 0.24s ease;
@@ -70,7 +70,7 @@ import { BrandComponent } from './brand.component';
 
     nav a:hover,
     nav a.active {
-      color: #c9a24a;
+      color: #ffffff;
     }
 
     nav a:hover::after,
@@ -79,16 +79,16 @@ import { BrandComponent } from './brand.component';
     }
 
     .login {
-      border: 1px solid rgba(201, 162, 74, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.42);
       border-radius: 8px;
-      color: #c9a24a;
+      color: #ffffff;
       font-weight: 800;
       padding: 10px 14px;
       transition: background 0.18s ease, transform 0.18s ease;
     }
 
     .login:hover {
-      background: rgba(201, 162, 74, 0.1);
+      background: rgba(255, 255, 255, 0.08);
       transform: translateY(-1px);
     }
 
@@ -118,3 +118,5 @@ import { BrandComponent } from './brand.component';
   `],
 })
 export class HeaderComponent {}
+
+

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+﻿import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Region, RegionPayload } from '@core/models/api.models';
 import { NotificationService } from '@core/services/notification.service';
@@ -105,3 +105,5 @@ export class AdminRegionsComponent implements OnInit {
     this.regionsService.deleteRegion(region.id).subscribe(() => this.load());
   }
 }
+
+

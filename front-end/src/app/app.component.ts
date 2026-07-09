@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+﻿import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ToastComponent } from './shared/components/toast.component';
 
@@ -12,3 +12,5 @@ import { ToastComponent } from './shared/components/toast.component';
   `,
 })
 export class AppComponent {}
+
+

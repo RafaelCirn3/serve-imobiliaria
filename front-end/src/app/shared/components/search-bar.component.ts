@@ -1,5 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
-import { inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -8,7 +7,7 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [ReactiveFormsModule],
   template: `
-    <form [formGroup]="form" (ngSubmit)="submit()" class="search card">
+    <form [formGroup]="form" (ngSubmit)="submit()" class="search card" [class.hero-search]="variant === 'hero'">
       <input formControlName="search" placeholder="Busque por bairro, cidade ou descrição">
       <select formControlName="tipo">
         <option value="">Tipo</option>
@@ -39,6 +38,15 @@ import { Router } from '@angular/router';
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
     }
 
+    .hero-search {
+      max-width: 860px;
+      margin-top: 6px;
+      border-color: rgba(255, 255, 255, 0.14);
+      background: rgba(17, 20, 23, 0.34);
+      box-shadow: none;
+      backdrop-filter: blur(8px);
+    }
+
     input,
     select {
       min-height: 46px;
@@ -48,6 +56,23 @@ import { Router } from '@angular/router';
       color: #f5f5f5;
       padding: 0 12px;
       outline: none;
+    }
+
+    .hero-search input,
+    .hero-search select {
+      min-height: 42px;
+      border-color: rgba(255, 255, 255, 0.16);
+      background: rgba(17, 20, 23, 0.5);
+    }
+
+    .hero-search .btn-primary {
+      min-height: 42px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #111417;
+    }
+
+    .hero-search .btn-primary:hover {
+      background: #ffffff;
     }
 
     @media (max-width: 900px) {
@@ -64,6 +89,7 @@ import { Router } from '@angular/router';
   `],
 })
 export class SearchBarComponent {
+  @Input() variant: 'default' | 'hero' = 'default';
   @Output() filtersChanged = new EventEmitter<Record<string, string>>();
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+﻿import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Property, PropertyFilters } from '@core/models/api.models';
 import { PropertyService } from '@core/services/property.service';
@@ -156,3 +156,5 @@ export class PropertiesComponent implements OnInit {
     });
   }
 }
+
+

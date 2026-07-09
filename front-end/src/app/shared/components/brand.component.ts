@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+﻿import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-brand',
@@ -24,7 +24,7 @@ import { Component } from '@angular/core';
     }
 
     span {
-      color: #c9a24a;
+      color: #ffffff;
       font-size: 0.64rem;
       font-weight: 700;
       letter-spacing: 0.1em;
@@ -33,3 +33,5 @@ import { Component } from '@angular/core';
   `],
 })
 export class BrandComponent {}
+
+

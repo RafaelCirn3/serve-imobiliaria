@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
+﻿import { Component, EventEmitter, Input, OnChanges, Output, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { PropertyFilters } from '@core/models/api.models';
 
@@ -146,3 +146,5 @@ export class FilterSidebarComponent implements OnChanges {
     this.filtersChanged.emit({});
   }
 }
+
+

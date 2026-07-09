@@ -1,4 +1,4 @@
-import { CurrencyPipe } from '@angular/common';
+﻿import { CurrencyPipe } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Property } from '@core/models/api.models';
@@ -45,7 +45,7 @@ import { Property } from '@core/models/api.models';
     }
 
     .property-card:hover {
-      border-color: rgba(201, 162, 74, 0.5);
+      border-color: rgba(255, 255, 255, 0.48);
       transform: translateY(-3px);
     }
 
@@ -73,8 +73,8 @@ import { Property } from '@core/models/api.models';
       left: 12px;
       top: 12px;
       border-radius: 999px;
-      background: #c9a24a;
-      color: #17130b;
+      background: #ffffff;
+      color: #111417;
       padding: 6px 10px;
       font-size: 0.75rem;
       font-weight: 900;
@@ -90,7 +90,7 @@ import { Property } from '@core/models/api.models';
 
     .location {
       margin: 0 0 8px;
-      color: #c9a24a;
+      color: #ffffff;
       font-size: 0.82rem;
       font-weight: 800;
       text-transform: uppercase;
@@ -108,7 +108,7 @@ import { Property } from '@core/models/api.models';
 
     .price {
       display: block;
-      color: #d6b765;
+      color: #e6e8eb;
       font-size: 1.25rem;
       margin-bottom: 14px;
       overflow-wrap: anywhere;
@@ -143,3 +143,5 @@ export class PropertyCardComponent {
     return Number(this.property.valor || 0);
   }
 }
+
+

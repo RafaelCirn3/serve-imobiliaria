@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+﻿import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LeadService } from '@core/services/lead.service';
 import { NotificationService } from '@core/services/notification.service';
@@ -108,3 +108,5 @@ export class ContactComponent {
     });
   }
 }
+
+

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+﻿import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-metric-card',
@@ -23,7 +23,7 @@ import { Component, Input } from '@angular/core';
     strong {
       display: block;
       margin-top: 10px;
-      color: #d6b765;
+      color: #e6e8eb;
       font-size: 2rem;
     }
   `],
@@ -32,3 +32,5 @@ export class MetricCardComponent {
   @Input() label = '';
   @Input() value: string | number = 0;
 }
+
+

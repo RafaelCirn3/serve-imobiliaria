@@ -23,7 +23,7 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
           <span class="eyebrow">João Pessoa / PB</span>
           <h1>O melhor de João Pessoa para o seu novo capítulo.</h1>
           <p>Imóveis selecionados com critério, apresentação premium e atendimento direto para comprar, vender ou alugar com clareza.</p>
-          <app-search-bar />
+          <app-search-bar variant="hero" />
         </div>
       </section>
 
@@ -109,35 +109,40 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
   `,
   styles: [`
     .hero {
-      min-height: 720px;
+      min-height: min(860px, 92vh);
       display: grid;
       align-items: end;
-      padding: 140px 0 80px;
+      padding: 128px 0 68px;
       background:
-        linear-gradient(180deg, rgba(17, 20, 23, 0.12), #111417 96%),
-        linear-gradient(90deg, rgba(17, 20, 23, 0.92), rgba(17, 20, 23, 0.2)),
-        url('https://images.unsplash.com/photo-1516306580123-e6e52b1b7b5f?auto=format&fit=crop&w=1800&q=85') center/cover;
+        linear-gradient(180deg, rgba(17, 20, 23, 0.08), rgba(17, 20, 23, 0.16) 58%, #111417 100%),
+        linear-gradient(90deg, rgba(17, 20, 23, 0.48), rgba(17, 20, 23, 0.14) 44%, rgba(17, 20, 23, 0) 72%),
+        url('/assets/hero-joao-pessoa.jpg') center/cover;
     }
 
     .hero-content {
       display: grid;
-      gap: 22px;
-      max-width: 980px;
+      gap: 16px;
+      max-width: 700px;
+      text-shadow: 0 2px 18px rgba(0, 0, 0, 0.34);
     }
 
     h1 {
-      max-width: 820px;
+      max-width: 660px;
       margin: 0;
-      font-size: clamp(3rem, 7vw, 6.7rem);
-      line-height: 0.95;
-      letter-spacing: -0.03em;
+      font-size: clamp(2.3rem, 5vw, 4.7rem);
+      line-height: 1;
     }
 
     .hero p {
-      max-width: 650px;
-      color: #d7d7d7;
-      font-size: 1.12rem;
-      line-height: 1.7;
+      max-width: 560px;
+      margin: 0;
+      color: rgba(245, 245, 245, 0.78);
+      font-size: 1rem;
+      line-height: 1.65;
+    }
+
+    .hero .eyebrow {
+      color: rgba(245, 245, 245, 0.76);
     }
 
     .region-grid {
@@ -175,10 +180,10 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
       place-items: center;
       width: 44px;
       height: 44px;
-      border: 1px solid rgba(201, 162, 74, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.4);
       border-radius: 999px;
-      background: rgba(201, 162, 74, 0.08);
-      color: #d6b765;
+      background: rgba(255, 255, 255, 0.07);
+      color: #e6e8eb;
       font-size: 1.9rem;
       line-height: 1;
       padding: 3px 0 0;
@@ -186,7 +191,7 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
     }
 
     .carousel-btn:hover {
-      background: rgba(201, 162, 74, 0.18);
+      background: rgba(255, 255, 255, 0.14);
       transform: translateY(-1px);
     }
 
@@ -226,7 +231,7 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
 
     .carousel-dots button.active {
       width: 26px;
-      background: #c9a24a;
+      background: #ffffff;
     }
 
     .regions {
@@ -273,9 +278,9 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
     }
 
     .owner-box {
-      border: 1px solid rgba(201, 162, 74, 0.28);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 8px;
-      background: linear-gradient(135deg, rgba(201, 162, 74, 0.11), rgba(255, 255, 255, 0.025));
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025));
     }
 
     @media (max-width: 900px) {
@@ -296,7 +301,9 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
       }
 
       .hero {
-        min-height: 640px;
+        min-height: 680px;
+        padding: 116px 0 42px;
+        background-position: center;
       }
     }
 

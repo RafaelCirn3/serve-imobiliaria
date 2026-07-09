@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+﻿import { Routes } from '@angular/router';
 import { adminAuthGuard } from './core/guards/admin-auth.guard';
 
 export const routes: Routes = [
@@ -43,3 +43,5 @@ export const routes: Routes = [
   },
   { path: '**', redirectTo: '' },
 ];
+
+

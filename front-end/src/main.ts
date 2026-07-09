@@ -1,4 +1,4 @@
-import localePt from '@angular/common/locales/pt';
+﻿import localePt from '@angular/common/locales/pt';
 import { registerLocaleData } from '@angular/common';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -21,3 +21,5 @@ bootstrapApplication(AppComponent, {
     ),
   ],
 }).catch((error) => console.error(error));
+
+

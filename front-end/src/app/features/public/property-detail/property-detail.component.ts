@@ -1,4 +1,4 @@
-import { CurrencyPipe, Location } from '@angular/common';
+﻿import { CurrencyPipe, Location } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -91,10 +91,10 @@ import { PropertyCardComponent } from '@shared/components/property-card.componen
       align-items: center;
       gap: 8px;
       min-height: 42px;
-      border: 1px solid rgba(201, 162, 74, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.38);
       border-radius: 999px;
-      background: rgba(201, 162, 74, 0.08);
-      color: #d6b765;
+      background: rgba(255, 255, 255, 0.07);
+      color: #e6e8eb;
       font-weight: 900;
       padding: 0 16px;
       margin-bottom: 18px;
@@ -102,7 +102,7 @@ import { PropertyCardComponent } from '@shared/components/property-card.componen
     }
 
     .back-button:hover {
-      background: rgba(201, 162, 74, 0.16);
+      background: rgba(255, 255, 255, 0.12);
       transform: translateX(-2px);
     }
 
@@ -140,7 +140,7 @@ import { PropertyCardComponent } from '@shared/components/property-card.componen
 
     .thumbs button:hover,
     .thumbs button.active {
-      border-color: #c9a24a;
+      border-color: #ffffff;
       opacity: 1;
       transform: translateY(-1px);
     }
@@ -167,7 +167,7 @@ import { PropertyCardComponent } from '@shared/components/property-card.componen
     }
 
     .price {
-      color: #d6b765;
+      color: #e6e8eb;
       font-size: 2rem;
     }
 
@@ -347,3 +347,5 @@ export class PropertyDetailComponent implements OnInit {
     });
   }
 }
+
+

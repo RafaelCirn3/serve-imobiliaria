@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+﻿import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-loading',
@@ -17,7 +17,7 @@ import { Component } from '@angular/core';
       width: 38px;
       height: 38px;
       border: 3px solid rgba(255, 255, 255, 0.12);
-      border-top-color: #c9a24a;
+      border-top-color: #ffffff;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
@@ -28,3 +28,5 @@ import { Component } from '@angular/core';
   `],
 })
 export class LoadingComponent {}
+
+

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+﻿import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Banner, BannerPayload } from '@core/models/api.models';
 import { BannerService } from '@core/services/banner.service';
@@ -111,3 +111,5 @@ export class AdminBannersComponent implements OnInit {
     this.bannersService.deleteBanner(banner.id).subscribe(() => this.load());
   }
 }
+
+

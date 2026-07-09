@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+﻿import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
@@ -64,3 +64,5 @@ export class PropertyService {
     return this.http.delete<void>(`${this.adminUrl}/${propertyId}/imagens/${imageId}/`);
   }
 }
+
+

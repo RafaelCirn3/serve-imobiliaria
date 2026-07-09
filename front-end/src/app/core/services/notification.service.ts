@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+﻿import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
 export interface ToastMessage {
@@ -16,3 +16,5 @@ export class NotificationService {
     window.setTimeout(() => this.messageSubject.next(null), 3800);
   }
 }
+
+

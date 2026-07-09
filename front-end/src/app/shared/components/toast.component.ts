@@ -1,4 +1,4 @@
-import { AsyncPipe } from '@angular/common';
+﻿import { AsyncPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { NotificationService } from '@core/services/notification.service';
 
@@ -38,3 +38,5 @@ import { NotificationService } from '@core/services/notification.service';
 export class ToastComponent {
   readonly notification = inject(NotificationService);
 }
+
+

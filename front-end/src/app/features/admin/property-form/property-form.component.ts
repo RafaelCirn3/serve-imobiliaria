@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+﻿import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PropertyImage, PropertyPayload, Region } from '@core/models/api.models';
@@ -112,8 +112,8 @@ import { ImageUploaderComponent } from '@shared/components/image-uploader.compon
     }
 
     .tabs button.active {
-      border-color: rgba(201, 162, 74, 0.55);
-      color: #c9a24a;
+      border-color: rgba(255, 255, 255, 0.42);
+      color: #ffffff;
     }
 
     .form-card {
@@ -270,3 +270,5 @@ export class PropertyFormComponent implements OnInit {
     this.propertiesService.getAdminProperty(this.propertyId).subscribe((property) => (this.images = property.imagens));
   }
 }
+
+

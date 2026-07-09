@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+﻿import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { Lead, Property } from '@core/models/api.models';
 import { LeadService } from '@core/services/lead.service';
@@ -96,3 +96,5 @@ export class DashboardComponent implements OnInit {
     this.leadsService.listAdminLeads().subscribe((response) => (this.leads = response.results));
   }
 }
+
+

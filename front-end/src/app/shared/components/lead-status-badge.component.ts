@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+﻿import { Component, Input } from '@angular/core';
 import { LeadStatus } from '@core/models/api.models';
 
 @Component({
@@ -12,8 +12,8 @@ import { LeadStatus } from '@core/models/api.models';
       padding: 5px 10px;
       font-size: 0.78rem;
       font-weight: 900;
-      background: rgba(201, 162, 74, 0.13);
-      color: #d6b765;
+      background: rgba(255, 255, 255, 0.12);
+      color: #e6e8eb;
     }
 
     .finalizado {
@@ -40,3 +40,5 @@ export class LeadStatusBadgeComponent {
     return labels[this.status || 'novo'];
   }
 }
+
+

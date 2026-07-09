@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+﻿import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { BrandComponent } from './brand.component';
 
@@ -68,3 +68,5 @@ import { BrandComponent } from './brand.component';
   `],
 })
 export class FooterComponent {}
+
+

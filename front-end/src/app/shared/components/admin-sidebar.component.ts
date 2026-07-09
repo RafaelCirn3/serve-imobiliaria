@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+﻿import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { BrandComponent } from './brand.component';
@@ -77,9 +77,9 @@ import { BrandComponent } from './brand.component';
 
     a.active,
     a:hover {
-      border-color: rgba(201, 162, 74, 0.35);
-      background: rgba(201, 162, 74, 0.1);
-      color: #c9a24a;
+      border-color: rgba(255, 255, 255, 0.32);
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
     }
 
     .icon {
@@ -109,3 +109,5 @@ export class AdminSidebarComponent {
     this.auth.logout();
   }
 }
+
+

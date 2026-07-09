@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+﻿import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
@@ -21,3 +21,5 @@ export class LeadService {
     return this.http.patch<Lead>(`${environment.apiUrl}/admin/leads/${id}/`, { status });
   }
 }
+
+

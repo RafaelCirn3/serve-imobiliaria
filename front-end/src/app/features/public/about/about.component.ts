@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+﻿import { Component } from '@angular/core';
 import { FooterComponent } from '@shared/components/footer.component';
 import { HeaderComponent } from '@shared/components/header.component';
 
@@ -73,7 +73,7 @@ import { HeaderComponent } from '@shared/components/header.component';
     }
 
     strong {
-      color: #d6b765;
+      color: #e6e8eb;
       font-size: 1.2rem;
     }
 
@@ -85,3 +85,5 @@ import { HeaderComponent } from '@shared/components/header.component';
   `],
 })
 export class AboutComponent {}
+
+

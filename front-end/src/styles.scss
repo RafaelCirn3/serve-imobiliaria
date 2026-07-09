@@ -1,11 +1,11 @@
-$color-bg: #111417;
+﻿$color-bg: #111417;
 $color-bg-soft: #181c20;
 $color-card: #1f2429;
 $color-border: #30363d;
 $color-text: #f5f5f5;
 $color-text-muted: #b8b8b8;
-$color-gold: #c9a24a;
-$color-gold-hover: #d6b765;
+$color-accent: #ffffff;
+$color-accent-hover: #e6e8eb;
 $color-white: #ffffff;
 $color-danger: #d9534f;
 $color-success: #2f9e44;
@@ -57,7 +57,7 @@ img {
 }
 
 .eyebrow {
-  color: $color-gold;
+  color: $color-accent;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.14em;
@@ -88,12 +88,12 @@ img {
 }
 
 .btn-primary {
-  background: $color-gold;
-  color: #17130b;
+  background: $color-accent;
+  color: #111417;
 }
 
 .btn-primary:hover {
-  background: $color-gold-hover;
+  background: $color-accent-hover;
   transform: translateY(-1px);
 }
 
@@ -153,8 +153,8 @@ img {
 .field input:focus,
 .field textarea:focus,
 .field select:focus {
-  border-color: $color-gold;
-  box-shadow: 0 0 0 3px rgba(201, 162, 74, 0.12);
+  border-color: $color-accent;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
 }
 
 .table-wrap {
@@ -178,7 +178,7 @@ td {
 }
 
 th {
-  color: $color-gold;
+  color: $color-accent;
   font-size: 0.78rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -187,7 +187,7 @@ th {
 .page-shell {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(201, 162, 74, 0.09), transparent 28rem),
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.06), transparent 28rem),
     $color-bg;
 }
 
@@ -218,8 +218,8 @@ th {
   align-items: center;
   border-radius: 999px;
   padding: 5px 10px;
-  background: rgba(201, 162, 74, 0.12);
-  color: $color-gold;
+  background: rgba(255, 255, 255, 0.1);
+  color: $color-accent;
   font-size: 0.8rem;
   font-weight: 800;
 }
@@ -238,3 +238,5 @@ th {
     flex-direction: column;
   }
 }
+
+

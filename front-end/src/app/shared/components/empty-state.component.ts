@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+﻿import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-empty-state',
@@ -30,3 +30,5 @@ export class EmptyStateComponent {
   @Input() title = 'Nenhum resultado encontrado';
   @Input() message = 'Ajuste os filtros ou tente uma nova busca.';
 }
+
+

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+﻿import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { PropertyImage } from '@core/models/api.models';
 
 @Component({
@@ -47,10 +47,10 @@ import { PropertyImage } from '@core/models/api.models';
       display: grid;
       place-items: center;
       min-height: 160px;
-      border: 1px dashed rgba(201, 162, 74, 0.55);
+      border: 1px dashed rgba(255, 255, 255, 0.42);
       border-radius: 8px;
-      background: rgba(201, 162, 74, 0.06);
-      color: #c9a24a;
+      background: rgba(255, 255, 255, 0.05);
+      color: #ffffff;
       font-weight: 900;
     }
 
@@ -102,3 +102,5 @@ export class ImageUploaderComponent {
     this.previews = this.selected.map((file) => URL.createObjectURL(file));
   }
 }
+
+
