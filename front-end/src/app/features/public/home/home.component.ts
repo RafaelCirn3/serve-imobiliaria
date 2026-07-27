@@ -23,6 +23,8 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
           <span class="eyebrow">João Pessoa / PB</span>
           <h1>O melhor de João Pessoa para o seu novo capítulo.</h1>
           <p>Imóveis selecionados com critério, apresentação premium e atendimento direto para comprar, vender ou alugar com clareza.</p>
+        </div>
+        <div class="container hero-search-wrap">
           <app-search-bar variant="hero" />
         </div>
       </section>
@@ -122,7 +124,10 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
     .hero-content {
       display: grid;
       gap: 16px;
-      max-width: 700px;
+      width: min(620px, 100%);
+      max-width: 620px;
+      margin-left: clamp(0px, 7vw, 120px);
+      margin-right: auto;
       text-shadow: 0 2px 18px rgba(0, 0, 0, 0.34);
     }
 
@@ -139,6 +144,10 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
       color: rgba(245, 245, 245, 0.78);
       font-size: 1rem;
       line-height: 1.65;
+    }
+
+    .hero-search-wrap {
+      margin-top: 22px;
     }
 
     .hero .eyebrow {
@@ -304,6 +313,16 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
         min-height: 680px;
         padding: 116px 0 42px;
         background-position: center;
+      }
+
+      .hero-content {
+        width: 100%;
+        max-width: 700px;
+        margin-left: 0;
+      }
+
+      .hero-search-wrap {
+        margin-top: 18px;
       }
     }
 

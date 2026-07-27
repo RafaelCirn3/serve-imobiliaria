@@ -39,8 +39,8 @@ import { Router } from '@angular/router';
     }
 
     .hero-search {
-      max-width: 860px;
-      margin-top: 6px;
+      width: min(860px, 100%);
+      margin: 6px auto 0;
       border-color: rgba(255, 255, 255, 0.14);
       background: rgba(17, 20, 23, 0.34);
       box-shadow: none;
