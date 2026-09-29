@@ -2,6 +2,7 @@ import django_filters
 from django import forms
 
 from .models import Property
+from apps.locations.normalization import normalized
 
 
 class PropertyFilterForm(forms.Form):
@@ -20,6 +21,20 @@ class PropertyFilterForm(forms.Form):
 
 
 class PropertyFilter(django_filters.FilterSet):
+    cidade = django_filters.CharFilter(method="filter_location")
+    bairro = django_filters.CharFilter(method="filter_location")
+    logradouro = django_filters.CharFilter(method="filter_location")
+    cep = django_filters.CharFilter(method="filter_cep")
+
+    def filter_location(self, queryset, name, value):
+        return queryset.filter(**{f"{name}_busca": normalized(value)})
+
+    def filter_cep(self, queryset, name, value):
+        cep = value.replace("-", "").strip()
+        if len(cep) != 8 or not cep.isascii() or not cep.isdigit():
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError({"cep": "Informe um CEP com oito dígitos."})
+        return queryset.filter(cep=cep)
     valor_min = django_filters.NumberFilter(field_name="valor", lookup_expr="gte", min_value=0)
     valor_max = django_filters.NumberFilter(field_name="valor", lookup_expr="lte", min_value=0)
     area_min = django_filters.NumberFilter(field_name="area_privativa", lookup_expr="gte", min_value=0)
@@ -36,6 +51,8 @@ class PropertyFilter(django_filters.FilterSet):
         fields = [
             "cidade",
             "bairro",
+            "logradouro",
+            "cep",
             "tipo",
             "finalidade",
             "destaque",

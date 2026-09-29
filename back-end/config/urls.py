@@ -10,9 +10,11 @@ from apps.accounts.views import LogoutView, ServeTokenObtainPairView
 from apps.banners.views import AdminBannerViewSet, PublicBannerViewSet
 from apps.leads.views import AdminLeadViewSet, PublicLeadViewSet
 from apps.locations.views import AdminRegionViewSet, PublicRegionViewSet
+from apps.locations.views import LocationViewSet
 from apps.properties.views import AdminPropertyViewSet, PublicPropertyViewSet
 
 router = DefaultRouter()
+router.register("localizacao", LocationViewSet, basename="localizacao")
 router.register("imoveis", PublicPropertyViewSet, basename="public-imoveis")
 router.register("leads", PublicLeadViewSet, basename="public-leads")
 router.register("regioes", PublicRegionViewSet, basename="public-regioes")

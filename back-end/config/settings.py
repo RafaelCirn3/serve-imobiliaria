@@ -118,6 +118,28 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = env("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = env_int("EMAIL_PORT", 587)
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", "")
+EMAIL_TIMEOUT = env_int("EMAIL_TIMEOUT", 10)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER) or EMAIL_HOST_USER
+SALE_EMAIL_ENABLED = env_bool("SALE_EMAIL_ENABLED", bool(EMAIL_HOST_USER and EMAIL_HOST_PASSWORD))
+SALE_LEAD_RECIPIENT = "Servenegociosimobiliarios@gmail.com"
+
+LOCATION_TIMEOUT = env_int("LOCATION_TIMEOUT", 6)
+LOCATION_USER_AGENT = "SERVE/1.0 (contact: Servenegociosimobiliarios@gmail.com)"
+GEOCODER_URL = env("GEOCODER_URL", "https://nominatim.openstreetmap.org/search")
+MAP_TILE_URL = env("MAP_TILE_URL", "https://tile.openstreetmap.org/{z}/{x}/{y}.png")
+MAP_TILE_ATTRIBUTION = env("MAP_TILE_ATTRIBUTION", '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors')
+MAP_RESULT_LIMIT = env_int("MAP_RESULT_LIMIT", 2000)
+CACHES = {"default": {
+    "BACKEND": env("CACHE_BACKEND", "django.core.cache.backends.locmem.LocMemCache"),
+    "LOCATION": env("CACHE_LOCATION", "serve-location"),
+}}
+
 CORS_ALLOWED_ORIGINS = env_list(
     "CORS_ALLOWED_ORIGINS",
     "http://localhost:4200,http://127.0.0.1:4200,http://localhost:3000,http://127.0.0.1:3000",

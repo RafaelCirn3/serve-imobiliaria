@@ -12,11 +12,12 @@ import { FooterComponent } from '@shared/components/footer.component';
 import { HeaderComponent } from '@shared/components/header.component';
 import { LoadingComponent } from '@shared/components/loading.component';
 import { PropertyCardComponent } from '@shared/components/property-card.component';
+import { PropertyMapComponent } from '@shared/components/property-map.component';
 
 @Component({
   selector: 'app-property-detail',
   standalone: true,
-  imports: [CurrencyPipe, ReactiveFormsModule, HeaderComponent, FooterComponent, LoadingComponent, PropertyCardComponent],
+  imports: [CurrencyPipe, ReactiveFormsModule, HeaderComponent, FooterComponent, LoadingComponent, PropertyCardComponent, PropertyMapComponent],
   template: `
     <div class="page-shell">
       <app-header />
@@ -48,10 +49,9 @@ import { PropertyCardComponent } from '@shared/components/property-card.componen
                 <span>{{ area.label }}: {{ area.value ?? '—' }} m²</span>
               </div>
               <p class="description">{{ property.descricao }}</p>
-              @if (property.latitude && property.longitude) {
-                <div class="map card">
-                  Localização aproximada: {{ property.latitude }}, {{ property.longitude }}
-                </div>
+              @if (property.latitude != null && property.longitude != null) {
+                <h2>Localização {{ property.localizacao_exata ? 'confirmada' : 'aproximada' }}</h2>
+                <app-property-map [properties]="[property]" />
               }
             </div>
 

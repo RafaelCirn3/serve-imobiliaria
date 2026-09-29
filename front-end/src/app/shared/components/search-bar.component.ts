@@ -2,11 +2,12 @@ import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PROPERTY_TYPES, SERVICE_CITIES } from '@core/models/property-options';
+import { LocationFiltersComponent } from './location-filters.component';
 
 @Component({
   selector: 'app-search-bar',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, LocationFiltersComponent],
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()" class="search card" [class.hero-search]="variant === 'hero'">
       <input formControlName="search" aria-label="Busca" placeholder="Busque por bairro, cidade ou descrição">
@@ -16,13 +17,7 @@ import { PROPERTY_TYPES, SERVICE_CITIES } from '@core/models/property-options';
           <option [value]="type.value">{{ type.label }}</option>
         }
       </select>
-      <select formControlName="cidade" aria-label="Cidade" (change)="form.controls.bairro.setValue('')">
-        <option value="">Todas as cidades</option>
-        @for (city of cities; track city) {
-          <option [value]="city">{{ city }}</option>
-        }
-      </select>
-      <input formControlName="bairro" aria-label="Bairro" placeholder="Bairro">
+      <app-location-filters [form]="form" [compact]="true" />
       <select formControlName="valor_max" aria-label="Valor máximo">
         <option value="">Faixa de preço</option>
         <option value="500000">Até R$ 500 mil</option>
@@ -35,7 +30,8 @@ import { PROPERTY_TYPES, SERVICE_CITIES } from '@core/models/property-options';
   styles: [`
     .search {
       display: grid;
-      grid-template-columns: 1.4fr repeat(4, minmax(0, 1fr)) auto;
+      grid-template-columns: 1.3fr 1fr 3fr 1fr auto;
+      align-items: end;
       gap: 10px;
       padding: 12px;
       background: rgba(31, 36, 41, 0.9);
@@ -85,6 +81,7 @@ import { PROPERTY_TYPES, SERVICE_CITIES } from '@core/models/property-options';
       .search {
         grid-template-columns: 1fr 1fr;
       }
+      .search app-location-filters { grid-column: 1 / -1; }
     }
 
     @media (max-width: 560px) {
@@ -107,6 +104,7 @@ export class SearchBarComponent {
     tipo: [''],
     cidade: [''],
     bairro: [''],
+    logradouro: [''],
     valor_max: [''],
   });
 

@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework.test import APITestCase
+from django.test import override_settings
 
 from .models import Property
 
@@ -103,3 +104,68 @@ class PropertyProfileTests(APITestCase):
                 response = self.client.patch(f"/api/admin/imoveis/{self.flat.id}/", {"tipo": property_type})
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(response.data["tipo"], property_type)
+
+
+class PropertyMapTests(APITestCase):
+    def setUp(self):
+        self.points = []
+        for index in range(15):
+            self.points.append(PropertyProfileTests.create_property(
+                titulo=f"Mapa {index}", latitude="-7.1234567", longitude="-34.8765432",
+                numero="123", complemento="Apartamento 8", endereco="Rua da Praia, 123", logradouro="Rua da Praia",
+            ))
+        PropertyProfileTests.create_property(titulo="Sem coordenadas")
+        PropertyProfileTests.create_property(titulo="Mapa rascunho", status="rascunho", latitude="-7.12", longitude="-34.87")
+
+    def test_map_covers_multiple_pages_and_counts_missing_coordinates(self):
+        listing = self.client.get("/api/imoveis/")
+        self.assertEqual(len(listing.data["results"]), 12)
+        response = self.client.get("/api/imoveis/mapa/", {"cidade": "Cabedelo", "page": 2})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 16)
+        self.assertEqual(len(response.data["results"]), 15)
+        self.assertEqual(response.data["sem_coordenadas"], 1)
+        self.assertFalse(response.data["truncado"])
+
+    @override_settings(MAP_RESULT_LIMIT=2)
+    def test_map_limit_is_explicit(self):
+        response = self.client.get("/api/imoveis/mapa/")
+        self.assertEqual(len(response.data["results"]), 2)
+        self.assertTrue(response.data["truncado"])
+        self.assertEqual(response.data["geolocalizados"], 15)
+
+    def test_approximate_location_hides_number_and_rounds_coordinates(self):
+        response = self.client.get(f"/api/imoveis/{self.points[0].slug}/")
+        self.assertEqual(response.data["latitude"], "-7.123")
+        self.assertEqual(response.data["numero"], "")
+        self.assertEqual(response.data["complemento"], "")
+        self.assertNotIn("123", response.data["endereco"])
+        self.points[0].localizacao_exata = True
+        self.points[0].save()
+        response = self.client.get(f"/api/imoveis/{self.points[0].slug}/")
+        self.assertEqual(response.data["latitude"], "-7.1234567")
+        self.assertEqual(response.data["numero"], "123")
+
+    def test_coordinates_must_be_paired_and_valid(self):
+        admin = get_user_model().objects.create_user(username="map-admin", is_staff=True)
+        self.client.force_authenticate(user=admin)
+        for fields in ({"latitude": 91}, {"longitude": 181}, {"latitude": None}):
+            with self.subTest(fields=fields):
+                response = self.client.patch(f"/api/admin/imoveis/{self.points[0].id}/", fields, format="json")
+                self.assertEqual(response.status_code, 400)
+
+    def test_map_and_list_apply_same_filters(self):
+        response = self.client.get("/api/imoveis/mapa/", {"cidade": "Bananeiras"})
+        self.assertEqual(response.data["count"], 0)
+        self.assertEqual(response.data["results"], [])
+
+    def test_map_and_list_match_multiword_search(self):
+        property = self.points[0]
+        property.titulo = "Flat com varanda"
+        property.save()
+        filters = {"search": "Flat varanda", "cidade": "Cabedelo"}
+        listing = self.client.get("/api/imoveis/", filters)
+        markers = self.client.get("/api/imoveis/mapa/", filters)
+        self.assertEqual(listing.data["count"], 1)
+        self.assertEqual(markers.data["count"], listing.data["count"])
+        self.assertEqual(markers.data["results"][0]["id"], listing.data["results"][0]["id"])

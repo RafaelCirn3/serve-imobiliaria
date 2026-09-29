@@ -240,3 +240,5 @@ th {
 }
 
 
+/* Espaço para o CTA fixo nas páginas públicas. */
+body:has(app-sale-dialog) app-footer footer { padding-bottom: 110px; }

@@ -8,6 +8,7 @@ class Lead(models.Model):
         FORMULARIO = "formulario", "Formulario"
         WHATSAPP = "whatsapp", "WhatsApp"
         BOTAO_CONTATO = "botao_contato", "Botao de contato"
+        VENDA_IMOVEL = "venda_imovel", "Venda de imóvel"
 
     class Status(models.TextChoices):
         NOVO = "novo", "Novo"
@@ -23,6 +24,15 @@ class Lead(models.Model):
     origem = models.CharField(max_length=30, choices=Origem.choices, default=Origem.FORMULARIO)
     status = models.CharField(max_length=30, choices=Status.choices, default=Status.NOVO)
     criado_em = models.DateTimeField(auto_now_add=True)
+    dados_imovel = models.JSONField(default=dict, blank=True)
+    idempotency_key = models.UUIDField(null=True, blank=True, unique=True, editable=False)
+    payload_hash = models.CharField(max_length=64, blank=True, editable=False)
+    notificacao_status = models.CharField(max_length=20, default="nao_aplicavel", choices=[
+        ("nao_aplicavel", "Não aplicável"), ("pendente", "Pendente"),
+        ("enviado", "Enviado"), ("falhou", "Falhou"),
+    ])
+    notificacao_tentativas = models.PositiveIntegerField(default=0)
+    notificacao_em = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-criado_em"]

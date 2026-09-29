@@ -36,8 +36,13 @@ export interface Property {
   bairro: string;
   endereco?: string;
   cep?: string;
+  uf?: string;
+  logradouro?: string;
+  numero?: string;
+  complemento?: string;
   latitude?: string | number | null;
   longitude?: string | number | null;
+  localizacao_exata?: boolean;
   area_total?: string | number | null;
   area_privativa?: string | number | null;
   quartos: number;
@@ -64,8 +69,11 @@ export type PropertyPayload = Omit<
 >;
 
 export interface PropertyFilters {
+  visualizacao?: 'lista' | 'mapa';
   cidade?: string;
   bairro?: string;
+  logradouro?: string;
+  cep?: string;
   tipo?: string;
   finalidade?: string;
   valor_min?: string | number;
@@ -84,6 +92,16 @@ export interface PropertyFilters {
   page?: number;
 }
 
+export interface MapProperty {
+  id: number; titulo: string; slug: string; valor: string | number; cidade: string; bairro: string;
+  latitude?: string | number | null; longitude?: string | number | null; localizacao_exata?: boolean;
+  foto?: string | null; imagens?: PropertyImage[];
+}
+
+export interface MapResponse {
+  count: number; geolocalizados: number; sem_coordenadas: number; limite: number; truncado: boolean; results: MapProperty[];
+}
+
 export interface Lead {
   id: number;
   imovel?: number | null;
@@ -92,7 +110,10 @@ export interface Lead {
   email: string;
   telefone: string;
   mensagem: string;
-  origem: 'formulario' | 'whatsapp' | 'botao_contato';
+  origem: 'formulario' | 'whatsapp' | 'botao_contato' | 'venda_imovel';
+  dados_imovel?: Record<string, string | number | null>;
+  notificacao_status?: 'nao_aplicavel' | 'pendente' | 'enviado' | 'falhou';
+  notificacao_tentativas?: number;
   status?: LeadStatus;
   criado_em?: string;
 }

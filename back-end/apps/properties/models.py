@@ -2,6 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
+from apps.locations.normalization import normalized
 
 
 class Property(models.Model):
@@ -46,8 +47,16 @@ class Property(models.Model):
     bairro = models.CharField(max_length=120)
     endereco = models.CharField(max_length=255, blank=True)
     cep = models.CharField(max_length=12, blank=True)
+    uf = models.CharField(max_length=2, default="PB")
+    logradouro = models.CharField(max_length=255, blank=True)
+    numero = models.CharField(max_length=30, blank=True)
+    complemento = models.CharField(max_length=120, blank=True)
+    cidade_busca = models.CharField(max_length=120, blank=True, editable=False, db_index=True)
+    bairro_busca = models.CharField(max_length=120, blank=True, editable=False, db_index=True)
+    logradouro_busca = models.CharField(max_length=255, blank=True, editable=False, db_index=True)
     latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
     longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True)
+    localizacao_exata = models.BooleanField(default=False)
     area_total = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     area_privativa = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     quartos = models.PositiveSmallIntegerField(default=0)
@@ -85,6 +94,12 @@ class Property(models.Model):
             raise ValidationError({"status": "Imóvel com finalidade de aluguel não pode ter status vendido."})
 
     def save(self, *args, **kwargs):
+        for field in ("cidade", "bairro", "logradouro"):
+            setattr(self, f"{field}_busca", normalized(getattr(self, field)))
+        if kwargs.get("update_fields"):
+            kwargs["update_fields"] = set(kwargs["update_fields"]) | {
+                f"{field}_busca" for field in ("cidade", "bairro", "logradouro") if field in kwargs["update_fields"]
+            }
         if not self.slug:
             self.slug = self._build_unique_slug()
         if self.status == self.Status.PUBLICADO and self.publicado_em is None:

@@ -2,6 +2,7 @@
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { PropertyFilters } from '@core/models/api.models';
 import { PROPERTY_TYPES, SERVICE_CITIES } from '@core/models/property-options';
+import { LocationFiltersComponent } from './location-filters.component';
 
 function validRanges(control: AbstractControl): ValidationErrors | null {
   const values = control.value as Record<string, string>;
@@ -18,18 +19,13 @@ function validRanges(control: AbstractControl): ValidationErrors | null {
 @Component({
   selector: 'app-filter-sidebar',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, LocationFiltersComponent],
   template: `
     <form class="filters card" [formGroup]="form" (ngSubmit)="apply()">
       <h2>Filtros</h2>
       <label>Busca<input formControlName="search" placeholder="Título, bairro ou cidade"></label>
-      <label>Cidade
-        <select formControlName="cidade" (change)="form.controls.bairro.setValue('')">
-          <option value="">Todas as cidades</option>
-          @for (city of cities; track city) { <option [value]="city">{{ city }}</option> }
-        </select>
-      </label>
-      <label>Bairro<input formControlName="bairro" placeholder="Bessa, Manaira..."></label>
+      <app-location-filters [form]="form" />
+      <label>CEP<input formControlName="cep" placeholder="00000-000" maxlength="9"></label>
       <label>Tipo
         <select formControlName="tipo">
           <option value="">Todos</option>
@@ -163,6 +159,8 @@ export class FilterSidebarComponent implements OnChanges {
     search: [''],
     cidade: [''],
     bairro: [''],
+    logradouro: [''],
+    cep: [''],
     tipo: [''],
     finalidade: [''],
     valor_min: ['', Validators.min(0)],
@@ -178,7 +176,7 @@ export class FilterSidebarComponent implements OnChanges {
 
   ngOnChanges(): void {
     this.form.reset(undefined, { emitEvent: false });
-    this.form.patchValue(this.initialFilters as Record<string, string>, { emitEvent: false });
+    this.form.patchValue(this.initialFilters as Record<string, string>);
   }
 
   apply(): void {

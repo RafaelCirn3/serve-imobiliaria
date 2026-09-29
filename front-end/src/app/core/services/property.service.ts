@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
 import { PaginatedResponse, Property, PropertyFilters, PropertyImage, PropertyPayload } from '../models/api.models';
 import { toHttpParams } from './api-utils';
+import { MapResponse } from '../models/api.models';
 
 @Injectable({ providedIn: 'root' })
 export class PropertyService {
@@ -23,10 +24,13 @@ export class PropertyService {
     return this.http.get<PaginatedResponse<Property>>(`${this.baseUrl}/destaques/`);
   }
 
+  mapProperties(filters: PropertyFilters): Observable<MapResponse> {
+    const { page, visualizacao, ...query } = filters;
+    return this.http.get<MapResponse>(`${this.baseUrl}/mapa/`, { params: toHttpParams(query) });
+  }
+
   searchProperties(query: string, filters: PropertyFilters = {}): Observable<PaginatedResponse<Property>> {
-    return this.http.get<PaginatedResponse<Property>>(`${this.baseUrl}/busca/`, {
-      params: toHttpParams({ ...filters, q: query }),
-    });
+    return this.listPublicProperties({ ...filters, search: query });
   }
 
   listAdminProperties(filters: PropertyFilters = {}): Observable<PaginatedResponse<Property>> {

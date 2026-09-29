@@ -10,6 +10,8 @@ from apps.common.permissions import IsAdminUserOnly
 from .filters import PropertyFilter
 from .models import Property, PropertyImage
 from .serializers import AdminPropertySerializer, PropertyImageSerializer, PublicPropertySerializer
+from .serializers import MapPropertySerializer
+from django.conf import settings
 
 
 class PublicPropertyViewSet(viewsets.ReadOnlyModelViewSet):
@@ -17,11 +19,23 @@ class PublicPropertyViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [AllowAny]
     lookup_field = "slug"
     filterset_class = PropertyFilter
-    search_fields = ["titulo", "descricao", "bairro", "cidade"]
+    search_fields = ["titulo", "descricao", "bairro", "cidade", "logradouro"]
     ordering_fields = ["valor", "publicado_em", "destaque"]
 
     def get_queryset(self):
         return Property.objects.prefetch_related("imagens").filter(status=Property.Status.PUBLICADO)
+
+    @action(detail=False, methods=["get"], url_path="mapa")
+    def map_properties(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        total = queryset.count()
+        located = queryset.filter(latitude__isnull=False, longitude__isnull=False)
+        located_count = located.count()
+        limit = settings.MAP_RESULT_LIMIT
+        data = MapPropertySerializer(located[:limit], many=True, context={"request": request}).data
+        return Response({"count": total, "geolocalizados": located_count,
+                         "sem_coordenadas": total - located_count, "limite": limit,
+                         "truncado": located_count > limit, "results": data})
 
     @action(detail=False, methods=["get"], url_path="destaques")
     def destaques(self, request):
@@ -42,6 +56,7 @@ class PublicPropertyViewSet(viewsets.ReadOnlyModelViewSet):
                 | Q(descricao__icontains=termo)
                 | Q(bairro__icontains=termo)
                 | Q(cidade__icontains=termo)
+                | Q(logradouro__icontains=termo)
             )
         page = self.paginate_queryset(queryset)
         if page is not None:

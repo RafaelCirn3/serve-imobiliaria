@@ -1,5 +1,7 @@
 ﻿import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PropertyImage, PropertyPayload, Region } from '@core/models/api.models';
 import { PROPERTY_TYPES } from '@core/models/property-options';
@@ -7,11 +9,15 @@ import { NotificationService } from '@core/services/notification.service';
 import { PropertyService } from '@core/services/property.service';
 import { RegionService } from '@core/services/region.service';
 import { ImageUploaderComponent } from '@shared/components/image-uploader.component';
+import { AddressEditorComponent } from '@shared/components/address-editor.component';
+import { PropertyMapComponent } from '@shared/components/property-map.component';
+import { LocationService } from '@core/services/location.service';
+import { MapProperty } from '@core/models/api.models';
 
 @Component({
   selector: 'app-property-form',
   standalone: true,
-  imports: [ReactiveFormsModule, ImageUploaderComponent],
+  imports: [ReactiveFormsModule, ImageUploaderComponent, AddressEditorComponent, PropertyMapComponent],
   template: `
     <div class="admin-page">
       <div class="admin-header">
@@ -53,12 +59,14 @@ import { ImageUploaderComponent } from '@shared/components/image-uploader.compon
                 }
               </select>
             </label>
-            <label class="field">Cidade<input formControlName="cidade"></label>
-            <label class="field">Bairro<input formControlName="bairro"></label>
-            <label class="field full">Endereco<input formControlName="endereco"></label>
-            <label class="field">CEP<input formControlName="cep"></label>
+            <app-address-editor [form]="form" listId="admin-address" />
+            <label class="field full">Endereço anterior / referência<input formControlName="endereco"></label>
             <label class="field">Latitude<input formControlName="latitude"></label>
             <label class="field">Longitude<input formControlName="longitude"></label>
+            <button type="button" class="btn btn-secondary" [disabled]="geocoding" (click)="geocode()">{{ geocoding ? 'Localizando…' : 'Localizar endereço no mapa' }}</button>
+            <label class="check"><input type="checkbox" formControlName="localizacao_exata"> Publicar localização exata (posição conferida)</label>
+            <p class="muted full">A posição é aproximada por padrão. Ao publicar a localização exata, número e complemento também ficam disponíveis ao público.</p>
+            @if (mapPreview.length) { <div class="full"><app-property-map [properties]="mapPreview" [editable]="true" (positionChanged)="movePosition($event)" /></div> }
           </div>
         }
 
@@ -147,6 +155,11 @@ export class PropertyFormComponent implements OnInit {
   private readonly propertiesService = inject(PropertyService);
   private readonly regionsService = inject(RegionService);
   private readonly notification = inject(NotificationService);
+  private readonly locations = inject(LocationService);
+  private readonly destroyRef = inject(DestroyRef);
+  geocoding = false;
+  private previewKey = '';
+  private previewProperties: MapProperty[] = [];
 
   propertyId: string | null = null;
   tab = 'basic';
@@ -174,9 +187,11 @@ export class PropertyFormComponent implements OnInit {
     cidade: ['João Pessoa', Validators.required],
     bairro: ['', Validators.required],
     endereco: [''],
+    uf: ['PB'], logradouro: [''], numero: [''], complemento: [''],
     cep: [''],
     latitude: [''],
     longitude: [''],
+    localizacao_exata: [false],
     area_total: [null as number | null],
     area_privativa: [null as number | null],
     quartos: [0],
@@ -223,7 +238,8 @@ export class PropertyFormComponent implements OnInit {
       return;
     }
 
-    const payload = this.form.getRawValue() as PropertyPayload;
+    const values = this.form.getRawValue();
+    const payload = { ...values, latitude: values.latitude || null, longitude: values.longitude || null } as PropertyPayload;
     const request = this.propertyId
       ? this.propertiesService.updateProperty(this.propertyId, payload)
       : this.propertiesService.createProperty(payload);
@@ -237,7 +253,7 @@ export class PropertyFormComponent implements OnInit {
           this.images = property.imagens;
         }
       },
-      error: () => this.notification.show({ type: 'error', text: 'Não foi possível salvar o imóvel.' }),
+      error: (response) => this.notification.show({ type: 'error', text: response.status === 400 ? 'Revise cidade, UF, CEP, região e coordenadas antes de salvar.' : 'Não foi possível salvar o imóvel.' }),
     });
   }
 
@@ -251,6 +267,46 @@ export class PropertyFormComponent implements OnInit {
         this.reloadProperty();
       },
       error: () => this.notification.show({ type: 'error', text: 'Falha no upload das fotos.' }),
+    });
+  }
+
+  get mapPreview(): MapProperty[] {
+    const values = this.form.getRawValue();
+    const key = JSON.stringify([values.latitude, values.longitude, values.titulo, values.valor, values.cidade, values.bairro, values.localizacao_exata]);
+    if (this.previewKey === key) return this.previewProperties;
+    this.previewKey = key;
+    if (values.latitude == null || values.longitude == null || values.latitude === '' || values.longitude === '') { this.previewProperties = []; return this.previewProperties; }
+    this.previewProperties = [{ id: 0, titulo: values.titulo || 'Prévia da localização', slug: '', valor: values.valor,
+      cidade: values.cidade, bairro: values.bairro, latitude: values.latitude, longitude: values.longitude,
+      localizacao_exata: values.localizacao_exata }];
+    return this.previewProperties;
+  }
+
+  movePosition(position: { latitude: string; longitude: string }): void {
+    this.form.patchValue({ ...position, localizacao_exata: false });
+  }
+
+  geocode(): void {
+    if (this.geocoding) return;
+    const { cidade, bairro, logradouro, numero, uf } = this.form.getRawValue();
+    if (!logradouro || !cidade || uf !== 'PB') {
+      this.notification.show({ type: 'error', text: 'Informe a cidade, UF PB e a rua antes de localizar.' }); return;
+    }
+    this.geocoding = true;
+    const address = { cidade, bairro, logradouro, numero, uf };
+    const coordinates = { latitude: this.form.controls.latitude.value, longitude: this.form.controls.longitude.value };
+    this.locations.geocode({ cidade, bairro, logradouro, numero }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (result) => {
+        this.geocoding = false;
+        const current = this.form.getRawValue();
+        if (Object.entries({ ...address, ...coordinates }).some(([field, value]) => current[field as keyof typeof current] !== value)) {
+          this.notification.show({ type: 'error', text: 'O endereço ou as coordenadas foram alterados. Consulte a localização novamente.' });
+          return;
+        }
+        this.form.patchValue({ latitude: result.latitude.toFixed(7), longitude: result.longitude.toFixed(7), localizacao_exata: false });
+        this.notification.show({ type: 'success', text: 'Posição sugerida. Confira no mapa e salve o imóvel.' });
+      },
+      error: (response) => { this.geocoding = false; this.notification.show({ type: 'error', text: response.status === 429 ? 'Aguarde alguns segundos antes de consultar novamente.' : 'Não foi possível localizar. Você pode informar as coordenadas manualmente.' }); },
     });
   }
 

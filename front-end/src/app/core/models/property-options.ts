@@ -12,6 +12,10 @@ export const PROPERTY_TYPES: ReadonlyArray<{ value: PropertyType; label: string 
 
 export const SERVICE_CITIES = ['João Pessoa', 'Cabedelo', 'Bananeiras'] as const;
 
+export function normalizedLocation(value: unknown): string {
+  return String(value || '').trim().replace(/\s+/g, ' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
+}
+
 export function propertyTypeLabel(type: PropertyType): string {
   return PROPERTY_TYPES.find((option) => option.value === type)?.label ?? type;
 }

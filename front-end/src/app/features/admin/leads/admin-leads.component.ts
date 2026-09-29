@@ -1,4 +1,5 @@
-﻿import { DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { Lead, LeadStatus } from '@core/models/api.models';
 import { LeadService } from '@core/services/lead.service';
@@ -8,7 +9,7 @@ import { LeadStatusBadgeComponent } from '@shared/components/lead-status-badge.c
 @Component({
   selector: 'app-admin-leads',
   standalone: true,
-  imports: [DatePipe, LeadStatusBadgeComponent],
+  imports: [DatePipe, KeyValuePipe, LeadStatusBadgeComponent],
   template: `
     <div class="admin-page">
       <div class="admin-header"><h1>Leads</h1></div>
@@ -19,7 +20,11 @@ import { LeadStatusBadgeComponent } from '@shared/components/lead-status-badge.c
             @for (lead of leads; track lead.id) {
               <tr>
                 <td><strong>{{ lead.nome }}</strong><br><span class="muted">{{ lead.telefone }} · {{ lead.email }}</span></td>
-                <td>{{ lead.imovel_titulo || 'Contato geral' }}</td>
+                <td>{{ lead.origem === 'venda_imovel' ? 'Oferta de venda' : lead.imovel_titulo || 'Contato geral' }}
+                  @for (field of lead.dados_imovel | keyvalue; track field.key) {
+                    @if (field.value !== null && field.value !== '') { <div class="muted">{{ detailLabels[field.key] || field.key }}: {{ field.value }}</div> }
+                  }
+                </td>
                 <td>{{ lead.mensagem }}</td>
                 <td><app-lead-status-badge [status]="lead.status" /></td>
                 <td>{{ lead.criado_em | date:'dd/MM/yyyy HH:mm' }}</td>
@@ -30,6 +35,12 @@ import { LeadStatusBadgeComponent } from '@shared/components/lead-status-badge.c
                     <option value="finalizado">Finalizado</option>
                     <option value="descartado">Descartado</option>
                   </select>
+                  @if (lead.origem === 'venda_imovel') {
+                    <p>E-mail: {{ lead.notificacao_status === 'enviado' ? 'Enviado' : 'Pendente' }}</p>
+                    @if (lead.notificacao_status !== 'enviado') {
+                      <button type="button" class="btn btn-secondary" [disabled]="retrying === lead.id" (click)="retry(lead)">Reenviar e-mail</button>
+                    }
+                  }
                 </td>
               </tr>
             }
@@ -52,6 +63,19 @@ export class AdminLeadsComponent implements OnInit {
   private readonly leadsService = inject(LeadService);
   private readonly notification = inject(NotificationService);
   leads: Lead[] = [];
+  readonly detailLabels: Record<string, string> = { tipo: 'Tipo', cep: 'CEP', cidade: 'Cidade', uf: 'UF', bairro: 'Bairro', logradouro: 'Rua', numero: 'Número', complemento: 'Complemento', quartos: 'Quartos', area_total: 'Área total (m²)', valor: 'Valor pretendido (R$)' };
+  retrying: number | null = null;
+
+  retry(lead: Lead): void {
+    this.retrying = lead.id;
+    this.leadsService.retryNotification(lead.id).subscribe({
+      next: (updated) => {
+        Object.assign(lead, updated); this.retrying = null;
+        this.notification.show({ type: updated.notificacao_status === 'enviado' ? 'success' : 'error', text: updated.notificacao_status === 'enviado' ? 'Notificação enviada.' : 'A notificação continua pendente. Verifique a configuração de e-mail.' });
+      },
+      error: () => { this.retrying = null; this.notification.show({ type: 'error', text: 'Não foi possível reenviar.' }); },
+    });
+  }
 
   ngOnInit(): void {
     this.load();

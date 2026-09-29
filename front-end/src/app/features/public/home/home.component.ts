@@ -1,5 +1,4 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
 import { Banner, Property, Region } from '@core/models/api.models';
 import { BannerService } from '@core/services/banner.service';
 import { PropertyService } from '@core/services/property.service';
@@ -10,11 +9,12 @@ import { HeaderComponent } from '@shared/components/header.component';
 import { LoadingComponent } from '@shared/components/loading.component';
 import { PropertyCardComponent } from '@shared/components/property-card.component';
 import { SearchBarComponent } from '@shared/components/search-bar.component';
+import { SaleDialogService } from '@core/services/sale-dialog.service';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, HeaderComponent, FooterComponent, SearchBarComponent, PropertyCardComponent, LoadingComponent, EmptyStateComponent],
+  imports: [HeaderComponent, FooterComponent, SearchBarComponent, PropertyCardComponent, LoadingComponent, EmptyStateComponent],
   template: `
     <div class="page-shell">
       <app-header />
@@ -106,7 +106,7 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
             <h2>Anuncie com apresentação premium e gestão direta.</h2>
             <p>Seu imóvel merece imagens fortes, texto objetivo e uma jornada de contato sem atrito.</p>
           </div>
-          <a class="btn btn-primary" routerLink="/contato">Falar com a SERVE</a>
+          <button type="button" class="btn btn-primary" (click)="saleDialog.open()">Falar com a SERVE</button>
         </div>
       </section>
       <app-footer />
@@ -120,22 +120,22 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
       padding: 128px 0 68px;
       background:
         linear-gradient(180deg, rgba(17, 20, 23, 0.08), rgba(17, 20, 23, 0.16) 58%, #111417 100%),
-        linear-gradient(90deg, rgba(17, 20, 23, 0.48), rgba(17, 20, 23, 0.14) 44%, rgba(17, 20, 23, 0) 72%),
+        linear-gradient(90deg, rgba(17, 20, 23, 0.54), rgba(17, 20, 23, 0.14) 40%, rgba(17, 20, 23, 0) 68%),
         url('/assets/hero-joao-pessoa.jpg') center/cover;
     }
 
     .hero-content {
       display: grid;
       gap: 16px;
-      width: min(620px, 100%);
-      max-width: 620px;
-      margin-left: clamp(0px, 7vw, 120px);
+      width: min(540px, calc(100% - 48px));
+      max-width: 540px;
+      margin-left: clamp(24px, 3.5vw, 60px);
       margin-right: auto;
       text-shadow: 0 2px 18px rgba(0, 0, 0, 0.34);
     }
 
     h1 {
-      max-width: 660px;
+      max-width: 540px;
       margin: 0;
       font-size: clamp(2.3rem, 5vw, 4.7rem);
       line-height: 1;
@@ -151,6 +151,7 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
 
     .hero-search-wrap {
       margin-top: 22px;
+      margin-bottom: 28px;
     }
 
     .hero .eyebrow {
@@ -315,13 +316,14 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
       .hero {
         min-height: 680px;
         padding: 116px 0 42px;
-        background-position: center;
+        background-position: 35% center;
       }
 
       .hero-content {
-        width: 100%;
+        width: calc(100% - 32px);
         max-width: 700px;
-        margin-left: 0;
+        margin-left: 16px;
+        margin-right: 16px;
       }
 
       .hero-search-wrap {
@@ -337,6 +339,7 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
   `],
 })
 export class HomeComponent implements OnInit {
+  readonly saleDialog = inject(SaleDialogService);
   private readonly propertyService = inject(PropertyService);
   private readonly regionService = inject(RegionService);
   private readonly bannerService = inject(BannerService);
