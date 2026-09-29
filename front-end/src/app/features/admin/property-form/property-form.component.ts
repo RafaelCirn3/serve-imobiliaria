@@ -2,6 +2,7 @@
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PropertyImage, PropertyPayload, Region } from '@core/models/api.models';
+import { PROPERTY_TYPES } from '@core/models/property-options';
 import { NotificationService } from '@core/services/notification.service';
 import { PropertyService } from '@core/services/property.service';
 import { RegionService } from '@core/services/region.service';
@@ -33,7 +34,9 @@ import { ImageUploaderComponent } from '@shared/components/image-uploader.compon
             <label class="field">Titulo<input formControlName="titulo"></label>
             <label class="field">Valor<input type="number" formControlName="valor"></label>
             <label class="field full">Descrição<textarea formControlName="descricao"></textarea></label>
-            <label class="field">Tipo<select formControlName="tipo"><option value="apartamento">Apartamento</option><option value="casa">Casa</option><option value="cobertura">Cobertura</option><option value="terreno">Terreno</option><option value="comercial">Comercial</option><option value="condominio">Condomínio</option></select></label>
+            <label class="field">Tipo<select formControlName="tipo">
+              @for (type of propertyTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }
+            </select></label>
             <label class="field">Finalidade<select formControlName="finalidade"><option value="venda">Venda</option><option value="aluguel">Aluguel</option></select></label>
             <label class="field">Condomínio<input type="number" formControlName="valor_condominio"></label>
             <label class="field">IPTU<input type="number" formControlName="valor_iptu"></label>
@@ -61,8 +64,11 @@ import { ImageUploaderComponent } from '@shared/components/image-uploader.compon
 
         @if (tab === 'features') {
           <div class="form-grid">
-            <label class="field">Área total<input type="number" formControlName="area_total"></label>
-            <label class="field">Área privativa<input type="number" formControlName="area_privativa"></label>
+            <label class="field">Área total (m²)<input type="number" min="0" step="0.01" formControlName="area_total"></label>
+            <label class="field">Área privativa (m²)<input type="number" min="0" step="0.01" formControlName="area_privativa"></label>
+            @if (form.controls.tipo.value === 'terreno') {
+              <p class="muted full">Para áreas e terrenos, informe a metragem no campo Área total.</p>
+            }
             <label class="field">Quartos<input type="number" formControlName="quartos"></label>
             <label class="field">Suítes<input type="number" formControlName="suites"></label>
             <label class="field">Banheiros<input type="number" formControlName="banheiros"></label>
@@ -134,6 +140,7 @@ import { ImageUploaderComponent } from '@shared/components/image-uploader.compon
   `],
 })
 export class PropertyFormComponent implements OnInit {
+  readonly propertyTypes = PROPERTY_TYPES;
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

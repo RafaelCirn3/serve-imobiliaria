@@ -20,9 +20,12 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
       <app-header />
       <section class="hero">
         <div class="container hero-content">
-          <span class="eyebrow">João Pessoa / PB</span>
-          <h1>O melhor de João Pessoa para o seu novo capítulo.</h1>
-          <p>Imóveis selecionados com critério, apresentação premium e atendimento direto para comprar, vender ou alugar com clareza.</p>
+          <span class="eyebrow">João Pessoa · Cabedelo · Bananeiras / PB</span>
+          <h1>Seu próximo capítulo começa na Paraíba.</h1>
+          <p>Encontre o imóvel para realizar seu sonho ou investir em João Pessoa, Cabedelo e Bananeiras, com atendimento direto para comprar, vender ou alugar.</p>
+          @if (totalPublicProperties !== null) {
+            <p aria-live="polite">{{ totalPublicProperties }} {{ totalPublicProperties === 1 ? 'imóvel disponível' : 'imóveis disponíveis' }} no catálogo.</p>
+          }
         </div>
         <div class="container hero-search-wrap">
           <app-search-bar variant="hero" />
@@ -75,7 +78,7 @@ import { SearchBarComponent } from '@shared/components/search-bar.component';
                 <img [src]="regionImage(region)" [alt]="region.nome">
                 <div>
                   <h3>{{ region.nome }}</h3>
-                  <p>{{ region.descricao || 'Região estratégica para morar ou investir em João Pessoa.' }}</p>
+                  <p>{{ region.descricao || 'Região estratégica para morar ou investir em ' + region.cidade + '.' }}</p>
                 </div>
               </article>
             }
@@ -339,6 +342,7 @@ export class HomeComponent implements OnInit {
   private readonly bannerService = inject(BannerService);
 
   featured: Property[] = [];
+  totalPublicProperties: number | null = null;
   regions: Region[] = [];
   banners: Banner[] = [];
   loadingFeatured = true;
@@ -367,6 +371,10 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.propertyService.listPublicProperties().subscribe({
+      next: (response) => (this.totalPublicProperties = response.count),
+      error: () => (this.totalPublicProperties = null),
+    });
     this.propertyService.getFeaturedProperties().subscribe({
       next: (response) => {
         this.featured = response.results.slice(0, 6);

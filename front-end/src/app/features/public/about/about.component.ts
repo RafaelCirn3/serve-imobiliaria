@@ -13,14 +13,14 @@ import { HeaderComponent } from '@shared/components/header.component';
         <section class="hero">
           <div class="container">
             <span class="eyebrow">Sobre a SERVE</span>
-            <h1>Uma rede imobiliária enxuta, premium e focada em João Pessoa.</h1>
+            <h1>Seu imóvel em João Pessoa, Cabedelo e Bananeiras.</h1>
           </div>
         </section>
         <section class="section container split">
           <div>
             <h2 class="section-title">Curadoria, presenca local e atendimento direto.</h2>
-            <p>A SERVE nasce para organizar a jornada imobiliária em João Pessoa com menos ruído e mais critério. Nesta fase, a gestão dos imóveis é centralizada pelo administrador da marca.</p>
-            <p>O foco está nas regiões mais valorizadas da cidade, da orla aos bairros em expansão, sempre com apresentação visual forte e informação objetiva.</p>
+            <p>A SERVE organiza sua jornada para comprar, vender ou alugar em João Pessoa, Cabedelo e Bananeiras, com atenção ao seu perfil e atendimento direto.</p>
+            <p>Da orla às regiões de serra, conheça imóveis para morar ou investir, com apresentação visual e informação objetiva.</p>
           </div>
           <div class="card values">
             <strong>Diferenciais</strong>

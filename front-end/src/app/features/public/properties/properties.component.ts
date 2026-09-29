@@ -18,7 +18,7 @@ import { PropertyCardComponent } from '@shared/components/property-card.componen
       <app-header />
       <main class="section container">
         <span class="eyebrow">Portfolio SERVE</span>
-        <h1 class="section-title">Imóveis em João Pessoa</h1>
+        <h1 class="section-title">Imóveis em {{ filters.cidade || 'João Pessoa, Cabedelo e Bananeiras' }}</h1>
         <div class="layout">
           <aside class="filters-column">
             <app-filter-sidebar [initialFilters]="filters" (filtersChanged)="applyFilters($event)" />

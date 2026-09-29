@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { environment } from '@env/environment';
 import { Property } from '@core/models/api.models';
+import { propertyArea, propertyTypeLabel } from '@core/models/property-options';
 import { LeadService } from '@core/services/lead.service';
 import { NotificationService } from '@core/services/notification.service';
 import { PropertyService } from '@core/services/property.service';
@@ -39,11 +40,12 @@ import { PropertyCardComponent } from '@shared/components/property-card.componen
               <h1>{{ property.titulo }}</h1>
               <strong class="price">{{ numberValue(property.valor) | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</strong>
               <div class="features">
+                <span>{{ typeLabel(property.tipo) }}</span>
                 <span>{{ property.quartos }} quartos</span>
                 <span>{{ property.suites }} suítes</span>
                 <span>{{ property.banheiros }} banheiros</span>
                 <span>{{ property.vagas }} vagas</span>
-                <span>{{ property.area_privativa || property.area_total }} m²</span>
+                <span>{{ area.label }}: {{ area.value ?? '—' }} m²</span>
               </div>
               <p class="description">{{ property.descricao }}</p>
               @if (property.latitude && property.longitude) {
@@ -272,6 +274,11 @@ import { PropertyCardComponent } from '@shared/components/property-card.componen
   `],
 })
 export class PropertyDetailComponent implements OnInit {
+  readonly typeLabel = propertyTypeLabel;
+
+  get area() {
+    return this.property ? propertyArea(this.property) : { value: null, label: 'Área' };
+  }
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly propertyService = inject(PropertyService);

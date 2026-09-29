@@ -6,7 +6,7 @@
 }
 
 export type PropertyStatus = 'rascunho' | 'publicado' | 'vendido' | 'alugado' | 'inativo';
-export type PropertyType = 'apartamento' | 'casa' | 'cobertura' | 'terreno' | 'comercial' | 'condominio';
+export type PropertyType = 'apartamento' | 'casa' | 'cobertura' | 'terreno' | 'comercial' | 'condominio' | 'flat';
 export type PropertyPurpose = 'venda' | 'aluguel';
 export type LeadStatus = 'novo' | 'em_atendimento' | 'finalizado' | 'descartado';
 
@@ -75,6 +75,8 @@ export interface PropertyFilters {
   vagas?: string | number;
   area_min?: string | number;
   area_max?: string | number;
+  area_total_min?: string | number;
+  area_total_max?: string | number;
   destaque?: boolean | string;
   status?: string;
   ordering?: string;

@@ -2,6 +2,7 @@
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Property } from '@core/models/api.models';
+import { propertyArea, propertyTypeLabel } from '@core/models/property-options';
 
 @Component({
   selector: 'app-property-card',
@@ -17,13 +18,14 @@ import { Property } from '@core/models/api.models';
       </a>
       <div class="content">
         <p class="location">{{ property.bairro }} · {{ property.cidade }}</p>
+        <span class="muted">{{ typeLabel(property.tipo) }}</span>
         <h3><a [routerLink]="['/imoveis', property.slug]">{{ property.titulo }}</a></h3>
         <strong class="price">{{ numericPrice | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</strong>
         <div class="features">
           <span>{{ property.quartos }} quartos</span>
           <span>{{ property.suites }} suítes</span>
           <span>{{ property.vagas }} vagas</span>
-          <span>{{ property.area_privativa || property.area_total || '-' }} m²</span>
+          <span>{{ area.label }}: {{ area.value ?? '—' }} m²</span>
         </div>
       </div>
     </article>
@@ -131,7 +133,10 @@ import { Property } from '@core/models/api.models';
   `],
 })
 export class PropertyCardComponent {
+  readonly typeLabel = propertyTypeLabel;
   @Input({ required: true }) property!: Property;
+
+  get area() { return propertyArea(this.property); }
 
   get coverImage(): string {
     return this.property.imagens?.find((image) => image.imagem_capa)?.imagem

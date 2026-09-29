@@ -11,7 +11,7 @@ import { BrandComponent } from './brand.component';
       <div class="container footer-grid">
         <div>
           <app-brand />
-          <p>Curadoria imobiliária premium em João Pessoa, com foco em localização, liquidez e atendimento direto.</p>
+          <p>Curadoria imobiliária em João Pessoa, Cabedelo e Bananeiras, com foco em localização e atendimento direto.</p>
         </div>
         <div>
           <strong>Navegação</strong>
@@ -23,7 +23,7 @@ import { BrandComponent } from './brand.component';
           <strong>Contato</strong>
           <span>WhatsApp: (83) 99999-9999</span>
           <span>contato&#64;serveimoveis.com.br</span>
-          <span>João Pessoa/PB</span>
+          <span>Atendimento em João Pessoa, Cabedelo e Bananeiras/PB</span>
         </div>
       </div>
     </footer>

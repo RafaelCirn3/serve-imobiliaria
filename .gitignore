@@ -1,4 +1,5 @@
 documents/
+.venv/
 back-end/.env
 back-end/media/
 back-end/staticfiles/

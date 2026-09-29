@@ -9,9 +9,10 @@ class Property(models.Model):
         APARTAMENTO = "apartamento", "Apartamento"
         CASA = "casa", "Casa"
         COBERTURA = "cobertura", "Cobertura"
-        TERRENO = "terreno", "Terreno"
+        TERRENO = "terreno", "Área/Terreno"
         COMERCIAL = "comercial", "Comercial"
-        CONDOMINIO = "condominio", "Condomínio"
+        CONDOMINIO = "condominio", "Condomínio fechado"
+        FLAT = "flat", "Flat"
 
     class Finalidade(models.TextChoices):
         VENDA = "venda", "Venda"

@@ -118,3 +118,33 @@ A regra de negócio garante apenas uma imagem de capa por imóvel.
 - Exclusão administrativa de imóvel é lógica: status vira `inativo`.
 - Leads podem ser criados publicamente e listados/atualizados apenas por admin.
 - Listagens possuem paginação, filtros combinados, busca textual e ordenação.
+
+## Tipos e perfil de busca
+
+Os tipos aceitos são `apartamento`, `terreno` (Área/Terreno), `casa`,
+`condominio` (Condomínio fechado), `flat`, `cobertura` e `comercial`.
+Os identificadores existentes foram preservados. Aplique a migração com
+`python manage.py migrate` no ambiente configurado antes de utilizar a nova versão.
+
+`area_min` e `area_max` continuam filtrando **área privativa** em m².
+`area_total_min` e `area_total_max` filtram **área total**, inclusive terrenos
+sem área privativa. As faixas são inclusivas e combinadas com cidade, bairro,
+tipo, valor e quantidade mínima de quartos. Valores negativos e faixas com
+mínimo maior que máximo retornam HTTP 400.
+
+Exemplo: `/api/imoveis/?tipo=terreno&cidade=Bananeiras&area_total_min=300&area_total_max=500`.
+O `count` dos endpoints públicos considera somente imóveis publicados.
+
+## Testes isolados
+
+Após instalar `requirements.txt`, execute:
+
+```powershell
+python manage.py check --settings=config.test_settings
+python manage.py makemigrations --check --dry-run --settings=config.test_settings
+python manage.py test apps.properties --settings=config.test_settings
+```
+
+Essa configuração utiliza SQLite em memória e não acessa o PostgreSQL da aplicação.
+Ela verifica os contratos e filtros desta etapa; a validação das migrações no PostgreSQL
+deve ocorrer no ambiente de implantação. Não utilize `config.test_settings` em produção.
