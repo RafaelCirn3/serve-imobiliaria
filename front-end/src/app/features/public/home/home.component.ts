@@ -119,7 +119,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
       align-items: end;
       padding: 128px 0 68px;
       background:
-        linear-gradient(180deg, rgba(17, 20, 23, 0.08), rgba(17, 20, 23, 0.16) 58%, #111417 100%),
+        linear-gradient(180deg, rgba(17, 20, 23, 0.12), rgba(17, 20, 23, 0.24) 58%, #0d1013 100%),
         linear-gradient(90deg, rgba(17, 20, 23, 0.54), rgba(17, 20, 23, 0.14) 40%, rgba(17, 20, 23, 0) 68%),
         url('/assets/hero-joao-pessoa.jpg') center/cover;
     }
@@ -148,6 +148,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
       font-size: 1rem;
       line-height: 1.65;
     }
+
 
     .hero-search-wrap {
       margin-top: 22px;

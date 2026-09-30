@@ -11,6 +11,7 @@ import { BrandComponent } from './brand.component';
       <div class="container footer-grid">
         <div>
           <app-brand />
+          <small class="footer-creci">RESP CRECI 15202</small>
           <p>Curadoria imobiliária em João Pessoa, Cabedelo e Bananeiras, com foco em localização e atendimento direto.</p>
         </div>
         <div>
@@ -46,6 +47,15 @@ import { BrandComponent } from './brand.component';
     a {
       color: #b8b8b8;
       line-height: 1.7;
+    }
+
+    .footer-creci {
+      display: block;
+      margin: 8px 0 14px;
+      color: #ffffff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
     }
 
     strong {

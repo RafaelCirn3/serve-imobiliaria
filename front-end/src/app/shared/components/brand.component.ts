@@ -5,31 +5,23 @@
   standalone: true,
   template: `
     <div class="brand">
-      <strong>SERVE</strong>
-      <span>negócios imobiliários</span>
+      <img src="assets/serve-logo.png" alt="Serve Negócios Imobiliários">
     </div>
   `,
   styles: [`
     .brand {
-      display: grid;
-      gap: 0;
-      line-height: 1;
+      width: 190px;
+      height: 58px;
+      overflow: hidden;
     }
 
-    strong {
-      color: #fff;
-      font-size: 1.35rem;
-      font-weight: 900;
-      letter-spacing: 0.08em;
+    img {
+      width: 100%;
+      height: 58px;
+      object-fit: cover;
+      object-position: center;
     }
 
-    span {
-      color: #ffffff;
-      font-size: 0.64rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
   `],
 })
 export class BrandComponent {}
