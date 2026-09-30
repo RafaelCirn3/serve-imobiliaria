@@ -1,6 +1,6 @@
 ﻿export const environment = {
   production: true,
-  apiUrl: 'https://seudominio.com.br/api',
+  apiUrl: '/api',
   whatsappNumber: '5583999999999',
 };
 
