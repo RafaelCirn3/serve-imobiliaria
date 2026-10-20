@@ -22,7 +22,7 @@ import { BrandComponent } from './brand.component';
         </div>
         <div>
           <strong>Contato</strong>
-          <span>WhatsApp: (83) 99999-9999</span>
+          <a href="https://wa.me/558396724745" target="_blank" rel="noopener noreferrer">WhatsApp: (83) 9672-4745</a>
           <span>contato&#64;serveimoveis.com.br</span>
           <span>Atendimento em João Pessoa, Cabedelo e Bananeiras/PB</span>
         </div>
