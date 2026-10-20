@@ -8,7 +8,7 @@ import { AddressEditorComponent } from './address-editor.component';
 @Component({
   selector: 'app-sale-dialog', standalone: true, imports: [ReactiveFormsModule, AddressEditorComponent],
   template: `
-    <button #trigger type="button" class="sale-trigger" [class.avoid-controls]="floatingHidden()" [style.--floating-offset]="floatingBottom() + 'px'" (click)="dialogService.open()" aria-haspopup="dialog">Quer vender seu imóvel? Descreva aqui!</button>
+    <div class="sale-actions" [class.avoid-controls]="floatingHidden()" [style.--floating-offset]="floatingBottom() + 'px'"><a class="sale-whatsapp" href="https://wa.me/558396724745?text=Ol%C3%A1%2C%20quero%20vender%20meu%20im%C3%B3vel." target="_blank" rel="noopener noreferrer" aria-label="Conversar no WhatsApp sobre venda de imóvel"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M16 2a14 14 0 0 0-12 21L2 30l7.3-2A14 14 0 1 0 16 2Zm0 25a11 11 0 0 1-5.7-1.6l-.5-.3-4 1.1L7 22.3l-.3-.5A11 11 0 1 1 16 27Zm6-8c-.3-.2-1.9-1-2.2-1.1-.3-.1-.5-.1-.7.2-.2.3-.9 1.1-1.1 1.2-.2.2-.4.2-.7.1-1.9-.9-3.2-2.2-4.1-3.9-.2-.3 0-.5.1-.7l.6-.6c.2-.2.3-.4.4-.6.1-.2 0-.4 0-.6L13.2 10c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.1 1.1-1.1 2.7s1.2 3.2 1.4 3.4c.2.2 2.4 3.7 5.8 5.1.8.3 1.5.5 2 .6.8.1 2.3-1 2.6-1.9.2-.8.2-1.5.1-1.6-.1-.1-.3-.2-.6-.4Z"/></svg> WhatsApp</a><button #trigger type="button" class="sale-trigger" (click)="dialogService.open()" aria-haspopup="dialog">Quer vender seu imóvel? Descreva aqui!</button></div>
     <dialog #dialog aria-labelledby="sale-title" (cancel)="dialogService.close()" (close)="dialogService.close()">
       <div class="dialog-header">
         <div><span class="eyebrow">Para proprietários</span><h2 id="sale-title">Conte sobre seu imóvel</h2></div>
@@ -43,8 +43,11 @@ import { AddressEditorComponent } from './address-editor.component';
     </dialog>
   `,
   styles: [`
-    .sale-trigger { position: fixed; right: max(20px, env(safe-area-inset-right)); bottom: max(var(--floating-offset, 20px), env(safe-area-inset-bottom)); z-index: 90; max-width: calc(100vw - 32px); border: 1px solid #ffffff50; border-radius: 28px; background: #f5f5f5; color: #111417; padding: 14px 20px; font-weight: 800; box-shadow: 0 6px 28px #0006; }
-    .sale-trigger.avoid-controls { visibility: hidden; pointer-events: none; }
+    .sale-actions { position: fixed; right: max(20px, env(safe-area-inset-right)); bottom: max(var(--floating-offset, 20px), env(safe-area-inset-bottom)); z-index: 90; display: grid; justify-items: center; gap: 8px; }
+    .sale-whatsapp { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border-radius: 999px; padding: 8px 15px; background: #16873b; color: white; font-weight: 800; box-shadow: 0 6px 20px #0006; }
+    .sale-actions.avoid-controls { visibility: hidden; pointer-events: none; }
+    .sale-trigger { max-width: calc(100vw - 32px); border: 1px solid #ffffff50; border-radius: 28px; background: #f5f5f5; color: #111417; padding: 14px 20px; font-weight: 800; box-shadow: 0 6px 28px #0006; }
+
     dialog { width: min(720px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; color: #f5f5f5; background: #181c20; border: 1px solid #ffffff30; border-radius: 16px; padding: 24px; }
     dialog::backdrop { background: #000b; backdrop-filter: blur(4px); }
     .dialog-header { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
@@ -120,7 +123,7 @@ export class SaleDialogComponent implements OnDestroy {
   private avoidOverlaps(): void {
     const button = this.trigger()?.nativeElement;
     if (!button) return;
-    const actual = button.getBoundingClientRect();
+    const actual = (button.closest('.sale-actions') ?? button).getBoundingClientRect();
     let rectangle = { left: actual.left, right: actual.right, top: innerHeight - 20 - actual.height, bottom: innerHeight - 20 };
     const intersects = (other: DOMRect) => other.width > 0 && other.height > 0 && rectangle.left < other.right && rectangle.right > other.left && rectangle.top < other.bottom && rectangle.bottom > other.top;
     let bottom = 20;
@@ -131,7 +134,7 @@ export class SaleDialogComponent implements OnDestroy {
     rectangle = { ...rectangle, top: innerHeight - bottom - actual.height, bottom: innerHeight - bottom };
     this.floatingBottom.set(bottom);
     this.floatingHidden.set(document.activeElement !== button && Array.from(document.querySelectorAll('input, select, textarea, button, a, .leaflet-control'))
-      .some((element) => element !== button && !element.closest('dialog') && intersects(element.getBoundingClientRect())));
+      .some((element) => element !== button && !element.closest('.sale-actions') && !element.closest('dialog') && intersects(element.getBoundingClientRect())));
   }
   invalid(field: string): boolean {
     const control = this.form.get(field);

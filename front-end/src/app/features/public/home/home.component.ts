@@ -21,8 +21,8 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
       <section class="hero">
         <div class="container hero-content">
           <span class="eyebrow">João Pessoa · Cabedelo · Bananeiras / PB</span>
-          <h1>Seu próximo capítulo começa na Paraíba.</h1>
-          <p>Encontre o imóvel para realizar seu sonho ou investir em João Pessoa, Cabedelo e Bananeiras, com atendimento direto para comprar, vender ou alugar.</p>
+          <h1>O Melhor de João Pessoa para o seu novo capítulo.</h1>
+          <p>Encontre os melhores imóveis e investimentos do litoral para o seu próximo capítulo.</p>
           @if (totalPublicProperties !== null) {
             <p aria-live="polite">{{ totalPublicProperties }} {{ totalPublicProperties === 1 ? 'imóvel disponível' : 'imóveis disponíveis' }} no catálogo.</p>
           }
@@ -114,10 +114,10 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
   `,
   styles: [`
     .hero {
-      min-height: min(860px, 92vh);
+      min-height: min(760px, 88vh);
       display: grid;
-      align-items: end;
-      padding: 128px 0 68px;
+      align-items: center;
+      padding: 110px 0 48px;
       background:
         linear-gradient(180deg, rgba(17, 20, 23, 0.12), rgba(17, 20, 23, 0.24) 58%, #0d1013 100%),
         linear-gradient(90deg, rgba(17, 20, 23, 0.54), rgba(17, 20, 23, 0.14) 40%, rgba(17, 20, 23, 0) 68%),
@@ -127,18 +127,18 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
     .hero-content {
       display: grid;
       gap: 16px;
-      width: min(540px, calc(100% - 48px));
-      max-width: 540px;
+      width: min(390px, calc(100% - 48px));
+      max-width: 390px;
       margin-left: clamp(24px, 3.5vw, 60px);
       margin-right: auto;
       text-shadow: 0 2px 18px rgba(0, 0, 0, 0.34);
     }
 
     h1 {
-      max-width: 540px;
+      max-width: 390px;
       margin: 0;
-      font-size: clamp(2.3rem, 5vw, 4.7rem);
-      line-height: 1;
+      font-size: clamp(2rem, 3.2vw, 3.6rem);
+      line-height: 1.12;
     }
 
     .hero p {
@@ -317,7 +317,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
       .hero {
         min-height: 680px;
         padding: 116px 0 42px;
-        background-position: 35% center;
+        background-position: 34% center;
       }
 
       .hero-content {
@@ -330,6 +330,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
       .hero-search-wrap {
         margin-top: 18px;
       }
+      .hero-content { background: rgba(7, 22, 31, .28); border-radius: 8px; padding: 12px; }
     }
 
     @media (min-width: 901px) and (max-width: 1120px) {

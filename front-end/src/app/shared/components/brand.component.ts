@@ -10,15 +10,14 @@
   `,
   styles: [`
     .brand {
-      width: 190px;
-      height: 58px;
-      overflow: hidden;
+      width: clamp(170px, 20vw, 240px);
+      height: 68px;
     }
 
     img {
       width: 100%;
-      height: 58px;
-      object-fit: cover;
+      height: 100%;
+      object-fit: contain;
       object-position: center;
     }
 
