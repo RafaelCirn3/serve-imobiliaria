@@ -8,7 +8,8 @@ import { AddressEditorComponent } from './address-editor.component';
 @Component({
   selector: 'app-sale-dialog', standalone: true, imports: [ReactiveFormsModule, AddressEditorComponent],
   template: `
-    <div class="sale-actions" [class.avoid-controls]="floatingHidden()" [style.--floating-offset]="floatingBottom() + 'px'"><a class="sale-whatsapp" href="https://wa.me/558396724745?text=Ol%C3%A1%2C%20quero%20vender%20meu%20im%C3%B3vel." target="_blank" rel="noopener noreferrer" aria-label="Conversar no WhatsApp sobre venda de imóvel"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M16 2a14 14 0 0 0-12 21L2 30l7.3-2A14 14 0 1 0 16 2Zm0 25a11 11 0 0 1-5.7-1.6l-.5-.3-4 1.1L7 22.3l-.3-.5A11 11 0 1 1 16 27Zm6-8c-.3-.2-1.9-1-2.2-1.1-.3-.1-.5-.1-.7.2-.2.3-.9 1.1-1.1 1.2-.2.2-.4.2-.7.1-1.9-.9-3.2-2.2-4.1-3.9-.2-.3 0-.5.1-.7l.6-.6c.2-.2.3-.4.4-.6.1-.2 0-.4 0-.6L13.2 10c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.1 1.1-1.1 2.7s1.2 3.2 1.4 3.4c.2.2 2.4 3.7 5.8 5.1.8.3 1.5.5 2 .6.8.1 2.3-1 2.6-1.9.2-.8.2-1.5.1-1.6-.1-.1-.3-.2-.6-.4Z"/></svg></a><button #trigger type="button" class="sale-trigger" (click)="dialogService.open()" aria-haspopup="dialog">Quer vender seu imóvel? Descreva aqui!</button></div>
+    <a class="sale-whatsapp" href="https://wa.me/558396724745?text=Ol%C3%A1%2C%20quero%20vender%20meu%20im%C3%B3vel." target="_blank" rel="noopener noreferrer" aria-label="Conversar no WhatsApp sobre venda de imóvel"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M16 2a14 14 0 0 0-12 21L2 30l7.3-2A14 14 0 1 0 16 2Zm0 25a11 11 0 0 1-5.7-1.6l-.5-.3-4 1.1L7 22.3l-.3-.5A11 11 0 1 1 16 27Zm6-8c-.3-.2-1.9-1-2.2-1.1-.3-.1-.5-.1-.7.2-.2.3-.9 1.1-1.1 1.2-.2.2-.4.2-.7.1-1.9-.9-3.2-2.2-4.1-3.9-.2-.3 0-.5.1-.7l.6-.6c.2-.2.3-.4.4-.6.1-.2 0-.4 0-.6L13.2 10c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.1 1.1-1.1 2.7s1.2 3.2 1.4 3.4c.2.2 2.4 3.7 5.8 5.1.8.3 1.5.5 2 .6.8.1 2.3-1 2.6-1.9.2-.8.2-1.5.1-1.6-.1-.1-.3-.2-.6-.4Z"/></svg></a>
+    <div class="sale-actions" [class.avoid-controls]="floatingHidden()" [style.--floating-offset]="floatingBottom() + 'px'"><button #trigger type="button" class="sale-trigger" (click)="dialogService.open()" aria-haspopup="dialog">Quer vender seu imóvel? Descreva aqui!</button></div>
     <dialog #dialog aria-labelledby="sale-title" (cancel)="dialogService.close()" (close)="dialogService.close()">
       <div class="dialog-header">
         <div><span class="eyebrow">Para proprietários</span><h2 id="sale-title">Conte sobre seu imóvel</h2></div>
@@ -44,7 +45,7 @@ import { AddressEditorComponent } from './address-editor.component';
   `,
   styles: [`
     .sale-actions { position: fixed; right: max(20px, env(safe-area-inset-right)); bottom: max(var(--floating-offset, 20px), env(safe-area-inset-bottom)); z-index: 90; display: grid; justify-items: center; gap: 8px; }
-    .sale-whatsapp { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; border-radius: 999px; padding: 8px 15px; background: #16873b; color: white; font-weight: 800; box-shadow: 0 6px 20px #0006; }
+    .sale-whatsapp { position:fixed; top:86px; right:max(16px,env(safe-area-inset-right)); z-index:90; display:inline-flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:50%; background:#16873b; color:white; box-shadow:0 6px 20px #0006; }
     .sale-actions.avoid-controls { visibility: hidden; pointer-events: none; }
     .sale-trigger { max-width: calc(100vw - 32px); border: 1px solid #ffffff50; border-radius: 28px; background: #f5f5f5; color: #111417; padding: 14px 20px; font-weight: 800; box-shadow: 0 6px 28px #0006; }
 
@@ -60,6 +61,7 @@ import { AddressEditorComponent } from './address-editor.component';
     .honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
     form .btn { margin-top: 20px; } .success { padding: 20px 0; line-height: 1.6; }
     :focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+    @media(max-width:860px) { .sale-whatsapp { top:150px; right:max(16px,env(safe-area-inset-right)); } }
     @media(max-width:560px) { .fields { grid-template-columns: 1fr; } dialog { padding: 18px; } .sale-trigger { font-size: .8rem; padding: 12px 16px; } }
   `],
 })
