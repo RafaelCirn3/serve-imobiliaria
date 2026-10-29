@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Banner, HomeContent
+from .models import Banner, HomeContent, PropertyCarousel
 
 
 @admin.register(Banner)
@@ -17,3 +17,9 @@ class HomeContentAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(PropertyCarousel)
+class PropertyCarouselAdmin(admin.ModelAdmin):
+    list_display = ("titulo", "ativo", "ordem")
+    filter_horizontal = ("imoveis",)
