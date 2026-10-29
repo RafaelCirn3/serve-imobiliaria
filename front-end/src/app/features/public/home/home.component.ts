@@ -1,5 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { Banner, Property, Region } from '@core/models/api.models';
+import { Component, OnInit, HostListener, inject } from '@angular/core';
+import { Banner, Property, Region, HomeContent } from '@core/models/api.models';
+import { HomeContentService } from '@core/services/home-content.service';
 import { BannerService } from '@core/services/banner.service';
 import { PropertyService } from '@core/services/property.service';
 import { RegionService } from '@core/services/region.service';
@@ -19,13 +20,31 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
     <div class="page-shell">
       <app-header />
       <section class="hero">
+        @for (banner of banners; track banner.id; let i = $index) {
+          <div class="hero-slide" [class.visible]="i === heroIndex" [style.background-image]="'url(&quot;' + banner.imagem + '&quot;)'"></div>
+        }
         <div class="container hero-content">
-          <h1>O Melhor de João Pessoa para o seu novo capítulo.</h1>
-          <p>Encontre os melhores imóveis e investimentos, e realize-se!</p>
+          @if (banners.length && banners[heroIndex]; as activeBanner) {
+            <h1>{{ activeBanner.titulo || content.hero_title }}</h1>
+            <p>{{ activeBanner.subtitulo || content.hero_subtitle }}</p>
+            @if (activeBanner.botao_link && activeBanner.botao_texto) {
+              <a class="btn btn-primary hero-cta" [href]="activeBanner.botao_link">{{ activeBanner.botao_texto }}</a>
+            }
+          } @else {
+            <h1>{{ content.hero_title }}</h1>
+            <p>{{ content.hero_subtitle }}</p>
+          }
           @if (totalPublicProperties !== null) {
             <p aria-live="polite">{{ totalPublicProperties }} {{ totalPublicProperties === 1 ? 'imóvel disponível' : 'imóveis disponíveis' }} no catálogo.</p>
           }
         </div>
+        @if (banners.length > 1) {
+          <div class="hero-controls">
+            <button type="button" aria-label="Slide anterior" (click)="moveHero(-1)">‹</button>
+            <span aria-live="polite">{{ heroIndex + 1 }} / {{ banners.length }}</span>
+            <button type="button" aria-label="Próximo slide" (click)="moveHero(1)">›</button>
+          </div>
+        }
         <div class="container hero-search-wrap">
           <app-search-bar variant="hero" />
         </div>
@@ -33,12 +52,12 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
 
       <section class="section">
         <div class="container">
-          <span class="eyebrow">Curadoria SERVE</span>
-          <h2 class="section-title">Imóveis em destaque</h2>
+          <span class="eyebrow">{{ content.featured_label }}</span>
+          <h2 class="section-title">{{ content.featured_title }}</h2>
           @if (loadingFeatured) {
             <app-loading />
           } @else if (featured.length) {
-            <div class="carousel-shell">
+            <div class="carousel-shell" (touchstart)="touchStart($event)" (touchend)="touchEnd($event)">
               <div class="carousel-head">
                 <p class="muted">Arraste no mobile ou use os controles para navegar pela curadoria.</p>
                 <div class="carousel-actions">
@@ -69,8 +88,8 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
 
       <section class="section regions">
         <div class="container">
-          <span class="eyebrow">Localização importa</span>
-          <h2 class="section-title">Regiões mais procuradas</h2>
+          <span class="eyebrow">{{ content.regions_label }}</span>
+          <h2 class="section-title">{{ content.regions_title }}</h2>
           <div class="region-grid">
             @for (region of regions; track region.id) {
               <article class="region-card card">
@@ -88,12 +107,12 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
       <section class="section invest">
         <div class="container split">
           <div>
-            <span class="eyebrow">Investir em João Pessoa</span>
-            <h2 class="section-title">Orla, qualidade de vida e valorização em uma capital em movimento.</h2>
+            <span class="eyebrow">{{ content.investment_label }}</span>
+            <h2 class="section-title">{{ content.investment_title }}</h2>
           </div>
           <div class="card text-card">
-            <p>João Pessoa combina bairros consolidados, novas frentes de desenvolvimento e uma relação rara entre praia, serviços e tranquilidade urbana.</p>
-            <p>A SERVE organiza essa leitura para quem quer decidir com segurança: localização, liquidez, padrão do imóvel e momento de mercado.</p>
+            <p>{{ content.investment_body }}</p>
+            <p>{{ content.investment_extra }}</p>
           </div>
         </div>
       </section>
@@ -101,11 +120,11 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
       <section id="proprietarios" class="section owner">
         <div class="container owner-box">
           <div>
-            <span class="eyebrow">Para proprietários</span>
-            <h2>Anuncie com apresentação premium e gestão direta.</h2>
-            <p>Seu imóvel merece imagens fortes, texto objetivo e uma jornada de contato sem atrito.</p>
+            <span class="eyebrow">{{ content.owner_label }}</span>
+            <h2>{{ content.owner_title }}</h2>
+            <p>{{ content.owner_body }}</p>
           </div>
-          <button type="button" class="btn btn-primary" (click)="saleDialog.open()">Falar com a SERVE</button>
+          <button type="button" class="btn btn-primary" (click)="saleDialog.open()">{{ content.owner_button }}</button>
         </div>
       </section>
       <app-footer />
@@ -113,6 +132,8 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
   `,
   styles: [`
     .hero {
+      position: relative;
+      isolation: isolate;
       min-height: min(760px, 88vh);
       display: grid;
       align-items: center;
@@ -123,6 +144,15 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
         url('/assets/hero-joao-pessoa.jpg') center/cover;
     }
 
+    .hero-slide {
+      position: absolute; inset: 0; z-index: -1;
+      background-size: cover; background-position: center;
+      opacity: 0; transition: opacity .65s ease; pointer-events: none;
+    }
+    .hero-slide.visible { opacity: 1; }
+    .hero-cta { width: fit-content; }
+    .hero-controls { display:flex; justify-content:center; align-items:center; gap:18px; z-index:2; }
+    .hero-controls button { border:1px solid #aaa; background:#171c20c9; color:white; border-radius:50%; width:40px; height:40px; font-size:26px; }
     .hero-content {
       display: grid;
       gap: 16px;
@@ -220,7 +250,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
     }
 
     .carousel-slide {
-      flex: 0 0 33.333%;
+      flex: 0 0 25%;
       padding-right: 18px;
       min-width: 0;
     }
@@ -344,7 +374,11 @@ export class HomeComponent implements OnInit {
   private readonly propertyService = inject(PropertyService);
   private readonly regionService = inject(RegionService);
   private readonly bannerService = inject(BannerService);
+  private readonly homeService = inject(HomeContentService);
 
+  content: HomeContent = {hero_title:'O Melhor de João Pessoa para o seu novo capítulo.',hero_subtitle:'Encontre os melhores imóveis e investimentos, e realize-se!',featured_label:'Curadoria SERVE',featured_title:'Imóveis em destaque',regions_label:'Localização importa',regions_title:'Regiões mais procuradas',investment_label:'Investir em João Pessoa',investment_title:'Orla, qualidade de vida e valorização em uma capital em movimento.',investment_body:'João Pessoa combina bairros consolidados, novas frentes de desenvolvimento e uma relação rara entre praia, serviços e tranquilidade urbana.',investment_extra:'A SERVE organiza essa leitura para quem quer decidir com segurança: localização, liquidez, padrão do imóvel e momento de mercado.',owner_label:'Para proprietários',owner_title:'Anuncie com apresentação premium e gestão direta.',owner_body:'Seu imóvel merece imagens fortes, texto objetivo e uma jornada de contato sem atrito.',owner_button:'Falar com a SERVE'};
+  heroIndex = 0;
+  private touchX = 0;
   featured: Property[] = [];
   totalPublicProperties: number | null = null;
   regions: Region[] = [];
@@ -355,7 +389,7 @@ export class HomeComponent implements OnInit {
 
   get visibleFeaturedCount(): number {
     if (typeof window === 'undefined') {
-      return 3;
+      return 4;
     }
     if (window.innerWidth <= 900) {
       return 1;
@@ -363,7 +397,7 @@ export class HomeComponent implements OnInit {
     if (window.innerWidth <= 1120) {
       return 2;
     }
-    return 3;
+    return 4;
   }
 
   get carouselTransform(): string {
@@ -375,13 +409,14 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.homeService.load().subscribe({next: content => this.content = content});
     this.propertyService.listPublicProperties().subscribe({
       next: (response) => (this.totalPublicProperties = response.count),
       error: () => (this.totalPublicProperties = null),
     });
     this.propertyService.getFeaturedProperties().subscribe({
       next: (response) => {
-        this.featured = response.results.slice(0, 6);
+        this.featured = response.results;
         this.featuredIndex = 0;
         this.loadingFeatured = false;
       },
@@ -390,12 +425,25 @@ export class HomeComponent implements OnInit {
       },
     });
     this.regionService.listRegions().subscribe((response) => (this.regions = response.results.slice(0, 6)));
-    this.bannerService.listBanners().subscribe((response) => (this.banners = response.results));
+    this.bannerService.listBanners().subscribe((response) => (this.banners = response.results.filter(b => b.ativo).sort((a,b) => a.ordem - b.ordem)));
   }
 
   regionImage(region: Region): string {
     return typeof region.imagem === 'string' && region.imagem ? region.imagem : this.fallbackRegionImage;
   }
+
+  moveHero(delta: number): void {
+    if (this.banners.length) this.heroIndex = (this.heroIndex + delta + this.banners.length) % this.banners.length;
+  }
+
+  touchStart(event: TouchEvent): void { this.touchX = event.changedTouches[0].screenX; }
+  touchEnd(event: TouchEvent): void {
+    const movement = event.changedTouches[0].screenX - this.touchX;
+    if (Math.abs(movement) > 45) movement < 0 ? this.nextFeatured() : this.previousFeatured();
+  }
+
+  @HostListener('window:resize')
+  onResize(): void { this.featuredIndex = Math.min(this.featuredIndex, this.maxFeaturedIndex); }
 
   nextFeatured(): void {
     this.featuredIndex = this.featuredIndex >= this.maxFeaturedIndex ? 0 : this.featuredIndex + 1;
