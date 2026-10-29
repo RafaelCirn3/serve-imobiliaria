@@ -204,8 +204,8 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
     .hero-content {
       display: grid;
       gap: 16px;
-      width: min(680px, calc(100% - 48px));
-      max-width: 680px;
+      width: min(560px, calc(100% - 48px));
+      max-width: 560px;
       transform: translateY(58px);
       margin-left: clamp(24px, 3.5vw, 60px);
       margin-right: auto;
@@ -213,9 +213,9 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
     }
 
     h1 {
-      max-width: 680px;
+      max-width: 560px;
       margin: 0;
-      font-size: clamp(2rem, 3.2vw, 3.6rem);
+      font-size: clamp(1.9rem, 2.75vw, 2.7rem);
       line-height: 1.12;
     }
 
