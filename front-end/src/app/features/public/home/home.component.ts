@@ -25,6 +25,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
           <div class="hero-slide" [class.visible]="i === heroIndex" [style.background-image]="'url(' + banner.imagem + ')'"></div>
         }
         <div class="container hero-content">
+          <img class="hero-secondary-brand" src="assets/serve-secondary.svg" alt="SERVE Negócios Imobiliários — CRECI RESP 15202" decoding="async">
           @if (banners.length && banners[heroIndex]; as activeBanner) {
             <h1>{{ activeBanner.titulo || content.hero_title }}</h1>
             <p>{{ activeBanner.subtitulo || content.hero_subtitle }}</p>
@@ -182,6 +183,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
     .hero-cta { width: fit-content; }
     .hero-controls { display:flex; justify-content:center; align-items:center; gap:18px; z-index:2; }
     .hero-controls button { border:1px solid #aaa; background:#171c20c9; color:white; border-radius:50%; width:40px; height:40px; font-size:26px; }
+    .hero-secondary-brand { display:block; width:clamp(220px, 26vw, 350px); max-width:100%; height:auto; object-fit:contain; object-position:left center; filter:drop-shadow(0 1px 6px rgba(0,0,0,.35)); }
     .hero-content {
       display: grid;
       gap: 16px;
