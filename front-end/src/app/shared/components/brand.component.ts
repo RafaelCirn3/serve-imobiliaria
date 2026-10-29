@@ -5,7 +5,7 @@
   standalone: true,
   template: `
     <div class="brand">
-      <img src="assets/serve-logo.png" alt="Serve Negócios Imobiliários">
+      <img src="assets/serve-logo.svg" alt="Serve Negócios Imobiliários">
     </div>
   `,
   styles: [`
