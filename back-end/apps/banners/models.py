@@ -17,3 +17,5 @@ class Banner(models.Model):
         return self.titulo
 
 from .home_content import HomeContent
+
+from .property_carousel import PropertyCarousel
