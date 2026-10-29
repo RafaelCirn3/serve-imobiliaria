@@ -10,7 +10,7 @@ import { NotificationService } from '@core/services/notification.service';
   imports: [ReactiveFormsModule],
   template: `
     <div class="admin-page">
-      <div class="admin-header"><h1>Banners</h1></div>
+      <div class="admin-header"><h1>Slides do Hero</h1></div>
       <form class="card form-grid" [formGroup]="form" (ngSubmit)="save()">
         <label class="field">Titulo<input formControlName="titulo"></label>
         <label class="field">Subtitulo<input formControlName="subtitulo"></label>
@@ -21,12 +21,13 @@ import { NotificationService } from '@core/services/notification.service';
         <label class="field full">Imagem<input type="file" accept="image/*" (change)="selectImage($event)"></label>
         <button class="btn btn-primary" type="submit">{{ editing ? 'Atualizar' : 'Cadastrar' }}</button>
       </form>
+      <p class="muted">Cadastre imagens, títulos e subtítulos para o carrossel da página inicial. Menor ordem aparece primeiro.</p>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Titulo</th><th>Ativo</th><th>Ordem</th><th>Acoes</th></tr></thead>
           <tbody>
             @for (banner of banners; track banner.id) {
-              <tr><td>{{ banner.titulo }}</td><td>{{ banner.ativo ? 'Sim' : 'Não' }}</td><td>{{ banner.ordem }}</td><td class="actions"><button class="btn btn-secondary" (click)="edit(banner)">Editar</button><button class="btn btn-danger" (click)="remove(banner)">Excluir</button></td></tr>
+              <tr><td><img [src]="banner.imagem" [alt]="banner.titulo" width="90" height="54" style="object-fit:cover;vertical-align:middle;margin-right:12px">{{ banner.titulo }}</td><td>{{ banner.ativo ? 'Sim' : 'Não' }}</td><td>{{ banner.ordem }}</td><td class="actions"><button class="btn btn-secondary" (click)="edit(banner)">Editar</button><button class="btn btn-danger" (click)="remove(banner)">Excluir</button></td></tr>
             }
           </tbody>
         </table>
