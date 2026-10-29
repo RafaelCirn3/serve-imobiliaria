@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Banner, HomeContent, PropertyCarousel
+from .models import Banner, HomeContent, PropertyCarousel, SectionImage
 
 
 @admin.register(Banner)
@@ -23,3 +23,9 @@ class HomeContentAdmin(admin.ModelAdmin):
 class PropertyCarouselAdmin(admin.ModelAdmin):
     list_display = ("titulo", "ativo", "ordem")
     filter_horizontal = ("imoveis",)
+
+
+@admin.register(SectionImage)
+class SectionImageAdmin(admin.ModelAdmin):
+    list_display = ("section", "caption", "active", "position")
+    list_filter = ("section", "active")
