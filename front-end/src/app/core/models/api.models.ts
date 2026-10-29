@@ -178,3 +178,13 @@ export interface HomeContent {
   investment_body: string; investment_extra: string;
   owner_label: string; owner_title: string; owner_body: string; owner_button: string;
 }
+
+export interface PropertyCarousel {
+  id: number;
+  titulo: string;
+  subtitulo: string;
+  ordem: number;
+  ativo: boolean;
+  imoveis: number[];
+  properties?: Property[];
+}
