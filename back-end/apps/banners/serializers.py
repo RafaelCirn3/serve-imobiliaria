@@ -38,3 +38,11 @@ class PublicPropertyCarouselSerializer(serializers.ModelSerializer):
     class Meta:
         model = PropertyCarousel
         fields = ["id", "titulo", "subtitulo", "properties", "ativo", "ordem"]
+
+from .section_image import SectionImage
+
+class SectionImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SectionImage
+        fields = ["id", "section", "image", "caption", "active", "position"]
+        read_only_fields = ["id"]
