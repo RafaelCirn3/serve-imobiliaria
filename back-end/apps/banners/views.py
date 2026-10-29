@@ -16,6 +16,11 @@ class PublicBannerViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Banner.objects.filter(ativo=True)
     ordering_fields = ["ordem"]
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        data = self.get_serializer(queryset, many=True).data
+        return Response({"count": len(data), "next": None, "previous": None, "results": data})
+
 
 class AdminBannerViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
