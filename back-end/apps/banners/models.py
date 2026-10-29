@@ -19,3 +19,5 @@ class Banner(models.Model):
 from .home_content import HomeContent
 
 from .property_carousel import PropertyCarousel
+
+from .section_image import SectionImage

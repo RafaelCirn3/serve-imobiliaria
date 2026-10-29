@@ -1,5 +1,6 @@
 import { Component, OnInit, HostListener, inject } from '@angular/core';
-import { Banner, Property, Region, HomeContent, PropertyCarousel } from '@core/models/api.models';
+import { Banner, Property, Region, HomeContent, PropertyCarousel, SectionImage } from '@core/models/api.models';
+import { SectionImageService } from '@core/services/section-image.service';
 import { PropertyCarouselService } from '@core/services/property-carousel.service';
 import { HomeContentService } from '@core/services/home-content.service';
 import { BannerService } from '@core/services/banner.service';
@@ -25,7 +26,6 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
           <div class="hero-slide" [class.visible]="i === heroIndex" [style.background-image]="'url(' + banner.imagem + ')'"></div>
         }
         <div class="container hero-content">
-          <img class="hero-secondary-brand" src="assets/serve-secondary.svg" alt="SERVE Negócios Imobiliários — CRECI RESP 15202" decoding="async">
           @if (banners.length && banners[heroIndex]; as activeBanner) {
             <h1>{{ activeBanner.titulo || content.hero_title }}</h1>
             <p>{{ activeBanner.subtitulo || content.hero_subtitle }}</p>
@@ -118,17 +118,24 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
         <div class="container">
           <span class="eyebrow">{{ content.regions_label }}</span>
           <h2 class="section-title">{{ content.regions_title }}</h2>
-          <div class="region-grid">
-            @for (region of regions; track region.id) {
-              <article class="region-card card">
-                <img [src]="regionImage(region)" [alt]="region.nome">
-                <div>
-                  <h3>{{ region.nome }}</h3>
-                  <p>{{ region.descricao || 'Região estratégica para morar ou investir em ' + region.cidade + '.' }}</p>
-                </div>
-              </article>
-            }
-          </div>
+          @if (tourismImages.length) {
+            <div class="editorial-gallery">
+              <button type="button" aria-label="Imagem turística anterior" (click)="moveGallery('tourism',-1)">‹</button>
+              <figure><img [src]="tourismImages[tourismIndex].image" [alt]="tourismImages[tourismIndex].caption || 'Ponto turístico'">
+                @if (tourismImages[tourismIndex].caption) {<figcaption>{{ tourismImages[tourismIndex].caption }}</figcaption>}
+              </figure>
+              <button type="button" aria-label="Próxima imagem turística" (click)="moveGallery('tourism',1)">›</button>
+            </div>
+          } @else {
+            <div class="region-grid">
+              @for (region of regions; track region.id) {
+                <article class="region-card card">
+                  <img [src]="regionImage(region)" [alt]="region.nome">
+                  <div><h3>{{ region.nome }}</h3><p>{{ region.descricao || 'Região estratégica para morar ou investir em ' + region.cidade + '.' }}</p></div>
+                </article>
+              }
+            </div>
+          }
         </div>
       </section>
 
@@ -138,9 +145,20 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
             <span class="eyebrow">{{ content.investment_label }}</span>
             <h2 class="section-title">{{ content.investment_title }}</h2>
           </div>
-          <div class="card text-card">
-            <p>{{ content.investment_body }}</p>
-            <p>{{ content.investment_extra }}</p>
+          <div>
+            @if (investmentImages.length) {
+              <div class="editorial-gallery">
+                <button type="button" aria-label="Imagem anterior da orla" (click)="moveGallery('investment',-1)">‹</button>
+                <figure><img [src]="investmentImages[investmentIndex].image" [alt]="investmentImages[investmentIndex].caption || 'Orla de João Pessoa'">
+                  @if (investmentImages[investmentIndex].caption) {<figcaption>{{ investmentImages[investmentIndex].caption }}</figcaption>}
+                </figure>
+                <button type="button" aria-label="Próxima imagem da orla" (click)="moveGallery('investment',1)">›</button>
+              </div>
+            }
+            <div class="card text-card">
+              <p>{{ content.investment_body }}</p>
+              <p>{{ content.investment_extra }}</p>
+            </div>
           </div>
         </div>
       </section>
@@ -183,7 +201,6 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
     .hero-cta { width: fit-content; }
     .hero-controls { display:flex; justify-content:center; align-items:center; gap:18px; z-index:2; }
     .hero-controls button { border:1px solid #aaa; background:#171c20c9; color:white; border-radius:50%; width:40px; height:40px; font-size:26px; }
-    .hero-secondary-brand { display:block; width:clamp(220px, 26vw, 350px); max-width:100%; height:auto; object-fit:contain; object-position:left center; filter:drop-shadow(0 1px 6px rgba(0,0,0,.35)); }
     .hero-content {
       display: grid;
       gap: 16px;
@@ -219,6 +236,11 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
       color: rgba(245, 245, 245, 0.76);
     }
 
+    .editorial-gallery { display:flex; align-items:center; gap:12px; margin:24px 0; min-width:0; }
+    .editorial-gallery figure { flex:1; min-width:0; margin:0; position:relative; }
+    .editorial-gallery img { display:block; width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:9px; }
+    .editorial-gallery figcaption { position:absolute; bottom:0; left:0; right:0; padding:14px; background:linear-gradient(transparent,rgba(0,0,0,.85)); color:white; }
+    .editorial-gallery button { flex:0 0 36px; height:42px; background:#30363d; border:1px solid #777; color:#fff; border-radius:8px; font-size:24px; }
     .region-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -407,9 +429,14 @@ export class HomeComponent implements OnInit {
   private readonly bannerService = inject(BannerService);
   private readonly homeService = inject(HomeContentService);
   private readonly extraService = inject(PropertyCarouselService);
+  private readonly galleryService = inject(SectionImageService);
 
   content: HomeContent = {hero_title:'O Melhor de João Pessoa para o seu novo capítulo.',hero_subtitle:'Encontre os melhores imóveis e investimentos, e realize-se!',featured_label:'Curadoria SERVE',featured_title:'Imóveis em destaque',regions_label:'Localização importa',regions_title:'Regiões mais procuradas',investment_label:'Investir em João Pessoa',investment_title:'Orla, qualidade de vida e valorização em uma capital em movimento.',investment_body:'João Pessoa combina bairros consolidados, novas frentes de desenvolvimento e uma relação rara entre praia, serviços e tranquilidade urbana.',investment_extra:'A SERVE organiza essa leitura para quem quer decidir com segurança: localização, liquidez, padrão do imóvel e momento de mercado.',owner_label:'Para proprietários',owner_title:'Anuncie com apresentação premium e gestão direta.',owner_body:'Seu imóvel merece imagens fortes, texto objetivo e uma jornada de contato sem atrito.',owner_button:'Falar com a SERVE'};
   heroIndex = 0;
+  tourismImages: SectionImage[] = [];
+  investmentImages: SectionImage[] = [];
+  tourismIndex = 0;
+  investmentIndex = 0;
   private touchX = 0;
   extraCarousels: PropertyCarousel[] = [];
   extraIndexes: Record<number,number> = {};
@@ -444,6 +471,7 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
     this.homeService.load().subscribe({next: content => this.content = content});
+    this.galleryService.list().subscribe({next: response => {this.tourismImages = response.results.filter(i => i.section === 'tourism'); this.investmentImages = response.results.filter(i => i.section === 'investment');}});
     this.extraService.list().subscribe({next: response => this.extraCarousels = response.results});
     this.propertyService.listPublicProperties().subscribe({
       next: (response) => (this.totalPublicProperties = response.count),
@@ -476,6 +504,13 @@ export class HomeComponent implements OnInit {
     const last = Math.max(count - this.visibleFeaturedCount, 0);
     const current = this.extraIndexes[carousel.id] || 0;
     this.extraIndexes[carousel.id] = delta > 0 ? (current >= last ? 0 : current + 1) : (current <= 0 ? last : current - 1);
+  }
+
+  moveGallery(section: 'tourism' | 'investment', delta: number): void {
+    const images = section === 'tourism' ? this.tourismImages : this.investmentImages;
+    if (!images.length) return;
+    if (section === 'tourism') this.tourismIndex = (this.tourismIndex + delta + images.length) % images.length;
+    else this.investmentIndex = (this.investmentIndex + delta + images.length) % images.length;
   }
 
   moveHero(delta: number): void {

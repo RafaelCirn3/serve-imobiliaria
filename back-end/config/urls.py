@@ -7,7 +7,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from apps.accounts.views import LogoutView, ServeTokenObtainPairView
-from apps.banners.views import AdminBannerViewSet, PublicBannerViewSet, HomeContentView, AdminHomeContentView, PublicPropertyCarouselViewSet, AdminPropertyCarouselViewSet
+from apps.banners.views import AdminBannerViewSet, PublicBannerViewSet, HomeContentView, AdminHomeContentView, PublicPropertyCarouselViewSet, AdminPropertyCarouselViewSet, PublicSectionImageViewSet, AdminSectionImageViewSet
 from apps.leads.views import AdminLeadViewSet, PublicLeadViewSet
 from apps.locations.views import AdminRegionViewSet, PublicRegionViewSet
 from apps.locations.views import LocationViewSet
@@ -20,6 +20,8 @@ router.register("leads", PublicLeadViewSet, basename="public-leads")
 router.register("regioes", PublicRegionViewSet, basename="public-regioes")
 router.register("carrosseis", PublicPropertyCarouselViewSet, basename="public-carrosseis")
 router.register("admin/carrosseis", AdminPropertyCarouselViewSet, basename="admin-carrosseis")
+router.register("section-images", PublicSectionImageViewSet, basename="public-section-images")
+router.register("admin/section-images", AdminSectionImageViewSet, basename="admin-section-images")
 router.register("banners", PublicBannerViewSet, basename="public-banners")
 router.register("admin/imoveis", AdminPropertyViewSet, basename="admin-imoveis")
 router.register("admin/leads", AdminLeadViewSet, basename="admin-leads")

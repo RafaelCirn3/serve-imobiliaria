@@ -188,3 +188,6 @@ export interface PropertyCarousel {
   imoveis: number[];
   properties?: Property[];
 }
+
+export type SectionImageSection = 'tourism' | 'investment';
+export interface SectionImage { id: number; section: SectionImageSection; image: string; caption: string; active: boolean; position: number; }

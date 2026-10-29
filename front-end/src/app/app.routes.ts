@@ -38,6 +38,7 @@ export const routes: Routes = [
       { path: 'imoveis/:id/editar', loadComponent: () => import('./features/admin/property-form/property-form.component').then((m) => m.PropertyFormComponent) },
       { path: 'leads', loadComponent: () => import('./features/admin/leads/admin-leads.component').then((m) => m.AdminLeadsComponent) },
       { path: 'carrosseis', loadComponent: () => import('./features/admin/carousels/admin-carousels.component').then((m) => m.AdminCarouselsComponent) },
+      { path: 'section-images', loadComponent: () => import('./features/admin/section-images/admin-section-images.component').then(m => m.AdminSectionImagesComponent) },
       { path: 'home-content', loadComponent: () => import('./features/admin/home-content/admin-home-content.component').then((m) => m.AdminHomeContentComponent) },
       { path: 'banners', loadComponent: () => import('./features/admin/banners/admin-banners.component').then((m) => m.AdminBannersComponent) },
       { path: 'regioes', loadComponent: () => import('./features/admin/regions/admin-regions.component').then((m) => m.AdminRegionsComponent) },
