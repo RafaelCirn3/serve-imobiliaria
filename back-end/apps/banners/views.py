@@ -6,8 +6,8 @@ from rest_framework.permissions import AllowAny
 
 from apps.common.permissions import IsAdminUserOnly
 
-from .models import Banner, HomeContent, PropertyCarousel
-from .serializers import BannerSerializer, HomeContentSerializer, AdminPropertyCarouselSerializer, PublicPropertyCarouselSerializer
+from .models import Banner, HomeContent, PropertyCarousel, SectionImage
+from .serializers import BannerSerializer, HomeContentSerializer, AdminPropertyCarouselSerializer, PublicPropertyCarouselSerializer, SectionImageSerializer
 
 
 class PublicBannerViewSet(viewsets.ReadOnlyModelViewSet):
@@ -64,6 +64,29 @@ class AdminPropertyCarouselViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminUserOnly]
     serializer_class = AdminPropertyCarouselSerializer
     queryset = PropertyCarousel.objects.all()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        data = self.get_serializer(queryset, many=True).data
+        return Response({"count": len(data), "next": None, "previous": None, "results": data})
+
+
+class PublicSectionImageViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [AllowAny]
+    serializer_class = SectionImageSerializer
+    queryset = SectionImage.objects.filter(active=True)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        data = self.get_serializer(queryset, many=True).data
+        return Response({"count": len(data), "next": None, "previous": None, "results": data})
+
+
+class AdminSectionImageViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAdminUserOnly]
+    serializer_class = SectionImageSerializer
+    queryset = SectionImage.objects.all()
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
