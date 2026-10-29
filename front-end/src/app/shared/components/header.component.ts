@@ -1,5 +1,5 @@
-﻿import { Component } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+﻿import { Component, inject } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { BrandComponent } from './brand.component';
 
 @Component({
@@ -9,7 +9,7 @@ import { BrandComponent } from './brand.component';
   template: `
     <header class="site-header">
       <div class="container nav">
-        <a routerLink="/" aria-label="Início SERVE"><app-brand /></a>
+        <a routerLink="/" aria-label="Início SERVE"><app-brand [showSecondary]="router.url === '/'" /></a>
         <nav>
           <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Início</a>
           <a routerLink="/imoveis" routerLinkActive="active">Imóveis</a>
@@ -117,6 +117,6 @@ import { BrandComponent } from './brand.component';
     }
   `],
 })
-export class HeaderComponent {}
+export class HeaderComponent { readonly router = inject(Router); }
 
 
