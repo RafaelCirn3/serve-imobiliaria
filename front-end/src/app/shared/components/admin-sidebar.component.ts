@@ -29,6 +29,7 @@ import { BrandComponent } from './brand.component';
           </span>
           Leads
         </a>
+        <a routerLink="/admin/carrosseis" routerLinkActive="active">Carrosséis</a>
         <a routerLink="/admin/home-content" routerLinkActive="active">Textos da página inicial</a>
         <a routerLink="/admin/banners" routerLinkActive="active">
           <span class="icon" aria-hidden="true">
