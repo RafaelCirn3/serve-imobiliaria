@@ -1,5 +1,6 @@
 import { Component, OnInit, HostListener, inject } from '@angular/core';
-import { Banner, Property, Region, HomeContent } from '@core/models/api.models';
+import { Banner, Property, Region, HomeContent, PropertyCarousel } from '@core/models/api.models';
+import { PropertyCarouselService } from '@core/services/property-carousel.service';
 import { HomeContentService } from '@core/services/home-content.service';
 import { BannerService } from '@core/services/banner.service';
 import { PropertyService } from '@core/services/property.service';
@@ -86,6 +87,32 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
         </div>
       </section>
 
+      @for (carousel of extraCarousels; track carousel.id) {
+        @if (carousel.properties?.length) {
+          <section class="section">
+            <div class="container">
+              <h2 class="section-title">{{ carousel.titulo }}</h2>
+              @if (carousel.subtitulo) { <p class="muted">{{ carousel.subtitulo }}</p> }
+              <div class="carousel-shell">
+                <div class="carousel-head">
+                  <span class="muted">{{ carousel.properties?.length }} imóveis</span>
+                  <div class="carousel-actions">
+                    <button class="carousel-btn" type="button" [attr.aria-label]="'Voltar imóveis de ' + carousel.titulo" (click)="moveExtra(carousel,-1)">‹</button>
+                    <button class="carousel-btn" type="button" [attr.aria-label]="'Avançar imóveis de ' + carousel.titulo" (click)="moveExtra(carousel,1)">›</button>
+                  </div>
+                </div>
+                <div class="carousel-viewport">
+                  <div class="carousel-track" [style.transform]="extraTransform(carousel)">
+                    @for (property of carousel.properties ?? []; track property.id) {
+                      <div class="carousel-slide"><app-property-card [property]="property" /></div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        }
+      }
       <section class="section regions">
         <div class="container">
           <span class="eyebrow">{{ content.regions_label }}</span>
@@ -376,10 +403,13 @@ export class HomeComponent implements OnInit {
   private readonly regionService = inject(RegionService);
   private readonly bannerService = inject(BannerService);
   private readonly homeService = inject(HomeContentService);
+  private readonly extraService = inject(PropertyCarouselService);
 
   content: HomeContent = {hero_title:'O Melhor de João Pessoa para o seu novo capítulo.',hero_subtitle:'Encontre os melhores imóveis e investimentos, e realize-se!',featured_label:'Curadoria SERVE',featured_title:'Imóveis em destaque',regions_label:'Localização importa',regions_title:'Regiões mais procuradas',investment_label:'Investir em João Pessoa',investment_title:'Orla, qualidade de vida e valorização em uma capital em movimento.',investment_body:'João Pessoa combina bairros consolidados, novas frentes de desenvolvimento e uma relação rara entre praia, serviços e tranquilidade urbana.',investment_extra:'A SERVE organiza essa leitura para quem quer decidir com segurança: localização, liquidez, padrão do imóvel e momento de mercado.',owner_label:'Para proprietários',owner_title:'Anuncie com apresentação premium e gestão direta.',owner_body:'Seu imóvel merece imagens fortes, texto objetivo e uma jornada de contato sem atrito.',owner_button:'Falar com a SERVE'};
   heroIndex = 0;
   private touchX = 0;
+  extraCarousels: PropertyCarousel[] = [];
+  extraIndexes: Record<number,number> = {};
   featured: Property[] = [];
   totalPublicProperties: number | null = null;
   regions: Region[] = [];
@@ -411,6 +441,7 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
     this.homeService.load().subscribe({next: content => this.content = content});
+    this.extraService.list().subscribe({next: response => this.extraCarousels = response.results});
     this.propertyService.listPublicProperties().subscribe({
       next: (response) => (this.totalPublicProperties = response.count),
       error: () => (this.totalPublicProperties = null),
@@ -431,6 +462,17 @@ export class HomeComponent implements OnInit {
 
   regionImage(region: Region): string {
     return typeof region.imagem === 'string' && region.imagem ? region.imagem : this.fallbackRegionImage;
+  }
+
+  extraTransform(carousel: PropertyCarousel): string {
+    return `translateX(-${(this.extraIndexes[carousel.id] || 0) * (100 / this.visibleFeaturedCount)}%)`;
+  }
+
+  moveExtra(carousel: PropertyCarousel, delta: number): void {
+    const count = carousel.properties?.length || 0;
+    const last = Math.max(count - this.visibleFeaturedCount, 0);
+    const current = this.extraIndexes[carousel.id] || 0;
+    this.extraIndexes[carousel.id] = delta > 0 ? (current >= last ? 0 : current + 1) : (current <= 0 ? last : current - 1);
   }
 
   moveHero(delta: number): void {
