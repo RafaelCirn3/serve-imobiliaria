@@ -21,7 +21,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
       <app-header />
       <section class="hero">
         @for (banner of banners; track banner.id; let i = $index) {
-          <div class="hero-slide" [class.visible]="i === heroIndex" [style.background-image]="'url(&quot;' + banner.imagem + '&quot;)'"></div>
+          <div class="hero-slide" [class.visible]="i === heroIndex" [style.background-image]="'url(' + banner.imagem + ')'"></div>
         }
         <div class="container hero-content">
           @if (banners.length && banners[heroIndex]; as activeBanner) {
@@ -145,11 +145,12 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
     }
 
     .hero-slide {
-      position: absolute; inset: 0; z-index: -1;
+      position: absolute; inset: 0; z-index: 0;
       background-size: cover; background-position: center;
       opacity: 0; transition: opacity .65s ease; pointer-events: none;
     }
     .hero-slide.visible { opacity: 1; }
+    .hero > .container, .hero-controls { position: relative; z-index: 1; }
     .hero-cta { width: fit-content; }
     .hero-controls { display:flex; justify-content:center; align-items:center; gap:18px; z-index:2; }
     .hero-controls button { border:1px solid #aaa; background:#171c20c9; color:white; border-radius:50%; width:40px; height:40px; font-size:26px; }
