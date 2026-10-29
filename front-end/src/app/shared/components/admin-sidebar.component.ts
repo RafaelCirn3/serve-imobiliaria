@@ -29,6 +29,7 @@ import { BrandComponent } from './brand.component';
           </span>
           Leads
         </a>
+        <a routerLink="/admin/home-content" routerLinkActive="active">Textos da página inicial</a>
         <a routerLink="/admin/banners" routerLinkActive="active">
           <span class="icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm2 11h12l-3.6-4.5-2.8 3.4-2-2.4L6 16Zm3-6.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" /></svg>
