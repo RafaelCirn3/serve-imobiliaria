@@ -169,3 +169,12 @@ export interface LoginResponse {
 }
 
 
+
+export interface HomeContent {
+  hero_title: string; hero_subtitle: string;
+  featured_label: string; featured_title: string;
+  regions_label: string; regions_title: string;
+  investment_label: string; investment_title: string;
+  investment_body: string; investment_extra: string;
+  owner_label: string; owner_title: string; owner_body: string; owner_button: string;
+}
