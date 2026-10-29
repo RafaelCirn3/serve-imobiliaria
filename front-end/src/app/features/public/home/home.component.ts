@@ -20,9 +20,8 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
       <app-header />
       <section class="hero">
         <div class="container hero-content">
-          <span class="eyebrow">João Pessoa · Cabedelo · Bananeiras / PB</span>
           <h1>O Melhor de João Pessoa para o seu novo capítulo.</h1>
-          <p>Encontre os melhores imóveis e investimentos do litoral para o seu próximo capítulo.</p>
+          <p>Encontre os melhores imóveis e investimentos, e realize-se!</p>
           @if (totalPublicProperties !== null) {
             <p aria-live="polite">{{ totalPublicProperties }} {{ totalPublicProperties === 1 ? 'imóvel disponível' : 'imóveis disponíveis' }} no catálogo.</p>
           }
