@@ -7,7 +7,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from apps.accounts.views import LogoutView, ServeTokenObtainPairView
-from apps.banners.views import AdminBannerViewSet, PublicBannerViewSet
+from apps.banners.views import AdminBannerViewSet, PublicBannerViewSet, HomeContentView, AdminHomeContentView
 from apps.leads.views import AdminLeadViewSet, PublicLeadViewSet
 from apps.locations.views import AdminRegionViewSet, PublicRegionViewSet
 from apps.locations.views import LocationViewSet
@@ -31,6 +31,8 @@ urlpatterns = [
     path("api/auth/logout/", LogoutView.as_view(), name="token_logout"),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    path("api/home-content/", HomeContentView.as_view()),
+    path("api/admin/home-content/", AdminHomeContentView.as_view()),
     path("api/", include(router.urls)),
 ]
 
