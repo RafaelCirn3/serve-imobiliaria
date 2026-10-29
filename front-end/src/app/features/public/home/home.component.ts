@@ -177,6 +177,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
       opacity: 0; transition: opacity .65s ease; pointer-events: none;
     }
     .hero-slide.visible { opacity: 1; }
+    .hero-slide::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,20,26,.68), rgba(10,20,26,.12) 75%), linear-gradient(0deg, rgba(10,20,26,.75), transparent 65%); }
     .hero > .container, .hero-controls { position: relative; z-index: 1; }
     .hero-cta { width: fit-content; }
     .hero-controls { display:flex; justify-content:center; align-items:center; gap:18px; z-index:2; }
