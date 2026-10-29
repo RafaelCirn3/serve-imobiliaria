@@ -7,7 +7,7 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from apps.accounts.views import LogoutView, ServeTokenObtainPairView
-from apps.banners.views import AdminBannerViewSet, PublicBannerViewSet
+from apps.banners.views import AdminBannerViewSet, PublicBannerViewSet, HomeContentView, AdminHomeContentView, PublicPropertyCarouselViewSet, AdminPropertyCarouselViewSet
 from apps.leads.views import AdminLeadViewSet, PublicLeadViewSet
 from apps.locations.views import AdminRegionViewSet, PublicRegionViewSet
 from apps.locations.views import LocationViewSet
@@ -18,6 +18,8 @@ router.register("localizacao", LocationViewSet, basename="localizacao")
 router.register("imoveis", PublicPropertyViewSet, basename="public-imoveis")
 router.register("leads", PublicLeadViewSet, basename="public-leads")
 router.register("regioes", PublicRegionViewSet, basename="public-regioes")
+router.register("carrosseis", PublicPropertyCarouselViewSet, basename="public-carrosseis")
+router.register("admin/carrosseis", AdminPropertyCarouselViewSet, basename="admin-carrosseis")
 router.register("banners", PublicBannerViewSet, basename="public-banners")
 router.register("admin/imoveis", AdminPropertyViewSet, basename="admin-imoveis")
 router.register("admin/leads", AdminLeadViewSet, basename="admin-leads")
@@ -31,6 +33,8 @@ urlpatterns = [
     path("api/auth/logout/", LogoutView.as_view(), name="token_logout"),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    path("api/home-content/", HomeContentView.as_view()),
+    path("api/admin/home-content/", AdminHomeContentView.as_view()),
     path("api/", include(router.urls)),
 ]
 

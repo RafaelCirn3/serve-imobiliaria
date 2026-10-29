@@ -40,11 +40,8 @@ class PublicPropertyViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=["get"], url_path="destaques")
     def destaques(self, request):
         queryset = self.filter_queryset(self.get_queryset().filter(destaque=True))
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-        return Response(self.get_serializer(queryset, many=True).data)
+        return Response({"count": queryset.count(), "next": None, "previous": None,
+                         "results": self.get_serializer(queryset, many=True).data})
 
     @action(detail=False, methods=["get"], url_path="busca")
     def busca(self, request):

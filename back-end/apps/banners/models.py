@@ -15,3 +15,7 @@ class Banner(models.Model):
 
     def __str__(self):
         return self.titulo
+
+from .home_content import HomeContent
+
+from .property_carousel import PropertyCarousel
