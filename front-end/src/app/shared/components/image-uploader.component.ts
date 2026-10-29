@@ -31,7 +31,7 @@ import { PropertyImage } from '@core/models/api.models';
           }
         </div>
       }
-      @if (selected.length) {
+      @if (selected.length && !deferUpload) {
         <button class="btn btn-primary" type="button" (click)="upload.emit(selected)">Enviar {{ selected.length }} imagem(ns)</button>
       }
     </div>
@@ -89,6 +89,8 @@ import { PropertyImage } from '@core/models/api.models';
 })
 export class ImageUploaderComponent {
   @Input() images: PropertyImage[] = [];
+  @Input() deferUpload = false;
+  @Output() selectionChanged = new EventEmitter<File[]>();
   @Output() upload = new EventEmitter<File[]>();
   @Output() remove = new EventEmitter<PropertyImage>();
   @Output() makeCover = new EventEmitter<PropertyImage>();
@@ -98,7 +100,9 @@ export class ImageUploaderComponent {
 
   onSelect(event: Event): void {
     const input = event.target as HTMLInputElement;
+    this.previews.forEach((url) => URL.revokeObjectURL(url));
     this.selected = Array.from(input.files || []);
+    this.selectionChanged.emit(this.selected);
     this.previews = this.selected.map((file) => URL.createObjectURL(file));
   }
 }

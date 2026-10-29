@@ -25,7 +25,7 @@ import { MapProperty } from '@core/models/api.models';
           <h1>{{ propertyId ? 'Editar imóvel' : 'Novo imóvel' }}</h1>
           <p class="muted">Organize dados, localização, características, fotos e SEO.</p>
         </div>
-        <button class="btn btn-primary" type="button" (click)="save()">Salvar</button>
+        <button class="btn btn-primary" type="button" [disabled]="saving" (click)="save()">{{ saving ? "Salvando…" : "Salvar" }}</button>
       </div>
 
       <nav class="tabs">
@@ -91,11 +91,8 @@ import { MapProperty } from '@core/models/api.models';
         }
 
         @if (tab === 'photos') {
-          @if (propertyId) {
-            <app-image-uploader [images]="images" (upload)="uploadImages($event)" (remove)="deleteImage($event)" (makeCover)="makeCover($event)" />
-          } @else {
-            <p class="muted">Salve o imóvel antes de enviar fotos.</p>
-          }
+          <p class="muted">{{ propertyId ? 'Adicione ou gerencie as imagens do imóvel.' : 'Fotos opcionais: selecione agora e elas serão enviadas ao salvar o imóvel.' }}</p>
+          <app-image-uploader [images]="images" [deferUpload]="!propertyId" (selectionChanged)="stageImages($event)" (upload)="uploadImages($event)" (remove)="deleteImage($event)" (makeCover)="makeCover($event)" />
         }
 
         @if (tab === 'seo') {
@@ -158,6 +155,8 @@ export class PropertyFormComponent implements OnInit {
   private readonly locations = inject(LocationService);
   private readonly destroyRef = inject(DestroyRef);
   geocoding = false;
+  saving = false;
+  pendingImages: File[] = [];
   private previewKey = '';
   private previewProperties: MapProperty[] = [];
 
@@ -233,6 +232,7 @@ export class PropertyFormComponent implements OnInit {
   }
 
   save(): void {
+    if (this.saving) return;
     if (this.form.invalid) {
       this.notification.show({ type: 'error', text: 'Preencha os campos obrigatorios.' });
       return;
@@ -244,17 +244,42 @@ export class PropertyFormComponent implements OnInit {
       ? this.propertiesService.updateProperty(this.propertyId, payload)
       : this.propertiesService.createProperty(payload);
 
+    this.saving = true;
     request.subscribe({
       next: (property) => {
-        this.notification.show({ type: 'success', text: 'Imóvel salvo.' });
-        if (!this.propertyId) {
-          this.router.navigate(['/admin/imoveis', property.id, 'editar']);
+        this.propertyId = String(property.id);
+        this.images = property.imagens;
+        if (this.pendingImages.length) {
+          const files = [...this.pendingImages];
+          this.propertiesService.uploadPropertyImages(property.id, files).subscribe({
+            next: () => {
+              this.pendingImages = [];
+              this.saving = false;
+              this.notification.show({ type: 'success', text: 'Imóvel e fotos salvos.' });
+              this.router.navigate(['/admin/imoveis', property.id, 'editar']);
+              this.reloadProperty();
+            },
+            error: () => {
+              this.saving = false;
+              this.notification.show({ type: 'error', text: 'Imóvel salvo, mas as fotos não foram enviadas. Tente enviá-las novamente.' });
+              this.router.navigate(['/admin/imoveis', property.id, 'editar']);
+            },
+          });
         } else {
-          this.images = property.imagens;
+          this.saving = false;
+          this.notification.show({ type: 'success', text: 'Imóvel salvo.' });
+          this.router.navigate(['/admin/imoveis', property.id, 'editar']);
         }
       },
-      error: (response) => this.notification.show({ type: 'error', text: response.status === 400 ? 'Revise cidade, UF, CEP, região e coordenadas antes de salvar.' : 'Não foi possível salvar o imóvel.' }),
+      error: (response) => {
+        this.saving = false;
+        this.notification.show({ type: 'error', text: response.status === 400 ? 'Revise cidade, UF, CEP, região e coordenadas antes de salvar.' : 'Não foi possível salvar o imóvel.' });
+      },
     });
+  }
+
+  stageImages(files: File[]): void {
+    if (!this.propertyId) this.pendingImages = files;
   }
 
   uploadImages(files: File[]): void {
