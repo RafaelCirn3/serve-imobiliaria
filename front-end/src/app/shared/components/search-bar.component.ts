@@ -9,8 +9,15 @@ import { LocationFiltersComponent } from './location-filters.component';
   standalone: true,
   imports: [ReactiveFormsModule, LocationFiltersComponent],
   template: `
-    <form [formGroup]="form" (ngSubmit)="submit()" class="search card" [class.hero-search]="variant === 'hero'">
+    <form [formGroup]="form" (ngSubmit)="submit()" class="search" [class.hero-search]="variant === 'hero'">
       <input formControlName="search" aria-label="Busca" placeholder="Busque por bairro, cidade ou descrição">
+      @if (variant === 'hero') {
+        <select formControlName="finalidade" aria-label="Finalidade">
+          <option value="">Comprar ou alugar</option>
+          <option value="venda">Comprar</option>
+          <option value="aluguel">Alugar</option>
+        </select>
+      }
       <select formControlName="tipo" aria-label="Tipo de imóvel">
         <option value="">Todos os tipos</option>
         @for (type of propertyTypes; track type.value) {
@@ -34,17 +41,20 @@ import { LocationFiltersComponent } from './location-filters.component';
       align-items: end;
       gap: 10px;
       padding: 12px;
-      background: rgba(31, 36, 41, 0.9);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+      background: transparent;
+      border: 0;
+      box-shadow: none;
     }
 
     .hero-search {
-      width: min(1120px, 100%);
-      margin: 6px auto 0;
-      border-color: rgba(255, 255, 255, 0.14);
-      background: rgba(17, 20, 23, 0.34);
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      grid-template-columns: minmax(180px,1.5fr) minmax(115px,.8fr) minmax(140px,1fr) minmax(225px,1.6fr) minmax(140px,1fr) auto;
+      background: transparent;
+      border: 0;
       box-shadow: none;
-      backdrop-filter: blur(8px);
+      backdrop-filter: none;
     }
 
     input,
@@ -64,12 +74,12 @@ import { LocationFiltersComponent } from './location-filters.component';
     .hero-search select {
       min-height: 42px;
       border-color: rgba(255, 255, 255, 0.16);
-      background: rgba(17, 20, 23, 0.5);
+      background: #111417;
     }
 
     .hero-search .btn-primary {
-      min-height: 42px;
-      background: rgba(255, 255, 255, 0.9);
+      min-height: 46px;
+      background: #f5f5f5;
       color: #111417;
     }
 
@@ -77,17 +87,23 @@ import { LocationFiltersComponent } from './location-filters.component';
       background: #ffffff;
     }
 
+    @media (max-width: 1120px) {
+      .hero-search { grid-template-columns: repeat(3,minmax(0,1fr)); }
+      .hero-search app-location-filters { grid-column: span 2; }
+    }
     @media (max-width: 900px) {
       .search {
         grid-template-columns: 1fr 1fr;
       }
       .search app-location-filters { grid-column: 1 / -1; }
+      .hero-search { grid-template-columns: 1fr 1fr; }
     }
 
     @media (max-width: 560px) {
       .search {
         grid-template-columns: 1fr;
       }
+      .hero-search { grid-template-columns: 1fr; }
     }
   `],
 })
@@ -102,6 +118,7 @@ export class SearchBarComponent {
   readonly form = this.fb.nonNullable.group({
     search: [''],
     tipo: [''],
+    finalidade: [''],
     cidade: [''],
     bairro: [''],
     logradouro: [''],
