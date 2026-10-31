@@ -47,15 +47,20 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
             <button type="button" aria-label="Próximo slide" (click)="moveHero(1)">›</button>
           </div>
         }
-        <div class="container hero-search-wrap">
+      </section>
+
+      <section class="search-section" aria-labelledby="search-section-title">
+        <div class="container">
+          <h2 id="search-section-title">Encontre seu imóvel ideal</h2>
+          <p>Pesquise por bairro, cidade, tipo de imóvel e faixa de preço.</p>
           <app-search-bar variant="hero" />
         </div>
       </section>
 
-      <section class="section">
+      <section class="section featured-section">
         <div class="container">
           <span class="eyebrow">{{ content.featured_label }}</span>
-          <h2 class="section-title">{{ content.featured_title }}</h2>
+          <div class="featured-heading"><h2 class="section-title">{{ content.featured_title }}</h2><a class="all-properties" href="/imoveis">Ver todos os imóveis →</a></div>
           @if (loadingFeatured) {
             <app-loading />
           } @else if (featured.length) {
@@ -180,10 +185,10 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
     .hero {
       position: relative;
       isolation: isolate;
-      min-height: min(760px, 88vh);
+      min-height: clamp(380px, 55vw, 610px);
       display: grid;
       align-items: center;
-      padding: 110px 0 48px;
+      padding: 88px 0 42px;
       background:
         linear-gradient(180deg, rgba(17, 20, 23, 0.12), rgba(17, 20, 23, 0.24) 58%, #0d1013 100%),
         linear-gradient(90deg, rgba(17, 20, 23, 0.54), rgba(17, 20, 23, 0.14) 40%, rgba(17, 20, 23, 0) 68%),
@@ -228,10 +233,14 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
     }
 
 
-    .hero-search-wrap {
-      margin-top: 22px;
-      margin-bottom: 28px;
-    }
+    .search-section { padding: 36px 0 24px; background: #181c20; }
+    .search-section h2 { margin:0 0 6px; color:#f5f5f5; font-size:clamp(1.45rem,2.3vw,2rem); }
+    .search-section p { margin:0 0 20px; color:#b8b8b8; line-height:1.5; }
+    .featured-section { padding-top: 26px; background:#181c20; }
+    .featured-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+    .featured-heading .section-title { margin:0; }
+    .all-properties { color:#f5f5f5; font-weight:700; white-space:nowrap; text-decoration:underline; text-underline-offset:4px; }
+    .all-properties:hover { color:#b8b8b8; }
 
     .hero .eyebrow {
       color: rgba(245, 245, 245, 0.76);
@@ -398,8 +407,8 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
       }
 
       .hero {
-        min-height: 680px;
-        padding: 116px 0 42px;
+        min-height: 390px;
+        padding: 50px 0 34px;
         background-position: 34% center;
       }
 
@@ -411,10 +420,11 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
         margin-right: 16px;
       }
 
-      .hero-search-wrap {
-        margin-top: 18px;
-      }
-      .hero-content { background: rgba(7, 22, 31, .28); border-radius: 8px; padding: 12px; }
+      .hero-content { background: none; border-radius: 0; padding: 0; }
+      .search-section { padding: 28px 0 14px; }
+      .featured-section { padding-top: 18px; }
+      .featured-heading { align-items:flex-start; flex-wrap:wrap; }
+      .all-properties { font-size:.85rem; }
     }
 
     @media (min-width: 901px) and (max-width: 1120px) {
