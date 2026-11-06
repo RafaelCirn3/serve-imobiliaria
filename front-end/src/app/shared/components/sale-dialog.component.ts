@@ -1,15 +1,16 @@
-import { Component, ElementRef, HostListener, OnDestroy, afterNextRender, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, effect, inject, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PROPERTY_TYPES, SERVICE_CITIES } from '@core/models/property-options';
 import { LeadService } from '@core/services/lead.service';
 import { SaleDialogService } from '@core/services/sale-dialog.service';
+import { ImageUploaderComponent } from './image-uploader.component';
 import { AddressEditorComponent } from './address-editor.component';
 
 @Component({
-  selector: 'app-sale-dialog', standalone: true, imports: [ReactiveFormsModule, AddressEditorComponent],
+  selector: 'app-sale-dialog', standalone: true, imports: [ReactiveFormsModule, AddressEditorComponent, ImageUploaderComponent],
   template: `
     <a class="sale-whatsapp" href="https://wa.me/558396724745?text=Ol%C3%A1%2C%20quero%20vender%20meu%20im%C3%B3vel." target="_blank" rel="noopener noreferrer" aria-label="Conversar no WhatsApp sobre venda de imóvel"><svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M16 2a14 14 0 0 0-12 21L2 30l7.3-2A14 14 0 1 0 16 2Zm0 25a11 11 0 0 1-5.7-1.6l-.5-.3-4 1.1L7 22.3l-.3-.5A11 11 0 1 1 16 27Zm6-8c-.3-.2-1.9-1-2.2-1.1-.3-.1-.5-.1-.7.2-.2.3-.9 1.1-1.1 1.2-.2.2-.4.2-.7.1-1.9-.9-3.2-2.2-4.1-3.9-.2-.3 0-.5.1-.7l.6-.6c.2-.2.3-.4.4-.6.1-.2 0-.4 0-.6L13.2 10c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.1 1.1-1.1 2.7s1.2 3.2 1.4 3.4c.2.2 2.4 3.7 5.8 5.1.8.3 1.5.5 2 .6.8.1 2.3-1 2.6-1.9.2-.8.2-1.5.1-1.6-.1-.1-.3-.2-.6-.4Z"/></svg></a>
-    <div class="sale-actions" [class.avoid-controls]="floatingHidden()" [style.--floating-offset]="floatingBottom() + 'px'"><button #trigger type="button" class="sale-trigger" (click)="dialogService.open()" aria-haspopup="dialog">Quer vender seu imóvel? Descreva aqui!</button></div>
+    <div class="sale-actions"><button type="button" class="sale-trigger" (click)="dialogService.open()" aria-haspopup="dialog">Quer Vender ou Alugar seu Imóvel? Descreva Aqui!</button></div>
     <dialog #dialog aria-labelledby="sale-title" (cancel)="dialogService.close()" (close)="dialogService.close()">
       <div class="dialog-header">
         <div><span class="eyebrow">Para proprietários</span><h2 id="sale-title">Conte sobre seu imóvel</h2></div>
@@ -27,6 +28,7 @@ import { AddressEditorComponent } from './address-editor.component';
               <label>Nome *<input autofocus autocomplete="name" formControlName="nome" maxlength="120">@if (invalid('nome')) { <small>Informe seu nome.</small> }</label>
               <label>E-mail *<input type="email" autocomplete="email" formControlName="email" maxlength="254">@if (invalid('email')) { <small>Informe um e-mail válido.</small> }</label>
               <label>Telefone/WhatsApp *<input type="tel" autocomplete="tel" formControlName="telefone" maxlength="30">@if (invalid('telefone')) { <small>Informe um telefone com DDD.</small> }</label>
+              <label>Finalidade<select formControlName="finalidade"><option value="venda">Venda</option><option value="aluguel">Aluguel</option></select></label>
               <label>Tipo de imóvel<select formControlName="tipo"><option value="">Selecione</option>@for (type of propertyTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }</select></label>
               <app-address-editor [form]="form" listId="sale-address" />
               <label>Quartos<input type="number" min="0" step="1" formControlName="quartos"></label>
@@ -34,6 +36,7 @@ import { AddressEditorComponent } from './address-editor.component';
               <label>Valor pretendido (R$)<input type="number" min="0" step="0.01" formControlName="valor"></label>
               <label class="full">Descrição *<textarea formControlName="mensagem" rows="4" maxlength="5000" placeholder="Conte o que torna seu imóvel especial."></textarea>@if (invalid('mensagem')) { <small>Descreva seu imóvel (até 5.000 caracteres).</small> }</label>
             </div>
+            <div class="offer-photos"><p>Fotos do imóvel (opcionais)</p><app-image-uploader [files]="files" [deferUpload]="true" (selectionChanged)="files = $event" /></div>
             <label class="honeypot" aria-hidden="true">Website<input formControlName="website" tabindex="-1" autocomplete="off"></label>
             @if (error) { <p class="error" role="alert">{{ error }}</p> }
             @if (submitted && form.invalid) { <p class="error" role="alert">Revise os campos obrigatórios e use valores não negativos.</p> }
@@ -44,9 +47,8 @@ import { AddressEditorComponent } from './address-editor.component';
     </dialog>
   `,
   styles: [`
-    .sale-actions { position: fixed; right: max(20px, env(safe-area-inset-right)); bottom: max(var(--floating-offset, 20px), env(safe-area-inset-bottom)); z-index: 90; display: grid; justify-items: center; gap: 8px; }
+    .sale-actions { position: fixed; right: max(20px, env(safe-area-inset-right)); bottom: max(20px, env(safe-area-inset-bottom)); z-index: 2147483647; display: grid; justify-items: center; gap: 8px; }
     .sale-whatsapp { position:fixed; top:86px; right:max(16px,env(safe-area-inset-right)); z-index:90; display:inline-flex; align-items:center; justify-content:center; width:48px; height:48px; border-radius:50%; background:#16873b; color:white; box-shadow:0 6px 20px #0006; }
-    .sale-actions.avoid-controls { visibility: hidden; pointer-events: none; }
     .sale-trigger { max-width: calc(100vw - 32px); border: 1px solid #ffffff50; border-radius: 28px; background: #f5f5f5; color: #111417; padding: 14px 20px; font-weight: 800; box-shadow: 0 6px 28px #0006; }
 
     dialog { width: min(720px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; color: #f5f5f5; background: #181c20; border: 1px solid #ffffff30; border-radius: 16px; padding: 24px; }
@@ -70,15 +72,10 @@ export class SaleDialogComponent implements OnDestroy {
   private readonly leads = inject(LeadService);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = viewChild<ElementRef<HTMLDialogElement>>('dialog');
-  private readonly trigger = viewChild<ElementRef<HTMLButtonElement>>('trigger');
   readonly propertyTypes = PROPERTY_TYPES;
   readonly cities = SERVICE_CITIES;
   sending = false; submitted = false; error = ''; success = '';
-  readonly floatingHidden = signal(false);
-  readonly floatingBottom = signal(20);
-  private frame = 0;
-  private contentObserver?: MutationObserver;
-  private layoutObserver?: ResizeObserver;
+  files: File[] = [];
   private previousOverflow = '';
   private locked = false;
   private requestKey = '';
@@ -88,24 +85,17 @@ export class SaleDialogComponent implements OnDestroy {
     email: ['', [Validators.required, Validators.email, Validators.maxLength(254)]],
     telefone: ['', [Validators.required, Validators.pattern(/^(?=(?:\D*[0-9]){10,15}\D*$)[0-9\s()+-]{10,30}$/)]],
     mensagem: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(5000)]],
-    tipo: [''], cep: [''], cidade: [''], uf: ['PB'], bairro: [''], logradouro: [''], numero: [''], complemento: [''], website: [''],
+    finalidade: ['venda'], tipo: [''], cep: [''], cidade: [''], uf: ['PB'], bairro: [''], logradouro: [''], numero: [''], complemento: [''], website: [''],
     quartos: [null as number | null, [Validators.min(0), Validators.pattern(/^\d+$/)]],
     area_total: [null as number | null, Validators.min(0)], valor: [null as number | null, Validators.min(0)],
   });
 
   constructor() {
-    afterNextRender(() => {
-      this.contentObserver = new MutationObserver(() => this.scheduleOverlapCheck());
-      this.contentObserver.observe(document.body, { childList: true, subtree: true });
-      this.layoutObserver = new ResizeObserver(() => this.scheduleOverlapCheck());
-      this.layoutObserver.observe(document.body);
-      this.avoidOverlaps();
-    });
     effect(() => {
       const element = this.dialog()?.nativeElement;
       if (!element) return;
       if (this.dialogService.opened() && !element.open) {
-        if (this.success) { this.success = ''; this.form.reset(); this.submitted = false; this.requestBody = ''; this.requestKey = ''; }
+        if (this.success) { this.success = ''; this.files = []; this.form.reset({ finalidade: 'venda', uf: 'PB' }); this.submitted = false; this.requestBody = ''; this.requestKey = ''; }
         this.previousOverflow = document.body.style.overflow;
         this.locked = true; document.body.style.overflow = 'hidden'; element.showModal();
       } else if (!this.dialogService.opened()) {
@@ -115,29 +105,6 @@ export class SaleDialogComponent implements OnDestroy {
     });
   }
 
-  @HostListener('window:scroll')
-  @HostListener('window:resize')
-  scheduleOverlapCheck(): void {
-    cancelAnimationFrame(this.frame);
-    this.frame = requestAnimationFrame(() => this.avoidOverlaps());
-  }
-
-  private avoidOverlaps(): void {
-    const button = this.trigger()?.nativeElement;
-    if (!button) return;
-    const actual = (button.closest('.sale-actions') ?? button).getBoundingClientRect();
-    let rectangle = { left: actual.left, right: actual.right, top: innerHeight - 20 - actual.height, bottom: innerHeight - 20 };
-    const intersects = (other: DOMRect) => other.width > 0 && other.height > 0 && rectangle.left < other.right && rectangle.right > other.left && rectangle.top < other.bottom && rectangle.bottom > other.top;
-    let bottom = 20;
-    for (const attribution of document.querySelectorAll('.leaflet-control-attribution')) {
-      const bounds = attribution.getBoundingClientRect();
-      if (intersects(bounds)) bottom = Math.max(bottom, innerHeight - bounds.top + 12);
-    }
-    rectangle = { ...rectangle, top: innerHeight - bottom - actual.height, bottom: innerHeight - bottom };
-    this.floatingBottom.set(bottom);
-    this.floatingHidden.set(document.activeElement !== button && Array.from(document.querySelectorAll('input, select, textarea, button, a, .leaflet-control'))
-      .some((element) => element !== button && !element.closest('.sale-actions') && !element.closest('dialog') && intersects(element.getBoundingClientRect())));
-  }
   invalid(field: string): boolean {
     const control = this.form.get(field);
     return Boolean(control?.invalid && (control.touched || this.submitted));
@@ -146,10 +113,10 @@ export class SaleDialogComponent implements OnDestroy {
     this.submitted = true; this.form.markAllAsTouched();
     if (this.form.invalid || this.sending) return;
     const payload = this.form.getRawValue();
-    const body = JSON.stringify(payload);
+    const body = JSON.stringify([payload, this.files.map(file => [file.name, file.size, file.lastModified])]);
     if (body !== this.requestBody) { this.requestBody = body; this.requestKey = crypto.randomUUID(); }
     this.sending = true; this.error = '';
-    this.leads.offerProperty({ ...payload, idempotency_key: this.requestKey }).subscribe({
+    this.leads.offerProperty({ ...payload, idempotency_key: this.requestKey }, this.files).subscribe({
       next: (result) => {
         this.sending = false;
         this.success = result.notificacao_status === 'enviado'
@@ -158,14 +125,11 @@ export class SaleDialogComponent implements OnDestroy {
       },
       error: (response) => {
         this.sending = false;
-        this.error = response.status === 429 ? 'Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.' : 'Não foi possível registrar sua oferta. Confira os dados e tente novamente.';
+        this.error = response.status === 413 ? 'As fotos excedem o limite do servidor. Selecione menos fotos ou arquivos menores.' : response.status === 400 ? Object.entries(response.error || {}).map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(' ') : messages}`).join(' · ') : response.status === 429 ? 'Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.' : 'Não foi possível registrar sua oferta. Confira os dados e tente novamente.';
       },
     });
   }
   ngOnDestroy(): void {
-    cancelAnimationFrame(this.frame);
-    this.contentObserver?.disconnect();
-    this.layoutObserver?.disconnect();
     if (this.locked) document.body.style.overflow = this.previousOverflow;
     this.dialogService.close();
   }

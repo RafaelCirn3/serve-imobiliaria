@@ -12,3 +12,5 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 SALE_EMAIL_ENABLED = True
 DEFAULT_FROM_EMAIL = "serve@example.test"
+
+MEDIA_ROOT = env("TEST_MEDIA_ROOT", str(BASE_DIR / "media"))  # noqa: F405

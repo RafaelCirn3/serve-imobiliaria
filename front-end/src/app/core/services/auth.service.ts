@@ -1,4 +1,4 @@
-﻿import { HttpClient } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
@@ -27,6 +27,7 @@ export class AuthService {
           localStorage.setItem(this.accessKey, response.access);
           localStorage.setItem(this.refreshKey, response.refresh);
           localStorage.setItem(this.userKey, JSON.stringify(response.user));
+          try { sessionStorage.setItem('serve-draft-owner', String(response.user.id)); } catch { /* Storage unavailable. */ }
           this.authState.next(true);
         }),
       );
@@ -37,6 +38,7 @@ export class AuthService {
     if (refresh) {
       this.http.post(`${environment.apiUrl}/auth/logout/`, { refresh }).subscribe({ error: () => undefined });
     }
+    try { for (const key of Object.keys(sessionStorage)) { if (key.startsWith('serve-property-draft:') || key === 'serve-draft-owner') sessionStorage.removeItem(key); } } catch { /* Storage unavailable. */ }
     localStorage.removeItem(this.accessKey);
     localStorage.removeItem(this.refreshKey);
     localStorage.removeItem(this.userKey);

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Lead
+from .models import Lead, LeadImage
 from apps.properties.models import Property
 
 
@@ -12,7 +12,14 @@ class PublicLeadSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "criado_em"]
 
 
+class LeadImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LeadImage
+        fields = ['id', 'imagem']
+
+
 class AdminLeadSerializer(serializers.ModelSerializer):
+    fotos = LeadImageSerializer(many=True, read_only=True)
     imovel_titulo = serializers.CharField(source="imovel.titulo", read_only=True)
 
     class Meta:
@@ -29,6 +36,7 @@ class AdminLeadSerializer(serializers.ModelSerializer):
             "status",
             "criado_em",
             "dados_imovel",
+            "fotos",
             "notificacao_status",
             "notificacao_tentativas",
             "notificacao_em",
@@ -43,6 +51,8 @@ class SaleLeadSerializer(serializers.Serializer):
     telefone = serializers.RegexField(r"^(?=(?:\D*[0-9]){10,15}\D*$)[0-9\s()+-]{10,30}$", max_length=30)
     mensagem = serializers.CharField(max_length=5000)
     tipo = serializers.ChoiceField(choices=Property.Tipo.choices, required=False, allow_blank=True)
+    finalidade = serializers.ChoiceField(choices=Property.Finalidade.choices, default='venda')
+    fotos = serializers.ListField(child=serializers.FileField(), required=False, max_length=20, write_only=True)
     cep = serializers.CharField(max_length=9, required=False, allow_blank=True)
     cidade = serializers.CharField(max_length=120, required=False, allow_blank=True)
     uf = serializers.CharField(max_length=2, required=False, allow_blank=True)

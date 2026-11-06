@@ -3,10 +3,11 @@ from rest_framework.permissions import AllowAny
 
 from apps.common.permissions import IsAdminUserOnly
 
-from .models import Lead
+from .models import Lead, LeadImage
 from .serializers import AdminLeadSerializer, PublicLeadSerializer
 import hashlib
 import json
+from apps.common.images import prepare_images
 from django.db import transaction
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -35,14 +36,36 @@ class PublicLeadViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
         data = dict(serializer.validated_data)
         key = data.pop("idempotency_key")
         data.pop("website", None)
-        signature = hashlib.sha256(json.dumps(data, sort_keys=True, default=str).encode()).hexdigest()
+        files = data.pop('fotos', [])
+        # Hash the bytes as well as the fields so retries cannot substitute attachments.
+        file_hashes = []
+        for file in files:
+            digest = hashlib.sha256()
+            for chunk in file.chunks():
+                digest.update(chunk)
+            file.seek(0)
+            file_hashes.append(digest.hexdigest())
+        signature = hashlib.sha256(json.dumps([data, file_hashes], sort_keys=True, default=str).encode()).hexdigest()
+        prepared = prepare_images(files)
         contact = {field: data.pop(field) for field in ("nome", "email", "telefone", "mensagem")}
         details = json.loads(json.dumps(data, default=str))
-        with transaction.atomic():
-            lead, created = Lead.objects.get_or_create(idempotency_key=key, defaults={
-                **contact, "dados_imovel": details, "payload_hash": signature,
-                "origem": Lead.Origem.VENDA_IMOVEL, "notificacao_status": "pendente",
-            })
+        stored = []
+        try:
+            with transaction.atomic():
+                lead, created = Lead.objects.get_or_create(idempotency_key=key, defaults={
+                    **contact, "dados_imovel": details, "payload_hash": signature,
+                    "origem": Lead.Origem.VENDA_IMOVEL, "notificacao_status": "pendente",
+                })
+                if created:
+                    for image in prepared:
+                        photo = LeadImage(lead=lead)
+                        photo.imagem.save(image.name, image, save=False)
+                        stored.append(photo.imagem)
+                        photo.save()
+        except Exception:
+            for image in stored:
+                image.delete(save=False)
+            raise
         if lead.payload_hash != signature:
             return Response({"detail": "Esta solicitação já foi registrada com outros dados."}, status=409)
         if created:
@@ -51,7 +74,7 @@ class PublicLeadViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
 
 
 class AdminLeadViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.UpdateModelMixin, viewsets.GenericViewSet):
-    queryset = Lead.objects.select_related("imovel").all()
+    queryset = Lead.objects.select_related("imovel").prefetch_related("fotos").all()
     serializer_class = AdminLeadSerializer
     permission_classes = [IsAdminUserOnly]
     filterset_fields = ["status", "origem", "imovel"]

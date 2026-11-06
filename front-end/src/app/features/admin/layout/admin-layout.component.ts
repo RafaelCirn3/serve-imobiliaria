@@ -1,4 +1,4 @@
-﻿import { Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AdminSidebarComponent } from '@shared/components/admin-sidebar.component';
 import { AdminTopbarComponent } from '@shared/components/admin-topbar.component';
@@ -39,9 +39,7 @@ import { AdminTopbarComponent } from '@shared/components/admin-topbar.component'
         grid-template-columns: 1fr;
       }
 
-      app-admin-sidebar {
-        display: none;
-      }
+      .content { padding: 16px; }
     }
   `],
 })

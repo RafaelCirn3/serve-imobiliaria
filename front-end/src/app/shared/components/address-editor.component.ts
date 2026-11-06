@@ -1,5 +1,5 @@
 import { Component, DestroyRef, Input, OnInit, inject } from '@angular/core';
-import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, catchError, distinctUntilChanged, map, merge, of, switchMap, timer } from 'rxjs';
 import { LocationService, PostalAddress } from '@core/services/location.service';
@@ -10,9 +10,9 @@ import { SERVICE_CITIES, normalizedLocation } from '@core/models/property-option
   template: `
     <div class="address-fields" [formGroup]="form">
       <label>CEP<input formControlName="cep" autocomplete="postal-code" maxlength="9" placeholder="00000-000"></label>
-      <label>Cidade<input formControlName="cidade" maxlength="120" [attr.list]="listId + '-cities'"><datalist [id]="listId + '-cities'">@for (city of cities; track city) { <option [value]="city"></option> }</datalist></label>
+      <label>Cidade{{ required('cidade') ? ' *' : '' }}<input formControlName="cidade" maxlength="120" [attr.list]="listId + '-cities'"><datalist [id]="listId + '-cities'">@for (city of cities; track city) { <option [value]="city"></option> }</datalist></label>
       <label>UF<input formControlName="uf" maxlength="2"></label>
-      <label>Bairro<input formControlName="bairro" maxlength="120"></label>
+      <label>Bairro{{ required('bairro') ? ' *' : '' }}<input formControlName="bairro" maxlength="120"></label>
       <label class="full">Rua<input formControlName="logradouro" maxlength="255" placeholder="Digite a rua para consultar o CEP" autocomplete="off"></label>
       @if (addresses.length) {
         <div class="suggestions full"><span>Endereços encontrados:</span>
@@ -50,6 +50,8 @@ export class AddressEditorComponent implements OnInit {
     const uf = String(this.form.get('uf')?.value || '').toUpperCase();
     return Boolean(city && (!this.cities.some((item) => normalizedLocation(item) === normalizedLocation(city)) || (uf && uf !== 'PB')));
   }
+
+  required(field: string): boolean { return this.form.get(field)?.hasValidator(Validators.required) ?? false; }
 
   ngOnInit(): void {
     this.form.get('cep')!.valueChanges.pipe(

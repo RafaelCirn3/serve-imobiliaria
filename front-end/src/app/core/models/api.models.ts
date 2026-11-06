@@ -1,4 +1,4 @@
-﻿export interface PaginatedResponse<T> {
+export interface PaginatedResponse<T> {
   count: number;
   next: string | null;
   previous: string | null;
@@ -111,6 +111,7 @@ export interface Lead {
   telefone: string;
   mensagem: string;
   origem: 'formulario' | 'whatsapp' | 'botao_contato' | 'venda_imovel';
+  fotos?: { id: number; imagem: string }[];
   dados_imovel?: Record<string, string | number | null>;
   notificacao_status?: 'nao_aplicavel' | 'pendente' | 'enviado' | 'falhou';
   notificacao_tentativas?: number;

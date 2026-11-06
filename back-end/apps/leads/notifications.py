@@ -21,9 +21,9 @@ def notify_sale(lead_id):
         try:
             if not settings.SALE_EMAIL_ENABLED:
                 raise ValueError("Email delivery is disabled")
-            lines = ["Nova oferta de imóvel para venda", f"Protocolo: {lead.pk}",
+            lines = ["Nova oferta de imóvel", f"Protocolo: {lead.pk}",
                      f"Nome: {lead.nome}", f"E-mail: {lead.email}", f"Telefone: {lead.telefone}", ""]
-            labels = {"tipo": "Tipo", "cep": "CEP", "cidade": "Cidade", "uf": "UF", "bairro": "Bairro",
+            labels = {"finalidade": "Finalidade", "tipo": "Tipo", "cep": "CEP", "cidade": "Cidade", "uf": "UF", "bairro": "Bairro",
                       "logradouro": "Rua", "numero": "Número", "complemento": "Complemento",
                       "quartos": "Quartos", "area_total": "Área total (m²)", "valor": "Valor pretendido (R$)"}
             lines.extend(f"{labels[key]}: {value}" for key, value in lead.dados_imovel.items()
@@ -33,6 +33,9 @@ def notify_sale(lead_id):
                 subject=f"SERVE — Oferta de imóvel #{lead.pk}", body="\n".join(lines),
                 from_email=settings.DEFAULT_FROM_EMAIL, to=[settings.SALE_LEAD_RECIPIENT], reply_to=[lead.email],
             )
+            for photo in lead.fotos.all():
+                lines.append(f"Foto: {settings.PUBLIC_SITE_URL.rstrip('/')}{photo.imagem.url}")
+            message.body = "\n".join(lines)
             if message.send(fail_silently=False) != 1:
                 raise ValueError("Email was not accepted")
             lead.notificacao_status = "enviado"

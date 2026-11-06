@@ -39,3 +39,8 @@ class Lead(models.Model):
 
     def __str__(self):
         return f"{self.nome} - {self.telefone}"
+
+
+class LeadImage(models.Model):
+    lead = models.ForeignKey(Lead, related_name='fotos', on_delete=models.CASCADE)
+    imagem = models.ImageField(upload_to='ofertas/')

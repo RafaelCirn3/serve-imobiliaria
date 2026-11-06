@@ -169,3 +169,48 @@ class PropertyMapTests(APITestCase):
         self.assertEqual(listing.data["count"], 1)
         self.assertEqual(markers.data["count"], listing.data["count"])
         self.assertEqual(markers.data["results"][0]["id"], listing.data["results"][0]["id"])
+
+
+class PropertyUploadTests(APITestCase):
+    def setUp(self):
+        import tempfile
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.settings_override = override_settings(MEDIA_ROOT=self.directory.name)
+        self.settings_override.enable()
+        self.addCleanup(self.settings_override.disable)
+        self.admin = get_user_model().objects.create_user(username='upload-admin', is_staff=True)
+        self.client.force_authenticate(user=self.admin)
+        self.property = PropertyProfileTests.create_property()
+        self.url = f'/api/admin/imoveis/{self.property.pk}/imagens/'
+
+    def test_append_photos_set_cover_with_json_and_delete(self):
+        from apps.leads.tests import OfferPhotoTests
+        for _ in range(2):
+            response = self.client.post(self.url, {'imagens': [OfferPhotoTests.photo()]}, format='multipart')
+            self.assertEqual(response.status_code, 201, response.data)
+        images = list(self.property.imagens.all())
+        self.assertEqual(len(images), 2)
+        self.assertLess(images[0].ordem, images[1].ordem)
+        response = self.client.patch(f'{self.url}{images[1].pk}/', {'imagem_capa': True}, format='json')
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertTrue(response.data['imagem_capa'])
+        response = self.client.delete(f'{self.url}{images[0].pk}/')
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(self.property.imagens.count(), 1)
+
+    def test_invalid_batch_does_not_leave_partial_upload(self):
+        from apps.leads.tests import OfferPhotoTests
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        response = self.client.post(self.url, {'imagens': [OfferPhotoTests.photo(), SimpleUploadedFile('bad.png', b'bad')]}, format='multipart')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.property.imagens.count(), 0)
+
+    def test_admin_heic_upload_and_bad_metadata(self):
+        from apps.leads.tests import OfferPhotoTests
+        response = self.client.post(self.url, {'imagens': [OfferPhotoTests.photo('iphone.heic', format='HEIF')]}, format='multipart')
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertTrue(response.data[0]['imagem'].endswith('.jpg'))
+        response = self.client.post(self.url, {'imagens': [OfferPhotoTests.photo()], 'ordem': -1}, format='multipart')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.property.imagens.count(), 1)

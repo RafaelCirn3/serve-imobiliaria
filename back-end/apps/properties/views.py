@@ -1,13 +1,16 @@
-from django.db.models import Q
-from rest_framework import status, viewsets
+from django.db.models import Q, Max
+from rest_framework import status, viewsets, serializers
 from rest_framework.decorators import action
-from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from apps.common.permissions import IsAdminUserOnly
 
 from .filters import PropertyFilter
+from apps.common.images import prepare_images
+from django.db import transaction
+
 from .models import Property, PropertyImage
 from .serializers import AdminPropertySerializer, PropertyImageSerializer, PublicPropertySerializer
 from .serializers import MapPropertySerializer
@@ -88,17 +91,28 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
         if not files:
             return Response({"detail": "Envie um ou mais arquivos no campo imagens."}, status=status.HTTP_400_BAD_REQUEST)
 
+        files = prepare_images(files)
         created = []
         capa_requested = str(request.data.get("imagem_capa", "")).lower() in {"1", "true", "sim"}
-        for index, file in enumerate(files):
-            image = PropertyImage.objects.create(
-                imovel=imovel,
-                imagem=file,
-                legenda=request.data.get("legenda", ""),
-                ordem=request.data.get("ordem", index),
-                imagem_capa=capa_requested and index == 0,
-            )
-            created.append(image)
+        metadata = serializers.Serializer(data=request.data)
+        metadata.fields['legenda'] = serializers.CharField(max_length=180, required=False, allow_blank=True, default='')
+        metadata.fields['ordem'] = serializers.IntegerField(min_value=0, required=False)
+        metadata.is_valid(raise_exception=True)
+        start = metadata.validated_data.get('ordem', (imovel.imagens.aggregate(last=Max('ordem'))['last'] or 0) + 1)
+        stored = []
+        try:
+            with transaction.atomic():
+                for index, file in enumerate(files):
+                    image = PropertyImage(imovel=imovel, legenda=metadata.validated_data['legenda'],
+                                          ordem=start + index, imagem_capa=capa_requested and index == 0)
+                    image.imagem.save(file.name, file, save=False)
+                    stored.append(image.imagem)
+                    image.save()
+                    created.append(image)
+        except Exception:
+            for image in stored:
+                image.delete(save=False)
+            raise
 
         return Response(PropertyImageSerializer(created, many=True, context={"request": request}).data, status=status.HTTP_201_CREATED)
 
@@ -106,7 +120,7 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
         detail=True,
         methods=["patch", "delete"],
         url_path=r"imagens/(?P<image_pk>[^/.]+)",
-        parser_classes=[MultiPartParser, FormParser],
+        parser_classes=[MultiPartParser, FormParser, JSONParser],
     )
     def image_detail(self, request, pk=None, image_pk=None):
         imovel = self.get_object()

@@ -1,4 +1,4 @@
-﻿import { Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { BrandComponent } from './brand.component';
 
@@ -23,7 +23,7 @@ import { BrandComponent } from './brand.component';
         <div>
           <strong>Contato</strong>
           <a href="https://wa.me/558396724745" target="_blank" rel="noopener noreferrer">WhatsApp: (83) 9672-4745</a>
-          <span>contato&#64;serveimoveis.com.br</span>
+          <a href="mailto:servenegociosimobiliarios@gmail.com">servenegociosimobiliarios&#64;gmail.com</a>
           <span>Atendimento em João Pessoa, Cabedelo e Bananeiras/PB</span>
         </div>
       </div>
@@ -47,6 +47,7 @@ import { BrandComponent } from './brand.component';
     a {
       color: #b8b8b8;
       line-height: 1.7;
+      overflow-wrap: anywhere;
     }
 
     .footer-creci {

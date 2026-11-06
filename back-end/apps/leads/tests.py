@@ -104,3 +104,71 @@ class SaleLeadTests(APITestCase):
         self.assertEqual(response.status_code, 400)
         response = self.client.post("/api/admin/leads/1/reenviar-notificacao/")
         self.assertIn(response.status_code, [401, 403])
+
+
+class OfferPhotoTests(APITestCase):
+    def setUp(self):
+        import tempfile
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.settings_override = override_settings(MEDIA_ROOT=self.directory.name)
+        self.settings_override.enable()
+        self.addCleanup(self.settings_override.disable)
+        cache.clear()
+        self.payload = {'idempotency_key': str(uuid4()), 'nome': 'Proprietário', 'email': 'owner@example.test',
+                        'telefone': '83999998888', 'mensagem': 'Casa para alugar', 'finalidade': 'aluguel'}
+
+    @staticmethod
+    def photo(name='foto.png', color='blue', format='PNG'):
+        from io import BytesIO
+        from PIL import Image
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        output = BytesIO()
+        Image.new('RGB', (16, 16), color).save(output, format=format)
+        return SimpleUploadedFile(name, output.getvalue(), content_type='image/' + format.lower())
+
+    def test_public_offer_persists_multiple_photos_and_purpose(self):
+        response = self.client.post('/api/leads/venda-imovel/', self.payload | {'fotos': [self.photo(), self.photo('outra.png', 'red')]}, format='multipart')
+        self.assertEqual(response.status_code, 201, response.data)
+        lead = Lead.objects.get(pk=response.data['id'])
+        self.assertEqual(lead.fotos.count(), 2)
+        self.assertEqual(lead.dados_imovel['finalidade'], 'aluguel')
+        self.assertTrue(all(photo.imagem.name.endswith('.jpg') for photo in lead.fotos.all()))
+        self.assertIn('Finalidade: aluguel', mail.outbox[0].body)
+        self.assertIn('https://servenegociosimobiliarios.com.br/media/ofertas/', mail.outbox[0].body)
+        admin = get_user_model().objects.create_user(username='photos-admin', is_staff=True)
+        self.client.force_authenticate(user=admin)
+        response = self.client.get(f'/api/admin/leads/{lead.pk}/')
+        self.assertEqual(len(response.data['fotos']), 2)
+
+    def test_photo_retry_does_not_duplicate_attachments(self):
+        for expected in [201, 200]:
+            response = self.client.post('/api/leads/venda-imovel/', self.payload | {'fotos': [self.photo()]}, format='multipart')
+            self.assertEqual(response.status_code, expected, response.data)
+        self.assertEqual(Lead.objects.get().fotos.count(), 1)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_idempotency_key_cannot_replace_photo_bytes(self):
+        self.client.post('/api/leads/venda-imovel/', self.payload | {'fotos': [self.photo()]}, format='multipart')
+        response = self.client.post('/api/leads/venda-imovel/', self.payload | {'fotos': [self.photo(color='red')]}, format='multipart')
+        self.assertEqual(response.status_code, 409)
+        self.assertEqual(Lead.objects.get().fotos.count(), 1)
+
+    def test_invalid_photo_rejects_whole_offer(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        response = self.client.post('/api/leads/venda-imovel/', self.payload | {'fotos': [self.photo(), SimpleUploadedFile('bad.png', b'bad', content_type='image/png')]}, format='multipart')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Lead.objects.count(), 0)
+
+    def test_heic_photo_is_converted(self):
+        response = self.client.post('/api/leads/venda-imovel/', self.payload | {'fotos': [self.photo('iphone.heic', format='HEIF')]}, format='multipart')
+        self.assertEqual(response.status_code, 201, response.data)
+        from PIL import Image
+        with Lead.objects.get().fotos.get().imagem.open('rb') as stream:
+            with Image.open(stream) as image:
+                self.assertEqual(image.format, 'JPEG')
+
+    def test_too_many_photos_rejected(self):
+        response = self.client.post('/api/leads/venda-imovel/', self.payload | {'fotos': [self.photo(f'{i}.png') for i in range(21)]}, format='multipart')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Lead.objects.count(), 0)

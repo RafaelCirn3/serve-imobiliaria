@@ -1,4 +1,4 @@
-﻿import { Component, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { BrandComponent } from './brand.component';
@@ -10,7 +10,8 @@ import { BrandComponent } from './brand.component';
   template: `
     <aside>
       <app-brand />
-      <nav>
+      <button class="mobile-toggle" type="button" [attr.aria-expanded]="menuOpen" aria-controls="admin-navigation" (click)="menuOpen = !menuOpen">{{ menuOpen ? 'Fechar menu' : 'Menu administrativo' }}</button>
+      <nav id="admin-navigation" [class.mobile-open]="menuOpen" (click)="menuOpen = false">
         <a routerLink="/admin/dashboard" routerLinkActive="active">
           <span class="icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M4 13h6V4H4v9Zm10 7h6V4h-6v16ZM4 20h6v-4H4v4Z" /></svg>
@@ -49,6 +50,7 @@ import { BrandComponent } from './brand.component';
     </aside>
   `,
   styles: [`
+    .mobile-toggle { display: none; }
     aside {
       min-height: 100vh;
       padding: 24px;
@@ -103,9 +105,16 @@ import { BrandComponent } from './brand.component';
       width: 100%;
       border-color: #30363d;
     }
+    @media (max-width: 820px) {
+      aside { min-height: auto; position: static; padding: 16px; border-right: 0; border-bottom: 1px solid #30363d; }
+      .mobile-toggle { display: flex; margin-top: 12px; border-color: #30363d; }
+      nav { display: none; margin: 12px 0; }
+      nav.mobile-open { display: grid; }
+    }
   `],
 })
 export class AdminSidebarComponent {
+  menuOpen = false;
   private readonly auth = inject(AuthService);
 
   logout(): void {

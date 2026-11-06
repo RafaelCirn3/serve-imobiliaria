@@ -20,12 +20,14 @@ import { LeadStatusBadgeComponent } from '@shared/components/lead-status-badge.c
             @for (lead of leads; track lead.id) {
               <tr>
                 <td><strong>{{ lead.nome }}</strong><br><span class="muted">{{ lead.telefone }} · {{ lead.email }}</span></td>
-                <td>{{ lead.origem === 'venda_imovel' ? 'Oferta de venda' : lead.imovel_titulo || 'Contato geral' }}
+                <td>{{ lead.origem === 'venda_imovel' ? 'Oferta de imóvel' : lead.imovel_titulo || 'Contato geral' }}
                   @for (field of lead.dados_imovel | keyvalue; track field.key) {
                     @if (field.value !== null && field.value !== '') { <div class="muted">{{ detailLabels[field.key] || field.key }}: {{ field.value }}</div> }
                   }
                 </td>
-                <td>{{ lead.mensagem }}</td>
+                <td>{{ lead.mensagem }}
+                  @for (photo of lead.fotos || []; track photo.id) { <a [href]="photo.imagem" target="_blank" rel="noopener noreferrer"><img [src]="photo.imagem" alt="Foto enviada pelo proprietário" width="100" loading="lazy"></a> }
+                </td>
                 <td><app-lead-status-badge [status]="lead.status" /></td>
                 <td>{{ lead.criado_em | date:'dd/MM/yyyy HH:mm' }}</td>
                 <td>
@@ -63,7 +65,7 @@ export class AdminLeadsComponent implements OnInit {
   private readonly leadsService = inject(LeadService);
   private readonly notification = inject(NotificationService);
   leads: Lead[] = [];
-  readonly detailLabels: Record<string, string> = { tipo: 'Tipo', cep: 'CEP', cidade: 'Cidade', uf: 'UF', bairro: 'Bairro', logradouro: 'Rua', numero: 'Número', complemento: 'Complemento', quartos: 'Quartos', area_total: 'Área total (m²)', valor: 'Valor pretendido (R$)' };
+  readonly detailLabels: Record<string, string> = { finalidade: 'Finalidade', tipo: 'Tipo', cep: 'CEP', cidade: 'Cidade', uf: 'UF', bairro: 'Bairro', logradouro: 'Rua', numero: 'Número', complemento: 'Complemento', quartos: 'Quartos', area_total: 'Área total (m²)', valor: 'Valor pretendido (R$)' };
   retrying: number | null = null;
 
   retry(lead: Lead): void {

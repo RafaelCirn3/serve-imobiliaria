@@ -5,7 +5,8 @@
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --port 4200",
     "build": "ng build",
-    "watch": "ng build --watch --configuration development"
+    "watch": "ng build --watch --configuration development",
+    "test:e2e": "npm run build && python tests/run-local.py"
   },
   "private": true,
   "dependencies": {
@@ -28,6 +29,7 @@
     "@angular/compiler-cli": "^20.1.0",
     "@types/leaflet": "^1.9.22",
     "@types/leaflet.markercluster": "^1.5.6",
+    "playwright": "^1.56.1",
     "typescript": "~5.8.3"
   }
 }

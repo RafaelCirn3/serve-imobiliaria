@@ -9,8 +9,11 @@ import { toHttpParams } from './api-utils';
 export class LeadService {
   private readonly http = inject(HttpClient);
 
-  offerProperty(payload: Record<string, unknown>): Observable<{ id: number; notificacao_status: string }> {
-    return this.http.post<{ id: number; notificacao_status: string }>(`${environment.apiUrl}/leads/venda-imovel/`, payload);
+  offerProperty(payload: Record<string, unknown>, files: File[] = []): Observable<{ id: number; notificacao_status: string }> {
+    const body = new FormData();
+    Object.entries(payload).forEach(([key, value]) => { if (value !== null && value !== undefined) body.append(key, String(value)); });
+    files.forEach(file => body.append('fotos', file));
+    return this.http.post<{ id: number; notificacao_status: string }>(`${environment.apiUrl}/leads/venda-imovel/`, body);
   }
 
   retryNotification(id: number): Observable<Lead> {
