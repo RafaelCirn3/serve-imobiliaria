@@ -28,7 +28,16 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
         <main class="container detail">
           <button class="back-button" type="button" (click)="goBack()">← Voltar</button>
           <section class="gallery">
-            <app-photo class="main-image" [src]="mainImage" [alt]="property.titulo" [eager]="true" fit="contain" />
+            <div class="gallery-stage" tabindex="0" role="group" aria-label="Galeria do imóvel. Use as setas ou deslize para navegar."
+              (keydown.arrowleft)="movePhoto(-1); $event.preventDefault()" (keydown.arrowright)="movePhoto(1); $event.preventDefault()"
+              (pointerdown)="startSwipe($event)" (pointerup)="finishSwipe($event)" (pointercancel)="cancelSwipe()">
+              <app-photo class="main-image" [src]="mainImage" [alt]="property.titulo" [eager]="true" [natural]="true" fit="contain" />
+              @if (property.imagens.length > 1) {
+                <button class="gallery-arrow previous" type="button" aria-label="Foto anterior" (click)="movePhoto(-1)">&lt;</button>
+                <button class="gallery-arrow next" type="button" aria-label="Próxima foto" (click)="movePhoto(1)">&gt;</button>
+                <span class="gallery-counter" aria-live="polite">{{ activePhotoIndex + 1 }} / {{ property.imagens.length }}</span>
+              }
+            </div>
             <div class="thumbs">
               @for (image of property.imagens; track image.id) {
                 <button type="button" [class.active]="mainImage === image.imagem" (click)="mainImage = image.imagem"><app-photo [src]="image.imagem" [alt]="image.legenda || property.titulo" /></button>
@@ -115,11 +124,18 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
       animation: fadeUp 0.45s ease both;
     }
 
+    .gallery-stage { position: relative; display: grid; width: fit-content; max-width: 100%; justify-self: center; border-radius: 8px; overflow: hidden; touch-action: pan-y pinch-zoom; user-select: none; }
+    .gallery-arrow { position: absolute; top: 0; bottom: 0; width: 64px; max-width: 18%; min-width: 44px; border: 0; border-radius: 0; color: #fff; display: grid; place-items: center; font: 400 34px/1 Arial, sans-serif; text-shadow: 0 1px 5px #000b; z-index: 2; transition: background .2s; }
+    .gallery-arrow.previous { left: 0; background: linear-gradient(90deg,#0004,transparent); }
+    .gallery-arrow.next { right: 0; background: linear-gradient(270deg,#0004,transparent); }
+    .gallery-arrow:hover { background: #0003; }
+    .gallery-arrow:focus-visible { outline: 2px solid #fff; outline-offset: -5px; }
+    .gallery-counter { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); background: #0007; border-radius: 16px; color: #fff; padding: 5px 12px; font-size: 12px; pointer-events: none; }
     .main-image {
-      width: 100%;
-      height: min(620px, 62vw);
-      min-height: 320px;
-      object-fit: cover;
+      width: fit-content;
+      max-width: 100%;
+      height: auto;
+      justify-self: center;
       border-radius: 8px;
       transition: opacity 0.2s ease;
     }
@@ -247,10 +263,6 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
         padding-top: 22px;
       }
 
-      .main-image {
-        min-height: 260px;
-      }
-
       .thumbs {
         padding-bottom: 4px;
         scroll-snap-type: x proximity;
@@ -290,6 +302,28 @@ export class PropertyDetailComponent implements OnInit {
   property: Property | null = null;
   similar: Property[] = [];
   mainImage = '';
+  private swipeStart: { x: number; y: number; pointerId: number } | null = null;
+  get activePhotoIndex(): number { return Math.max(0, this.property?.imagens.findIndex(image => image.imagem === this.mainImage) ?? 0); }
+  movePhoto(direction: number): void {
+    const images = this.property?.imagens;
+    if (!images || images.length < 2) return;
+    this.mainImage = images[(this.activePhotoIndex + direction + images.length) % images.length].imagem;
+  }
+  startSwipe(event: PointerEvent): void {
+    if (!event.isPrimary || event.button !== 0 || (event.target as Element).closest('button')) return;
+    this.swipeStart = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+  }
+  finishSwipe(event: PointerEvent): void {
+    const start = this.swipeStart;
+    this.swipeStart = null;
+    if (!start || start.pointerId !== event.pointerId) return;
+    const element = event.currentTarget as HTMLElement;
+    if (element.hasPointerCapture(event.pointerId)) element.releasePointerCapture(event.pointerId);
+    const dx = event.clientX - start.x, dy = event.clientY - start.y;
+    if (Math.abs(dx) >= 40 && Math.abs(dx) > Math.abs(dy) * 1.25) this.movePhoto(dx < 0 ? 1 : -1);
+  }
+  cancelSwipe(): void { this.swipeStart = null; }
   loading = true;
 
   readonly leadForm = this.fb.nonNullable.group({
