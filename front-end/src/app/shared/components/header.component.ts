@@ -17,7 +17,6 @@ import { BrandComponent } from './brand.component';
           <a routerLink="/imoveis" routerLinkActive="active">{{site.text('general','nav_properties')}}</a>
           <a routerLink="/sobre" routerLinkActive="active">{{site.text('general','nav_about')}}</a>
           <a routerLink="/contato" routerLinkActive="active">{{site.text('general','nav_contact')}}</a>
-          <a routerLink="/admin">{{site.text('general','nav_login')}}</a>
         </nav>
       </div>
     </header>
