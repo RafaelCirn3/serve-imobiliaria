@@ -14,6 +14,7 @@ import { NotificationService } from '@core/services/notification.service';
       @if (content) {
         <form class="card editor" (ngSubmit)="save()">
           @for (field of fields; track field.key) {
+            @if (groups[field.key]) { <h2>{{ groups[field.key] }}</h2> }
             <label class="field">{{ field.label }}
               @if (field.long) {
                 <textarea rows="3" [name]="field.key" [(ngModel)]="content[field.key]"></textarea>
@@ -27,15 +28,16 @@ import { NotificationService } from '@core/services/notification.service';
       }
     </div>
   `,
-  styles: [`.editor { display:grid; gap:16px; padding:22px; max-width:850px; } textarea { min-height:90px; }`],
+  styles: [`.editor { display:grid; gap:16px; padding:22px; max-width:850px; } textarea { min-height:90px; } h2 { font-size:16px; margin:16px 0 0; padding-top:16px; border-top:1px solid #e6ecf0; }`],
 })
 export class AdminHomeContentComponent implements OnInit {
   private readonly service = inject(HomeContentService);
   private readonly notification = inject(NotificationService);
   content: HomeContent | null = null;
   saving = false;
+  readonly groups: Partial<Record<keyof HomeContent,string>> = {hero_title:'Abertura do site',featured_label:'Imóveis em destaque',regions_label:'Regiões',investment_label:'Conheça João Pessoa',owner_label:'Convite aos proprietários'};
   readonly fields: {key: keyof HomeContent; label: string; long?: boolean}[] = [
-    {key:'hero_title',label:'Hero — título'}, {key:'hero_subtitle',label:'Hero — subtítulo',long:true},
+    {key:'hero_title',label:'Imagem principal — título'}, {key:'hero_subtitle',label:'Imagem principal — subtítulo',long:true},
     {key:'featured_label',label:'Destaques — etiqueta'}, {key:'featured_title',label:'Destaques — título'},
     {key:'regions_label',label:'Regiões — etiqueta'}, {key:'regions_title',label:'Regiões — título'},
     {key:'investment_label',label:'Investimento — etiqueta'}, {key:'investment_title',label:'Investimento — título'},

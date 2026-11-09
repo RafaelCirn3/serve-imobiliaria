@@ -1,3 +1,4 @@
+import { mediaUrl } from '@core/services/media-url';
 import { Component, OnInit, HostListener, inject } from '@angular/core';
 import { Banner, Property, Region, HomeContent, PropertyCarousel, SectionImage } from '@core/models/api.models';
 import { SectionImageService } from '@core/services/section-image.service';
@@ -23,7 +24,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
       <app-header />
       <section class="hero">
         @for (banner of banners; track banner.id; let i = $index) {
-          <div class="hero-slide" [class.visible]="i === heroIndex" [style.background-image]="'url(' + banner.imagem + ')'"></div>
+          <div class="hero-slide" [class.visible]="i === heroIndex" [style.background-image]="'url(' + mediaUrl(banner.imagem) + ')'"></div>
         }
         <div class="container hero-content">
           @if (banners.length && banners[heroIndex]; as activeBanner) {
@@ -126,7 +127,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
           @if (tourismImages.length) {
             <div class="editorial-gallery">
               <button type="button" aria-label="Imagem turística anterior" (click)="moveGallery('tourism',-1)">‹</button>
-              <figure><img [src]="tourismImages[tourismIndex].image" [alt]="tourismImages[tourismIndex].caption || 'Ponto turístico'">
+              <figure><img [src]="mediaUrl(tourismImages[tourismIndex].image)" [alt]="tourismImages[tourismIndex].caption || 'Ponto turístico'">
                 @if (tourismImages[tourismIndex].caption) {<figcaption>{{ tourismImages[tourismIndex].caption }}</figcaption>}
               </figure>
               <button type="button" aria-label="Próxima imagem turística" (click)="moveGallery('tourism',1)">›</button>
@@ -154,7 +155,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
             @if (investmentImages.length) {
               <div class="editorial-gallery">
                 <button type="button" aria-label="Imagem anterior da orla" (click)="moveGallery('investment',-1)">‹</button>
-                <figure><img [src]="investmentImages[investmentIndex].image" [alt]="investmentImages[investmentIndex].caption || 'Orla de João Pessoa'">
+                <figure><img [src]="mediaUrl(investmentImages[investmentIndex].image)" [alt]="investmentImages[investmentIndex].caption || 'Orla de João Pessoa'">
                   @if (investmentImages[investmentIndex].caption) {<figcaption>{{ investmentImages[investmentIndex].caption }}</figcaption>}
                 </figure>
                 <button type="button" aria-label="Próxima imagem da orla" (click)="moveGallery('investment',1)">›</button>
@@ -443,6 +444,7 @@ export class HomeComponent implements OnInit {
   private readonly extraService = inject(PropertyCarouselService);
   private readonly galleryService = inject(SectionImageService);
 
+  readonly mediaUrl = mediaUrl;
   content: HomeContent = {hero_title:'O Melhor de João Pessoa para o seu novo capítulo.',hero_subtitle:'Encontre os melhores imóveis e investimentos, e realize-se!',featured_label:'Curadoria SERVE',featured_title:'Imóveis em destaque',regions_label:'Localização importa',regions_title:'Regiões mais procuradas',investment_label:'Investir em João Pessoa',investment_title:'Orla, qualidade de vida e valorização em uma capital em movimento.',investment_body:'João Pessoa combina bairros consolidados, novas frentes de desenvolvimento e uma relação rara entre praia, serviços e tranquilidade urbana.',investment_extra:'A SERVE organiza essa leitura para quem quer decidir com segurança: localização, liquidez, padrão do imóvel e momento de mercado.',owner_label:'Para proprietários',owner_title:'Anuncie com apresentação premium e gestão direta.',owner_body:'Seu imóvel merece imagens fortes, texto objetivo e uma jornada de contato sem atrito.',owner_button:'Falar com a SERVE'};
   heroIndex = 0;
   tourismImages: SectionImage[] = [];
@@ -504,7 +506,7 @@ export class HomeComponent implements OnInit {
   }
 
   regionImage(region: Region): string {
-    return typeof region.imagem === 'string' && region.imagem ? region.imagem : this.fallbackRegionImage;
+    return typeof region.imagem === 'string' && region.imagem ? mediaUrl(region.imagem) : this.fallbackRegionImage;
   }
 
   extraTransform(carousel: PropertyCarousel): string {

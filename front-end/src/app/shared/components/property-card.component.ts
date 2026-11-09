@@ -1,4 +1,5 @@
-﻿import { CurrencyPipe } from '@angular/common';
+import { PhotoComponent } from '@shared/components/photo.component';
+import { CurrencyPipe } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Property } from '@core/models/api.models';
@@ -7,11 +8,11 @@ import { propertyArea, propertyTypeLabel } from '@core/models/property-options';
 @Component({
   selector: 'app-property-card',
   standalone: true,
-  imports: [RouterLink, CurrencyPipe],
+  imports: [PhotoComponent, RouterLink, CurrencyPipe],
   template: `
     <article class="property-card card">
       <a [routerLink]="['/imoveis', property.slug]" class="media">
-        <img [src]="coverImage" [alt]="property.titulo">
+        <app-photo [src]="coverImage" [alt]="property.titulo" />
         @if (property.destaque) {
           <span>Destaque</span>
         }
@@ -58,14 +59,14 @@ import { propertyArea, propertyTypeLabel } from '@core/models/property-options';
       background: #111417;
     }
 
-    img {
+    app-photo {
       width: 100%;
       height: 100%;
       object-fit: cover;
       transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), filter 0.2s ease;
     }
 
-    .property-card:hover img {
+    .property-card:hover app-photo {
       transform: scale(1.045);
       filter: saturate(1.08);
     }
@@ -141,7 +142,7 @@ export class PropertyCardComponent {
   get coverImage(): string {
     return this.property.imagens?.find((image) => image.imagem_capa)?.imagem
       || this.property.imagens?.[0]?.imagem
-      || 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80';
+      || '';
   }
 
   get numericPrice(): number {

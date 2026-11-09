@@ -1,11 +1,11 @@
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
+from apps.common.media import uploaded_picture
 from apps.accounts.views import LogoutView, ServeTokenObtainPairView
 from apps.banners.views import AdminBannerViewSet, PublicBannerViewSet, HomeContentView, AdminHomeContentView, PublicPropertyCarouselViewSet, AdminPropertyCarouselViewSet, PublicSectionImageViewSet, AdminSectionImageViewSet
 from apps.leads.views import AdminLeadViewSet, PublicLeadViewSet
@@ -40,4 +40,4 @@ urlpatterns = [
     path("api/", include(router.urls)),
 ]
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += [path("media/<path:path>", uploaded_picture, name="uploaded-picture")]

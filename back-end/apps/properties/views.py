@@ -1,4 +1,4 @@
-from django.db.models import Q, Max
+from django.db.models import Q, Max, Count
 from rest_framework import status, viewsets, serializers
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
@@ -72,6 +72,17 @@ class AdminPropertyViewSet(viewsets.ModelViewSet):
     filterset_class = PropertyFilter
     search_fields = ["titulo", "descricao", "bairro", "cidade"]
     ordering_fields = ["valor", "publicado_em", "destaque", "criado_em"]
+
+    @action(detail=False, methods=["get"], url_path="resumo")
+    def summary(self, request):
+        from apps.leads.models import Lead
+        counts = self.get_queryset().aggregate(
+            total=Count('id', distinct=True),
+            publicados=Count('id', filter=Q(status='publicado'), distinct=True),
+            rascunhos=Count('id', filter=Q(status='rascunho'), distinct=True),
+            sem_fotos=Count('id', filter=Q(imagens__isnull=True), distinct=True),
+        )
+        return Response({**counts, 'leads': Lead.objects.count()})
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

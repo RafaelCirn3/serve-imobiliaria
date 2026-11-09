@@ -1,3 +1,4 @@
+import { mediaUrl } from '@core/services/media-url';
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, ViewChild, ViewEncapsulation, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import type * as Leaflet from 'leaflet';
@@ -36,6 +37,7 @@ export class PropertyMapComponent implements AfterViewInit, OnChanges, OnDestroy
   private map?: Leaflet.Map;
   private markers?: Leaflet.FeatureGroup;
   private destroyed = false;
+  private resizeObserver?: ResizeObserver;
   readonly error = signal('');
   readonly tilesFailed = signal(false);
 
@@ -52,6 +54,8 @@ export class PropertyMapComponent implements AfterViewInit, OnChanges, OnDestroy
       this.map.on('click', (event: Leaflet.LeafletMouseEvent) => {
         if (this.editable) this.emitPosition(event.latlng);
       });
+      this.resizeObserver = new ResizeObserver(() => this.map?.invalidateSize());
+      this.resizeObserver.observe(this.canvas.nativeElement);
       this.render();
     } catch {
       if (!this.destroyed) this.error.set('Não foi possível abrir o mapa. Consulte os imóveis pela lista.');
@@ -86,7 +90,7 @@ export class PropertyMapComponent implements AfterViewInit, OnChanges, OnDestroy
     const node = document.createElement('div'); node.className = 'serve-map-popup';
     const photo = property.foto || property.imagens?.find((image) => image.imagem_capa)?.imagem || property.imagens?.[0]?.imagem;
     if (photo && /^(https?:\/\/|\/)/.test(photo)) {
-      const image = document.createElement('img'); image.src = photo; image.alt = property.titulo; node.appendChild(image);
+      const image = document.createElement('img'); image.src = mediaUrl(photo); image.alt = property.titulo; node.appendChild(image);
     }
     const title = document.createElement('strong'); title.textContent = property.titulo; node.appendChild(title);
     const price = document.createElement('p'); price.textContent = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(property.valor)); node.appendChild(price);
@@ -100,5 +104,5 @@ export class PropertyMapComponent implements AfterViewInit, OnChanges, OnDestroy
   private emitPosition(position: Leaflet.LatLng): void {
     this.positionChanged.emit({ latitude: position.lat.toFixed(7), longitude: position.lng.toFixed(7) });
   }
-  ngOnDestroy(): void { this.destroyed = true; this.map?.remove(); }
+  ngOnDestroy(): void { this.resizeObserver?.disconnect(); this.destroyed = true; this.map?.remove(); }
 }

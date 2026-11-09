@@ -1,3 +1,4 @@
+import { PhotoComponent } from '@shared/components/photo.component';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PropertyCarousel, Property } from '@core/models/api.models';
@@ -6,10 +7,10 @@ import { PropertyService } from '@core/services/property.service';
 import { NotificationService } from '@core/services/notification.service';
 
 @Component({
- selector:'app-admin-carousels', standalone:true, imports:[FormsModule],
+ selector:'app-admin-carousels', standalone:true, imports:[FormsModule,PhotoComponent],
  template:`
  <div class="admin-page">
-   <div class="admin-header"><h1>Carrosséis adicionais</h1></div>
+   <div class="admin-header"><h1>Vitrines de imóveis</h1></div>
    <p class="muted">Crie seções adicionais com imóveis do catálogo. Apenas imóveis publicados aparecem para visitantes.</p>
    <form class="card editor" (ngSubmit)="save()">
      <label class="field">Título<input name="titulo" [(ngModel)]="titulo" required></label>
@@ -19,7 +20,7 @@ import { NotificationService } from '@core/services/notification.service';
      <fieldset>
        <legend>Imóveis deste carrossel</legend>
        @for (property of properties; track property.id) {
-         <label class="choice"><input type="checkbox" [checked]="selected.includes(property.id)" (change)="toggle(property.id,$event)"> {{property.titulo}} — {{property.cidade}}</label>
+         <label class="choice"><input type="checkbox" [checked]="selected.includes(property.id)" (change)="toggle(property.id,$event)"> <app-photo [src]="cover(property)" [alt]="property.titulo" /><span>{{property.titulo}}<small>{{property.cidade}} · {{property.status === 'publicado' ? 'Publicado' : 'Não aparece no site'}}</small></span></label>
        }
      </fieldset>
      <div class="actions">
@@ -35,7 +36,7 @@ import { NotificationService } from '@core/services/notification.service';
    }</tbody></table></div>
  </div>
  `,
- styles:[`.editor{display:grid;gap:12px;padding:20px;margin-bottom:24px}.choice{display:block;padding:6px}fieldset{max-height:290px;overflow:auto;border:1px solid #444}.actions{display:flex;gap:12px}.check{display:flex;gap:8px}`]
+ styles:[`.editor{display:grid;gap:12px;padding:20px;margin-bottom:24px}.choice{display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid #e7edf1}.choice app-photo{width:76px;height:54px;flex:0 0 76px;border-radius:6px}.choice small{display:block;margin-top:5px;color:#75838c;font-size:11px}.choice span{font-size:13px}fieldset{max-height:290px;overflow:auto;border:1px solid #dbe3e9;border-radius:10px}.actions{display:flex;gap:12px}.check{display:flex;gap:8px}`]
 })
 export class AdminCarouselsComponent implements OnInit {
  private readonly service=inject(PropertyCarouselService);
@@ -44,6 +45,7 @@ export class AdminCarouselsComponent implements OnInit {
  carousels: PropertyCarousel[]=[];
  properties: Property[]=[];
  titulo=''; subtitulo=''; ordem=0; ativo=true; selected:number[]=[]; editingId:number|null=null; saving=false;
+ cover(p:Property):string {return p.imagens.find(image=>image.imagem_capa)?.imagem || p.imagens[0]?.imagem || '';}
  ngOnInit(){this.load();this.loadProperties(1);}
  loadProperties(page:number) {
    this.propertiesService.listAdminProperties({page}).subscribe({next:r=>{

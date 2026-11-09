@@ -214,3 +214,39 @@ class PropertyUploadTests(APITestCase):
         response = self.client.post(self.url, {'imagens': [OfferPhotoTests.photo()], 'ordem': -1}, format='multipart')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(self.property.imagens.count(), 1)
+
+
+class AdminSummaryTests(APITestCase):
+    def test_summary_counts_entire_catalog_and_distinct_properties(self):
+        from apps.leads.models import Lead
+        from .models import PropertyImage
+        admin = get_user_model().objects.create_user(username='summary-admin', is_staff=True)
+        for i in range(13):
+            property = PropertyProfileTests.create_property(titulo=f'Imóvel {i}', status='publicado' if i == 0 else 'rascunho')
+            if i == 0:
+                for image in range(2):
+                    PropertyImage.objects.create(imovel=property, imagem=f'imoveis/{image}.jpg')
+        Lead.objects.create(nome='Contato', email='test@example.test', telefone='83999999999')
+        self.client.force_authenticate(user=admin)
+        response = self.client.get('/api/admin/imoveis/resumo/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, {'total': 13, 'publicados': 1, 'rascunhos': 12, 'sem_fotos': 12, 'leads': 1})
+
+    def test_summary_is_admin_only(self):
+        self.assertIn(self.client.get('/api/admin/imoveis/resumo/').status_code, [401,403])
+        self.client.force_authenticate(user=get_user_model().objects.create_user(username='not-staff'))
+        self.assertEqual(self.client.get('/api/admin/imoveis/resumo/').status_code, 403)
+
+    def test_media_audit_reports_missing_file_without_deleting_record(self):
+        import json
+        from io import StringIO
+        from django.core.management import call_command
+        from .models import PropertyImage
+        property = PropertyProfileTests.create_property()
+        image = PropertyImage.objects.create(imovel=property, imagem='imoveis/missing-for-audit.jpg')
+        output = StringIO()
+        call_command('verificar_imagens', '--json', stdout=output)
+        report = json.loads(output.getvalue())
+        self.assertEqual(report['verificados'], 1)
+        self.assertEqual(report['ausentes'][0]['id'], image.pk)
+        self.assertTrue(PropertyImage.objects.filter(pk=image.pk).exists())

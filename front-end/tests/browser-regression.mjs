@@ -1,5 +1,6 @@
 // Run against an isolated local database. This script creates test properties and leads.
 import assert from 'node:assert/strict';
+import { readFileSync, mkdirSync } from 'node:fs';
 import { chromium, webkit } from 'playwright';
 const base = process.env.E2E_BASE_URL || 'http://127.0.0.1:4200';
 assert(['127.0.0.1', 'localhost'].includes(new URL(base).hostname), 'Use a local isolated test server.');
@@ -7,7 +8,8 @@ const username = process.env.E2E_USERNAME;
 const password = process.env.E2E_PASSWORD;
 assert(username && password, 'Set E2E_USERNAME and E2E_PASSWORD for a local staff account.');
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII=', 'base64');
-const photo = name => ({ name, mimeType: 'image/png', buffer: png });
+const fixture = process.env.E2E_IMAGE ? readFileSync(process.env.E2E_IMAGE) : png;
+const photo = name => ({ name, mimeType: 'image/jpeg', buffer: fixture });
 const results = [];
 for (const [name, engine, options] of [
   ['desktop-chromium', chromium, { viewport: { width: 1440, height: 900 } }],
@@ -63,7 +65,7 @@ for (const [name, engine, options] of [
   await page.waitForURL('**/admin/dashboard');
   if (name.startsWith('mobile')) await page.getByRole('button', { name: 'Menu administrativo' }).click();
   await page.locator('#admin-navigation a[routerLink="/admin/imoveis"]').click();
-  await page.getByRole('link', { name: 'Novo imóvel', exact: true }).click();
+  await page.getByRole('link', { name: /Novo imóvel/ }).click();
   await page.getByRole('button', { name: 'Salvar', exact: true }).click();
   assert(await page.locator('.error-summary').isVisible());
   await field('titulo').fill(`Verificação ${name} ${Date.now()}`);
@@ -92,7 +94,31 @@ for (const [name, engine, options] of [
   await page.getByRole('button', { name: 'Definir capa', exact: true }).first().click();
   assert.equal((await cover).status(), 200);
   await page.getByRole('button', { name: 'Capa atual', exact: true }).waitFor();
+  await page.waitForFunction(() => [...document.querySelectorAll('app-image-uploader app-photo img')].every(image => image.complete && image.naturalWidth > 0));
+  const savedPath = new URL(page.url()).pathname;
+  const propertyId = savedPath.split('/')[3];
+  // Photos must be visible before opening the Photos step, and the list must show them too.
   await tab('Informações básicas');
+  assert(await page.locator('.property-preview app-photo img').isVisible());
+  await page.waitForFunction(() => document.querySelector('.property-preview app-photo img')?.naturalWidth > 0);
+  if(process.env.E2E_SCREENSHOTS) { mkdirSync(process.env.E2E_SCREENSHOTS,{recursive:true}); await page.screenshot({path:`${process.env.E2E_SCREENSHOTS}/${name}-editor.png`,fullPage:true}); }
+  await page.goto(base + '/admin/imoveis');
+  await page.locator('.property-tile').first().waitFor();
+  await page.waitForFunction(() => document.querySelector('.tile-photo app-photo img')?.naturalWidth > 0);
+  assert(await page.locator('.tile-photo app-photo img').first().isVisible());
+  const tokenForRead = await page.evaluate(() => localStorage.getItem('serve_access_token'));
+  const propertyResponse = await context.request.get(`${base}/api/admin/imoveis/${propertyId}/`, {headers:{Authorization:`Bearer ${tokenForRead}`}});
+  const property = await propertyResponse.json();
+  // An old HTTP media URL must be upgraded to this site's media path in the UI.
+  await page.route(`**/api/imoveis/${property.slug}/`, async route => { const response=await route.fetch();const data=await response.json();data.imagens.forEach(image=>{image.imagem='http://old-origin.invalid'+new URL(image.imagem,base).pathname;});await route.fulfill({response,json:data}); });
+  await page.goto(`${base}/imoveis/${property.slug}`);
+  await page.waitForFunction(() => document.querySelector('.main-image img')?.naturalWidth > 0);
+  assert((await page.locator('.main-image img').getAttribute('src')).startsWith('/media/'));
+  // Missing files get an explicit placeholder instead of a broken image / empty gallery.
+  await page.route('**/media/**', route=>route.fulfill({status:404,body:'missing'}));
+  await page.reload();await page.getByRole('img',{name:'Foto indisponível',exact:true}).first().waitFor();
+  await page.unroute('**/media/**');
+  await page.goto(base + savedPath);
   await field('descricao').fill('Alteração recuperável'); await page.reload();
   await page.getByText(/Rascunho recuperado neste navegador/).waitFor();
   assert.equal(await field('descricao').inputValue(), 'Alteração recuperável');
@@ -108,8 +134,18 @@ for (const [name, engine, options] of [
   assert(await page.evaluate(() => !!localStorage.getItem('serve_access_token')));
   assert(await page.locator('.error-summary').getByText(/CEP/).isVisible());
   await tab('Informações básicas'); assert.equal(await field('descricao').inputValue(), 'Alteração recuperável');
+  for (const section of ['dashboard','carrosseis','section-images','home-content','banners','regioes','leads']) {
+    await page.goto(`${base}/admin/${section}`);
+    await page.locator('h1').waitFor();
+    assert(await page.locator('h1').isVisible());
+    assert(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth + 1), `${section} has horizontal overflow`);
+    if (section === 'dashboard') {
+      await page.waitForFunction(()=>document.querySelector('.recent-property app-photo img')?.naturalWidth > 0);
+      if(process.env.E2E_SCREENSHOTS) await page.screenshot({path:`${process.env.E2E_SCREENSHOTS}/${name}-dashboard.png`,fullPage:true});
+    }
+  }
   assert.deepEqual(errors, []);
-  results.push({ browser: name, status: 'PASS', checks: ['CTA before/after scroll and stacking', 'public offer with cumulative photos', 'contact links', 'admin navigation', 'validation preserves data/photos', 'create and publish', 'cover JSON update', 'draft reload', 'token refresh then validation'] });
+  results.push({ browser: name, status: 'PASS', checks: ['CTA before/after scroll and stacking', 'public offer with cumulative photos', 'contact links', 'admin navigation', 'validation preserves data/photos', 'create and publish', 'cover JSON update', 'draft reload', 'token refresh then validation', 'real image decoding with DEBUG=False and Gunicorn', 'photo visible in list and edit summary', 'legacy HTTP media URL normalized', 'missing photo placeholder','all admin sections open without horizontal overflow'] });
  } finally { await browser.close(); }
 }
 console.log(JSON.stringify(results, null, 2));

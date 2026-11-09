@@ -19,7 +19,7 @@ if not (assets / 'index.html').exists():
     raise SystemExit('Run npm run build first.')
 
 with tempfile.TemporaryDirectory(prefix='serve-regression-') as scratch:
-    env = dict(os.environ, TEST_DATABASE_NAME=str(Path(scratch) / 'db.sqlite3'),
+    env = dict(os.environ, DEBUG='False', SECURE_SSL_REDIRECT='False', DJANGO_SETTINGS_MODULE='config.test_settings', TEST_DATABASE_NAME=str(Path(scratch) / 'db.sqlite3'),
                TEST_MEDIA_ROOT=str(Path(scratch) / 'media'), E2E_USERNAME='local-regression-admin',
                E2E_PASSWORD=secrets.token_urlsafe(24))
     manage = [sys.executable, 'manage.py']
@@ -49,7 +49,10 @@ with tempfile.TemporaryDirectory(prefix='serve-regression-') as scratch:
                 body = response.read()
                 self.send_header('Content-Length', str(len(body)))
                 self.end_headers()
-                self.wfile.write(body)
+                try:
+                    self.wfile.write(body)
+                except (BrokenPipeError, ConnectionResetError):
+                    pass  # Browser navigation can cancel an in-flight request.
 
         def do_GET(self):
             if self.path.startswith(('/api/', '/media/')):
@@ -64,7 +67,7 @@ with tempfile.TemporaryDirectory(prefix='serve-regression-') as scratch:
         def log_message(self, *_): pass
 
     with open(Path(scratch) / 'api.log', 'w') as log:
-        api = subprocess.Popen(manage + ['runserver', f'127.0.0.1:{api_port}', '--settings=config.test_settings', '--noreload'],
+        api = subprocess.Popen([sys.executable, '-m', 'gunicorn', 'config.wsgi:application', '--bind', f'127.0.0.1:{api_port}', '--workers', '1', '--threads', '2'],
                                cwd=root / 'back-end', env=env, stdout=log, stderr=log)
         server = ThreadingHTTPServer(('127.0.0.1', 0), partial(Handler, directory=str(assets)))
         thread = threading.Thread(target=server.serve_forever, daemon=True)

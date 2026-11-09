@@ -1,4 +1,5 @@
-﻿import { CurrencyPipe, Location } from '@angular/common';
+import { PhotoComponent } from '@shared/components/photo.component';
+import { CurrencyPipe, Location } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -17,7 +18,7 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
 @Component({
   selector: 'app-property-detail',
   standalone: true,
-  imports: [CurrencyPipe, ReactiveFormsModule, HeaderComponent, FooterComponent, LoadingComponent, PropertyCardComponent, PropertyMapComponent],
+  imports: [PhotoComponent, CurrencyPipe, ReactiveFormsModule, HeaderComponent, FooterComponent, LoadingComponent, PropertyCardComponent, PropertyMapComponent],
   template: `
     <div class="page-shell">
       <app-header />
@@ -27,10 +28,10 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
         <main class="container detail">
           <button class="back-button" type="button" (click)="goBack()">← Voltar</button>
           <section class="gallery">
-            <img class="main-image" [src]="mainImage" [alt]="property.titulo">
+            <app-photo class="main-image" [src]="mainImage" [alt]="property.titulo" [eager]="true" fit="contain" />
             <div class="thumbs">
               @for (image of property.imagens; track image.id) {
-                <button type="button" [class.active]="mainImage === image.imagem" (click)="mainImage = image.imagem"><img [src]="image.imagem" [alt]="image.legenda || property.titulo"></button>
+                <button type="button" [class.active]="mainImage === image.imagem" (click)="mainImage = image.imagem"><app-photo [src]="image.imagem" [alt]="image.legenda || property.titulo" /></button>
               }
             </div>
           </section>
@@ -147,7 +148,7 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
       transform: translateY(-1px);
     }
 
-    .thumbs img {
+    .thumbs app-photo {
       width: 120px;
       height: 82px;
       object-fit: cover;
@@ -303,7 +304,7 @@ export class PropertyDetailComponent implements OnInit {
     this.propertyService.getPropertyBySlug(slug).subscribe({
       next: (property) => {
         this.property = property;
-        this.mainImage = property.imagens?.[0]?.imagem || 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1600&q=85';
+        this.mainImage = property.imagens?.find(image=>image.imagem_capa)?.imagem || property.imagens?.[0]?.imagem || '';
         this.loading = false;
         this.loadSimilar(property);
       },

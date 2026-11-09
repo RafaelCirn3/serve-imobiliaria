@@ -12,6 +12,10 @@ export class PropertyService {
   private readonly baseUrl = `${environment.apiUrl}/imoveis`;
   private readonly adminUrl = `${environment.apiUrl}/admin/imoveis`;
 
+  adminSummary(): Observable<{total:number;publicados:number;rascunhos:number;sem_fotos:number;leads:number}> {
+    return this.http.get<{total:number;publicados:number;rascunhos:number;sem_fotos:number;leads:number}>(`${this.adminUrl}/resumo/`);
+  }
+
   listPublicProperties(filters: PropertyFilters = {}): Observable<PaginatedResponse<Property>> {
     return this.http.get<PaginatedResponse<Property>>(`${this.baseUrl}/`, { params: toHttpParams(filters) });
   }

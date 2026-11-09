@@ -1,8 +1,9 @@
+import { PhotoComponent } from './photo.component';
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output } from '@angular/core';
 import { PropertyImage } from '@core/models/api.models';
 
 @Component({
-  selector: 'app-image-uploader', standalone: true,
+  selector: 'app-image-uploader', standalone: true, imports: [PhotoComponent],
   template: `
     <div class="uploader card">
       <label class="drop">
@@ -16,7 +17,7 @@ import { PropertyImage } from '@core/models/api.models';
         <div class="grid">
           @for (preview of previews; track preview.url; let index = $index) {
             <figure>
-              @if (!preview.heic) { <img [src]="preview.url" [alt]="preview.name"> }
+              @if (!preview.heic) { <app-photo [src]="preview.url" [alt]="preview.name" [eager]="true" /> } @else { <p>Foto HEIC selecionada. A prévia aparece após enviar.</p> }
               <figcaption><span>{{ preview.name }}</span><button class="btn btn-secondary" type="button" [disabled]="busy" (click)="removePending(index)">Remover</button></figcaption>
             </figure>
           }
@@ -25,7 +26,7 @@ import { PropertyImage } from '@core/models/api.models';
       @if (images.length) {
         <div class="grid">
           @for (image of images; track image.id) {
-            <figure><img [src]="image.imagem" [alt]="image.legenda || 'Imagem do imóvel'">
+            <figure><app-photo [src]="image.imagem" [alt]="image.legenda || 'Imagem do imóvel'" [eager]="true" />
               <figcaption><button class="btn btn-secondary" type="button" [disabled]="busy" (click)="makeCover.emit(image)">{{ image.imagem_capa ? 'Capa atual' : 'Definir capa' }}</button><button class="btn btn-danger" type="button" [disabled]="busy" (click)="remove.emit(image)">Excluir</button></figcaption>
             </figure>
           }
@@ -41,7 +42,7 @@ import { PropertyImage } from '@core/models/api.models';
     .drop:focus-within { outline: 2px solid white; outline-offset: 3px; }
     small { color: #b8b8b8; } p[role=alert] { color: #ffb4b4; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
-    img { width: 100%; aspect-ratio: 1.25; object-fit: cover; border-radius: 8px; } figure { margin: 0; min-width: 0; }
+    app-photo { width: 100%; height: auto; aspect-ratio: 1.25; object-fit: cover; border-radius: 8px; } figure { margin: 0; min-width: 0; }
     figcaption { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; } span { overflow-wrap: anywhere; }
   `],
 })

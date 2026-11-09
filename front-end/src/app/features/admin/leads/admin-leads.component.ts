@@ -1,3 +1,4 @@
+import { PhotoComponent } from '@shared/components/photo.component';
 import { DatePipe } from '@angular/common';
 import { KeyValuePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
@@ -9,7 +10,7 @@ import { LeadStatusBadgeComponent } from '@shared/components/lead-status-badge.c
 @Component({
   selector: 'app-admin-leads',
   standalone: true,
-  imports: [DatePipe, KeyValuePipe, LeadStatusBadgeComponent],
+  imports: [PhotoComponent, DatePipe, KeyValuePipe, LeadStatusBadgeComponent],
   template: `
     <div class="admin-page">
       <div class="admin-header"><h1>Leads</h1></div>
@@ -26,7 +27,7 @@ import { LeadStatusBadgeComponent } from '@shared/components/lead-status-badge.c
                   }
                 </td>
                 <td>{{ lead.mensagem }}
-                  @for (photo of lead.fotos || []; track photo.id) { <a [href]="photo.imagem" target="_blank" rel="noopener noreferrer"><img [src]="photo.imagem" alt="Foto enviada pelo proprietário" width="100" loading="lazy"></a> }
+                  @for (photo of lead.fotos || []; track photo.id) { <a [href]="photo.imagem" target="_blank" rel="noopener noreferrer"><app-photo [src]="photo.imagem" alt="Foto enviada pelo proprietário" style="width:140px;height:96px" /></a> }
                 </td>
                 <td><app-lead-status-badge [status]="lead.status" /></td>
                 <td>{{ lead.criado_em | date:'dd/MM/yyyy HH:mm' }}</td>

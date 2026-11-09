@@ -1,3 +1,4 @@
+import { ControlHintComponent } from './control-hint.component';
 import { Component, DestroyRef, Input, OnInit, inject } from '@angular/core';
 import { FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -6,13 +7,13 @@ import { LocationService, PostalAddress } from '@core/services/location.service'
 import { SERVICE_CITIES, normalizedLocation } from '@core/models/property-options';
 
 @Component({
-  selector: 'app-address-editor', standalone: true, imports: [ReactiveFormsModule],
+  selector: 'app-address-editor', standalone: true, imports: [ReactiveFormsModule, ControlHintComponent],
   template: `
     <div class="address-fields" [formGroup]="form">
       <label>CEP<input formControlName="cep" autocomplete="postal-code" maxlength="9" placeholder="00000-000"></label>
-      <label>Cidade{{ required('cidade') ? ' *' : '' }}<input formControlName="cidade" maxlength="120" [attr.list]="listId + '-cities'"><datalist [id]="listId + '-cities'">@for (city of cities; track city) { <option [value]="city"></option> }</datalist></label>
+      <label>Cidade{{ required('cidade') ? ' *' : '' }}<input formControlName="cidade" maxlength="120" [attr.list]="listId + '-cities'"><datalist [id]="listId + '-cities'">@for (city of cities; track city) { <option [value]="city"></option> }</datalist><app-control-hint [control]="form.get('cidade')!" [required]="required('cidade')" /></label>
       <label>UF<input formControlName="uf" maxlength="2"></label>
-      <label>Bairro{{ required('bairro') ? ' *' : '' }}<input formControlName="bairro" maxlength="120"></label>
+      <label>Bairro{{ required('bairro') ? ' *' : '' }}<input formControlName="bairro" maxlength="120"><app-control-hint [control]="form.get('bairro')!" [required]="required('bairro')" /></label>
       <label class="full">Rua<input formControlName="logradouro" maxlength="255" placeholder="Digite a rua para consultar o CEP" autocomplete="off"></label>
       @if (addresses.length) {
         <div class="suggestions full"><span>Endereços encontrados:</span>
