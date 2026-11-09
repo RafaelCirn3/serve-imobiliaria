@@ -25,7 +25,7 @@ import { HeaderComponent } from '@shared/components/header.component';
           </form>
           <aside class="card info" id="proprietarios">
             <h2>Atendimento direto</h2>
-            <p><a href="https://wa.me/558396724745" target="_blank" rel="noopener noreferrer">WhatsApp: (83) 9672-4745</a></p>
+            <p><a href="https://wa.me/5583988168587" target="_blank" rel="noopener noreferrer">WhatsApp: (83) 98816-8587</a></p>
             <p>E-mail: <a href="mailto:servenegociosimobiliarios@gmail.com">servenegociosimobiliarios&#64;gmail.com</a></p>
             <p>Endereço: João Pessoa/PB</p>
             <p>Instagram: &#64;serveimoveis</p>

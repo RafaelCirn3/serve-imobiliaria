@@ -58,7 +58,7 @@ for (const [name, engine, options] of [
   await page.getByRole('button', { name: 'Concluir', exact: true }).click();
   await page.goto(base + '/contato');
   assert.equal(await page.locator('a[href="mailto:servenegociosimobiliarios@gmail.com"]').count(), 2);
-  assert(await page.getByText('WhatsApp: (83) 9672-4745').first().isVisible());
+  assert(await page.getByText('WhatsApp: (83) 98816-8587').first().isVisible());
   await page.goto(base + '/admin/login');
   await field('email').fill(username); await field('password').fill(password);
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
