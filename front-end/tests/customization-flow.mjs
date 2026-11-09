@@ -1,0 +1,72 @@
+import assert from 'node:assert/strict';
+export async function customizationFlow(page,context,base,photo,name){
+ console.log(name,'starting customization');
+ const token=await page.evaluate(()=>localStorage.getItem('serve_access_token'));
+ const headers={Authorization:`Bearer ${token}`};
+ const originalResponse=await context.request.get(base+'/api/admin/customizacao/',{headers});
+ const original=await originalResponse.json();
+ const payload=data=>Object.fromEntries(Object.entries(data).filter(([key])=>!['fields','home_fields','sections'].includes(key)));
+ await page.goto(base+'/admin/customizacao');
+ await page.getByRole('button',{name:'Sobre nós',exact:true}).click();
+ const frame=page.frameLocator('iframe');
+ const input=label=>page.locator('label.field').filter({hasText:label}).locator('input').first();
+ const title=`Sobre em prévia ${name}`;
+ await input('Título da página').fill(title);
+ await frame.getByRole('heading',{name:title,exact:true}).waitFor();
+ let publicData=await (await context.request.get(base+'/api/site-content/')).json();
+ assert.notEqual(publicData.config.about.title,title,'Draft leaked before save');
+ const hero=page.locator('.section-row').filter({has:page.getByText('Imagem e título',{exact:true})});
+ await hero.locator('input[type=checkbox]').uncheck();
+ await frame.getByRole('heading',{name:title,exact:true}).waitFor({state:'hidden'});
+ await hero.locator('input[type=checkbox]').check();
+ await hero.locator('select').nth(1).selectOption('center');
+ await frame.locator('[data-site-section="about.hero"][data-site-align="center"]').waitFor();
+ await page.getByRole('button',{name:'Mover Diferenciais para cima',exact:true}).click();
+ await page.waitForTimeout(250);
+ assert(await frame.locator('[data-site-section="about.values"]').evaluate(node=>+node.style.order) < await frame.locator('[data-site-section="about.story"]').evaluate(node=>+node.style.order));
+ await page.getByRole('button',{name:'Contato',exact:true}).click();
+ const contactTitle=`Contato em prévia ${name}`;await input('Título da página').fill(contactTitle);
+ await frame.getByRole('heading',{name:contactTitle,exact:true}).waitFor();
+ // Forms in the preview cannot create real leads.
+ const contactForm=frame.locator('app-contact form');
+ await contactForm.locator('[formControlName=nome]').fill('Não enviar');
+ await contactForm.locator('[formControlName=email]').fill('preview@example.test');
+ await contactForm.locator('[formControlName=telefone]').fill('83999998888');
+ const before=(await (await context.request.get(base+'/api/admin/leads/',{headers})).json()).count;
+ await contactForm.evaluate(form=>form.requestSubmit());await page.waitForTimeout(200);
+ const after=(await (await context.request.get(base+'/api/admin/leads/',{headers})).json()).count;assert.equal(after,before);
+ await page.getByRole('button',{name:'Início',exact:true}).click();
+ const slides=page.locator('.editor-section').filter({has:page.getByRole('heading',{name:'Carrossel principal',exact:true})});
+ await slides.getByRole('button',{name:'+ Adicionar',exact:true}).click();
+ await slides.locator('input[type=file]').last().setInputFiles(photo('preview.jpg'));
+ await frame.locator('.hero-slide').first().waitFor();
+ await page.waitForFunction(()=>!document.body.textContent.includes('Preparando imagem…'));
+ const vitrines=page.locator('.editor-section').filter({has:page.getByRole('heading',{name:'Vitrines de imóveis',exact:true})});
+ await vitrines.getByRole('button',{name:'+ Adicionar',exact:true}).click();
+ await vitrines.locator('input[type=checkbox]').last().check();
+ await frame.getByRole('heading',{name:'Nova vitrine',exact:true}).waitFor();
+ if(process.env.E2E_SCREENSHOTS){await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:`${process.env.E2E_SCREENSHOTS}/${name}-customization.png`,fullPage:false});}
+ console.log(name,'saving customization');
+ await page.getByRole('button',{name:'Salvar alterações',exact:true}).first().click();
+ await page.getByText('Alterações salvas e publicadas no site.',{exact:true}).waitFor();
+ publicData=await (await context.request.get(base+'/api/site-content/')).json();
+ assert.equal(publicData.config.about.title,title);assert.equal(publicData.config.contact.title,contactTitle);assert.equal(publicData.banners.length,original.banners.length+1);
+ const visitor=await context.newPage();await visitor.goto(base+'/sobre');await visitor.getByRole('heading',{name:title,exact:true}).waitFor();await visitor.close();
+ await page.getByRole('button',{name:'Sobre nós',exact:true}).click();await input('Título da página').fill('Descartar esta alteração');
+ await frame.getByRole('heading',{name:'Descartar esta alteração',exact:true}).waitFor();
+ page.once('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'Descartar alterações',exact:true}).click();
+ await frame.getByRole('heading',{name:title,exact:true}).waitFor();
+ // A second session publishes; the stale editor must retain its draft and report the conflict.
+ let latest=await (await context.request.get(base+'/api/admin/customizacao/',{headers})).json();
+ latest.config.about.body='Publicado por outra sessão';
+ assert.equal((await context.request.put(base+'/api/admin/customizacao/',{headers,data:payload(latest)})).status(),200);
+ await input('Título da página').fill('Rascunho preservado em conflito');
+ await page.getByRole('button',{name:'Salvar alterações',exact:true}).first().click();
+ await page.getByText(/Outra sessão publicou mudanças/).waitFor();
+ assert.equal(await input('Título da página').inputValue(),'Rascunho preservado em conflito');
+ // Restore the isolated fixture so the next browser starts from the same published content.
+ latest=await (await context.request.get(base+'/api/admin/customizacao/',{headers})).json();
+ const reset=payload(original);reset.revision=latest.revision;
+ assert.equal((await context.request.put(base+'/api/admin/customizacao/',{headers,data:reset})).status(),200);
+ console.log(name,'customization preview/save/discard/conflict/images/sections: PASS');
+}

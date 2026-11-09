@@ -1,12 +1,9 @@
+import { SiteContentService } from '@core/services/site-content.service';
+import { SiteSectionDirective } from '@shared/components/site-section.directive';
 import { mediaUrl } from '@core/services/media-url';
-import { Component, OnInit, HostListener, inject } from '@angular/core';
+import { Component, OnInit, HostListener, effect, inject } from '@angular/core';
 import { Banner, Property, Region, HomeContent, PropertyCarousel, SectionImage } from '@core/models/api.models';
-import { SectionImageService } from '@core/services/section-image.service';
-import { PropertyCarouselService } from '@core/services/property-carousel.service';
-import { HomeContentService } from '@core/services/home-content.service';
-import { BannerService } from '@core/services/banner.service';
 import { PropertyService } from '@core/services/property.service';
-import { RegionService } from '@core/services/region.service';
 import { EmptyStateComponent } from '@shared/components/empty-state.component';
 import { FooterComponent } from '@shared/components/footer.component';
 import { HeaderComponent } from '@shared/components/header.component';
@@ -18,11 +15,11 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [HeaderComponent, FooterComponent, SearchBarComponent, PropertyCardComponent, LoadingComponent, EmptyStateComponent],
+  imports: [SiteSectionDirective, HeaderComponent, FooterComponent, SearchBarComponent, PropertyCardComponent, LoadingComponent, EmptyStateComponent],
   template: `
-    <div class="page-shell">
+    <div class="page-shell" data-site-page="home">
       <app-header />
-      <section class="hero">
+      <section appSiteSection="home.hero" class="hero">
         @for (banner of banners; track banner.id; let i = $index) {
           <div class="hero-slide" [class.visible]="i === heroIndex" [style.background-image]="'url(' + mediaUrl(banner.imagem) + ')'"></div>
         }
@@ -50,24 +47,24 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
         }
       </section>
 
-      <section class="search-section" aria-labelledby="search-section-title">
+      <section appSiteSection="home.search" class="search-section" aria-labelledby="search-section-title">
         <div class="container">
-          <h2 id="search-section-title">Encontre seu imóvel ideal</h2>
-          <p>Pesquise por bairro, cidade, tipo de imóvel e faixa de preço.</p>
+          <h2 id="search-section-title">{{site.text('home','search_title')}}</h2>
+          <p>{{site.text('home','search_body')}}</p>
           <app-search-bar variant="hero" />
         </div>
       </section>
 
-      <section class="section featured-section">
+      <section appSiteSection="home.featured" class="section featured-section">
         <div class="container">
           <span class="eyebrow">{{ content.featured_label }}</span>
-          <div class="featured-heading"><h2 class="section-title">{{ content.featured_title }}</h2><a class="all-properties" href="/imoveis">Ver todos os imóveis →</a></div>
+          <div class="featured-heading"><h2 class="section-title">{{ content.featured_title }}</h2><a class="all-properties" href="/imoveis">{{site.text('home','all_properties')}}</a></div>
           @if (loadingFeatured) {
             <app-loading />
           } @else if (featured.length) {
             <div class="carousel-shell" (touchstart)="touchStart($event)" (touchend)="touchEnd($event)">
               <div class="carousel-head">
-                <p class="muted">Arraste no mobile ou use os controles para navegar pela curadoria.</p>
+                <p class="muted">{{site.text('home','carousel_hint')}}</p>
                 <div class="carousel-actions">
                   <button class="carousel-btn" type="button" aria-label="Imóveis anteriores" (click)="previousFeatured()">&lsaquo;</button>
                   <button class="carousel-btn" type="button" aria-label="Próximos imóveis" (click)="nextFeatured()">&rsaquo;</button>
@@ -94,6 +91,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
         </div>
       </section>
 
+      <div appSiteSection="home.carousels">
       @for (carousel of extraCarousels; track carousel.id) {
         @if (carousel.properties?.length) {
           <section class="section">
@@ -120,7 +118,8 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
           </section>
         }
       }
-      <section class="section regions">
+      </div>
+      <section appSiteSection="home.regions" class="section regions">
         <div class="container">
           <span class="eyebrow">{{ content.regions_label }}</span>
           <h2 class="section-title">{{ content.regions_title }}</h2>
@@ -145,7 +144,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
         </div>
       </section>
 
-      <section class="section invest">
+      <section appSiteSection="home.investment" class="section invest">
         <div class="container split">
           <div>
             <span class="eyebrow">{{ content.investment_label }}</span>
@@ -169,7 +168,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
         </div>
       </section>
 
-      <section id="proprietarios" class="section owner">
+      <section appSiteSection="home.owner" id="proprietarios" class="section owner">
         <div class="container owner-box">
           <div>
             <span class="eyebrow">{{ content.owner_label }}</span>
@@ -436,13 +435,9 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
   `],
 })
 export class HomeComponent implements OnInit {
+ readonly site=inject(SiteContentService);
   readonly saleDialog = inject(SaleDialogService);
   private readonly propertyService = inject(PropertyService);
-  private readonly regionService = inject(RegionService);
-  private readonly bannerService = inject(BannerService);
-  private readonly homeService = inject(HomeContentService);
-  private readonly extraService = inject(PropertyCarouselService);
-  private readonly galleryService = inject(SectionImageService);
 
   readonly mediaUrl = mediaUrl;
   content: HomeContent = {hero_title:'O Melhor de João Pessoa para o seu novo capítulo.',hero_subtitle:'Encontre os melhores imóveis e investimentos, e realize-se!',featured_label:'Curadoria SERVE',featured_title:'Imóveis em destaque',regions_label:'Localização importa',regions_title:'Regiões mais procuradas',investment_label:'Investir em João Pessoa',investment_title:'Orla, qualidade de vida e valorização em uma capital em movimento.',investment_body:'João Pessoa combina bairros consolidados, novas frentes de desenvolvimento e uma relação rara entre praia, serviços e tranquilidade urbana.',investment_extra:'A SERVE organiza essa leitura para quem quer decidir com segurança: localização, liquidez, padrão do imóvel e momento de mercado.',owner_label:'Para proprietários',owner_title:'Anuncie com apresentação premium e gestão direta.',owner_body:'Seu imóvel merece imagens fortes, texto objetivo e uma jornada de contato sem atrito.',owner_button:'Falar com a SERVE'};
@@ -483,10 +478,16 @@ export class HomeComponent implements OnInit {
     return Array.from({ length: this.maxFeaturedIndex + 1 }, (_, index) => index);
   }
 
+  constructor(){effect(()=>{
+    const document=this.site.document();this.content=document.home;
+    this.banners=document.banners.filter(row=>row.ativo).sort((a,b)=>a.ordem-b.ordem);
+    this.regions=document.regions.filter(row=>row.ativo).slice(0,6);
+    this.extraCarousels=document.carousels.filter(row=>row.ativo);
+    this.tourismImages=document.section_images.filter(row=>row.active && row.section==='tourism').sort((a,b)=>a.position-b.position);
+    this.investmentImages=document.section_images.filter(row=>row.active && row.section==='investment').sort((a,b)=>a.position-b.position);
+    this.heroIndex=Math.min(this.heroIndex,Math.max(0,this.banners.length-1));this.tourismIndex=Math.min(this.tourismIndex,Math.max(0,this.tourismImages.length-1));this.investmentIndex=Math.min(this.investmentIndex,Math.max(0,this.investmentImages.length-1));
+  });}
   ngOnInit(): void {
-    this.homeService.load().subscribe({next: content => this.content = content});
-    this.galleryService.list().subscribe({next: response => {this.tourismImages = response.results.filter(i => i.section === 'tourism'); this.investmentImages = response.results.filter(i => i.section === 'investment');}});
-    this.extraService.list().subscribe({next: response => this.extraCarousels = response.results});
     this.propertyService.listPublicProperties().subscribe({
       next: (response) => (this.totalPublicProperties = response.count),
       error: () => (this.totalPublicProperties = null),
@@ -501,8 +502,6 @@ export class HomeComponent implements OnInit {
         this.loadingFeatured = false;
       },
     });
-    this.regionService.listRegions().subscribe((response) => (this.regions = response.results.slice(0, 6)));
-    this.bannerService.listBanners().subscribe((response) => (this.banners = response.results.filter(b => b.ativo).sort((a,b) => a.ordem - b.ordem)));
   }
 
   regionImage(region: Region): string {

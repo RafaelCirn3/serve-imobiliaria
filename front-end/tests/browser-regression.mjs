@@ -1,5 +1,6 @@
 // Run against an isolated local database. This script creates test properties and leads.
 import assert from 'node:assert/strict';
+import { customizationFlow } from './customization-flow.mjs';
 import { readFileSync, mkdirSync } from 'node:fs';
 import { chromium, webkit } from 'playwright';
 const base = process.env.E2E_BASE_URL || 'http://127.0.0.1:4200';
@@ -17,6 +18,7 @@ for (const [name, engine, options] of [
 ]) {
  const browser = await engine.launch({ headless: true });
  const context = await browser.newContext(options);
+ await context.route(/^https:\/\/images\.unsplash\.com\//, route=>route.fulfill({status:200,contentType:'image/jpeg',body:fixture}));
  const page = await context.newPage();
  const errors = [];
  page.on('pageerror', error => errors.push(error.message));
@@ -57,6 +59,8 @@ for (const [name, engine, options] of [
   const offerId = (await offer.json()).id;
   await page.getByRole('button', { name: 'Concluir', exact: true }).click();
   await page.goto(base + '/contato');
+  await page.locator('app-contact h1').waitFor();
+  await page.locator('a[href="mailto:servenegociosimobiliarios@gmail.com"]').first().waitFor();
   assert.equal(await page.locator('a[href="mailto:servenegociosimobiliarios@gmail.com"]').count(), 2);
   assert(await page.getByText('WhatsApp: (83) 98816-8587').first().isVisible());
   await page.goto(base + '/admin/login');
@@ -144,6 +148,7 @@ for (const [name, engine, options] of [
       if(process.env.E2E_SCREENSHOTS) await page.screenshot({path:`${process.env.E2E_SCREENSHOTS}/${name}-dashboard.png`,fullPage:true});
     }
   }
+  await customizationFlow(page,context,base,photo,name);
   assert.deepEqual(errors, []);
   results.push({ browser: name, status: 'PASS', checks: ['CTA before/after scroll and stacking', 'public offer with cumulative photos', 'contact links', 'admin navigation', 'validation preserves data/photos', 'create and publish', 'cover JSON update', 'draft reload', 'token refresh then validation', 'real image decoding with DEBUG=False and Gunicorn', 'photo visible in list and edit summary', 'legacy HTTP media URL normalized', 'missing photo placeholder','all admin sections open without horizontal overflow'] });
  } finally { await browser.close(); }

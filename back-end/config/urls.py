@@ -5,6 +5,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
+from apps.banners.customization import PublicSiteContent, AdminCustomization, AdminCustomizationUpload
 from apps.common.media import uploaded_picture
 from apps.accounts.views import LogoutView, ServeTokenObtainPairView
 from apps.banners.views import AdminBannerViewSet, PublicBannerViewSet, HomeContentView, AdminHomeContentView, PublicPropertyCarouselViewSet, AdminPropertyCarouselViewSet, PublicSectionImageViewSet, AdminSectionImageViewSet
@@ -29,6 +30,9 @@ router.register("admin/regioes", AdminRegionViewSet, basename="admin-regioes")
 router.register("admin/banners", AdminBannerViewSet, basename="admin-banners")
 
 urlpatterns = [
+    path("api/site-content/", PublicSiteContent.as_view()),
+    path("api/admin/customizacao/", AdminCustomization.as_view()),
+    path("api/admin/customizacao/imagens/", AdminCustomizationUpload.as_view()),
     path("admin/", admin.site.urls),
     path("api/auth/login/", ServeTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),

@@ -1,22 +1,24 @@
-﻿import { Component, inject } from '@angular/core';
+import { SiteContentService } from '@core/services/site-content.service';
+import { SiteSectionDirective } from '@shared/components/site-section.directive';
+import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { BrandComponent } from './brand.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, BrandComponent],
+  imports: [SiteSectionDirective, RouterLink, RouterLinkActive, BrandComponent],
   template: `
-    <header class="site-header">
+    <header class="site-header" appSiteSection="general.header">
       <div class="container nav">
-        <a routerLink="/" aria-label="Início SERVE"><app-brand [showSecondary]="router.url === '/'" /></a>
+        <a routerLink="/" aria-label="Início SERVE"><app-brand [showSecondary]="router.url.split('?')[0] === '/'" /></a>
         <nav>
-          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Início</a>
-          <a routerLink="/imoveis" routerLinkActive="active">Imóveis</a>
-          <a routerLink="/sobre" routerLinkActive="active">Sobre nós</a>
-          <a routerLink="/contato" routerLinkActive="active">Contato</a>
+          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{site.text('general','nav_home')}}</a>
+          <a routerLink="/imoveis" routerLinkActive="active">{{site.text('general','nav_properties')}}</a>
+          <a routerLink="/sobre" routerLinkActive="active">{{site.text('general','nav_about')}}</a>
+          <a routerLink="/contato" routerLinkActive="active">{{site.text('general','nav_contact')}}</a>
         </nav>
-        <a class="login" routerLink="/admin/login">Entrar</a>
+        <a class="login" routerLink="/admin/login">{{site.text('general','nav_login')}}</a>
       </div>
     </header>
   `,
@@ -117,6 +119,6 @@ import { BrandComponent } from './brand.component';
     }
   `],
 })
-export class HeaderComponent { readonly router = inject(Router); }
+export class HeaderComponent { readonly site=inject(SiteContentService); readonly router = inject(Router); }
 
 

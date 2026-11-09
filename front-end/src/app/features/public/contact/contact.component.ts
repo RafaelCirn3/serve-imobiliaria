@@ -1,3 +1,5 @@
+import { SiteContentService } from '@core/services/site-content.service';
+import { SiteSectionDirective } from '@shared/components/site-section.directive';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { LeadService } from '@core/services/lead.service';
@@ -8,30 +10,30 @@ import { HeaderComponent } from '@shared/components/header.component';
 @Component({
   selector: 'app-contact',
   standalone: true,
-  imports: [ReactiveFormsModule, HeaderComponent, FooterComponent],
+  imports: [SiteSectionDirective, ReactiveFormsModule, HeaderComponent, FooterComponent],
   template: `
     <div class="page-shell">
       <app-header />
-      <main class="section container">
-        <span class="eyebrow">Contato</span>
-        <h1 class="section-title">Fale com a SERVE</h1>
+      <main class="section container" data-site-page="contact">
+        <div appSiteSection="contact.intro"><span class="eyebrow">{{site.text('contact','label')}}</span>
+        <h1 class="section-title">{{site.text('contact','title')}}</h1></div>
         <div class="grid">
-          <form class="card" [formGroup]="form" (ngSubmit)="submit()">
-            <input formControlName="nome" placeholder="Nome">
-            <input formControlName="email" placeholder="Email">
-            <input formControlName="telefone" placeholder="Telefone">
-            <textarea formControlName="mensagem" placeholder="Como podemos ajudar?"></textarea>
-            <button class="btn btn-primary" type="submit" [disabled]="form.invalid">Enviar</button>
+          <form appSiteSection="contact.form" class="card" [formGroup]="form" (ngSubmit)="submit()">
+            <input formControlName="nome" [placeholder]="site.text('contact','name_placeholder')">
+            <input formControlName="email" [placeholder]="site.text('contact','email_placeholder')">
+            <input formControlName="telefone" [placeholder]="site.text('contact','phone_placeholder')">
+            <textarea formControlName="mensagem" [placeholder]="site.text('contact','message_placeholder')"></textarea>
+            <button class="btn btn-primary" type="submit" [disabled]="form.invalid">{{site.text('contact','submit_label')}}</button>
           </form>
-          <aside class="card info" id="proprietarios">
-            <h2>Atendimento direto</h2>
-            <p><a href="https://wa.me/5583988168587" target="_blank" rel="noopener noreferrer">WhatsApp: (83) 98816-8587</a></p>
-            <p>E-mail: <a href="mailto:servenegociosimobiliarios@gmail.com">servenegociosimobiliarios&#64;gmail.com</a></p>
-            <p>Endereço: João Pessoa/PB</p>
-            <p>Instagram: &#64;serveimoveis</p>
+          <aside appSiteSection="contact.details" class="card info" id="proprietarios">
+            <h2>{{site.text('contact','direct_title')}}</h2>
+            <p><a [href]="site.whatsapp()" target="_blank" rel="noopener noreferrer">WhatsApp: {{site.text('general','phone_label')}}</a></p>
+            <p>E-mail: <a [href]="'mailto:'+site.text('general','email')">{{site.text('general','email')}}</a></p>
+            <p>Endereço: {{site.text('general','address')}}</p>
+            <p>Instagram: {{site.text('general','instagram')}}</p>
             <hr>
-            <h3>Para proprietários</h3>
-            <p>Envie os dados do seu imóvel para avaliarmos a apresentação e a estratégia de divulgação.</p>
+            <h3>{{site.text('contact','owner_title')}}</h3>
+            <p>{{site.text('contact','owner_body')}}</p>
           </aside>
         </div>
       </main>
@@ -40,6 +42,7 @@ import { HeaderComponent } from '@shared/components/header.component';
   `,
   styles: [`
     .grid {
+      order: 2;
       display: grid;
       grid-template-columns: 1fr 0.7fr;
       gap: 24px;
@@ -78,12 +81,13 @@ import { HeaderComponent } from '@shared/components/header.component';
 
     @media (max-width: 840px) {
       .grid {
+      order: 2;
         grid-template-columns: 1fr;
       }
     }
   `],
 })
-export class ContactComponent {
+export class ContactComponent { readonly site=inject(SiteContentService);
   private readonly fb = inject(FormBuilder);
   private readonly leads = inject(LeadService);
   private readonly notification = inject(NotificationService);

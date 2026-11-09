@@ -30,21 +30,7 @@ import { BrandComponent } from './brand.component';
           </span>
           Contatos recebidos
         </a>
-        <a routerLink="/admin/carrosseis" routerLinkActive="active">Vitrines de imóveis</a>
-        <a routerLink="/admin/section-images" routerLinkActive="active">Fotos da página inicial</a>
-        <a routerLink="/admin/home-content" routerLinkActive="active">Textos da página inicial</a>
-        <a routerLink="/admin/banners" routerLinkActive="active">
-          <span class="icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm2 11h12l-3.6-4.5-2.8 3.4-2-2.4L6 16Zm3-6.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" /></svg>
-          </span>
-          Carrossel principal
-        </a>
-        <a routerLink="/admin/regioes" routerLinkActive="active">
-          <span class="icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5Z" /></svg>
-          </span>
-          Regiões
-        </a>
+        <a routerLink="/admin/customizacao" routerLinkActive="active"><span class="icon" aria-hidden="true">✦</span> Customização</a>
       </nav>
       <button type="button" class="logout-button" [class.mobile-visible]="menuOpen" (click)="logout()">Sair</button>
     </aside>

@@ -1,3 +1,5 @@
+import { SiteContentService } from '@core/services/site-content.service';
+import { SiteSectionDirective } from '@shared/components/site-section.directive';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
@@ -16,21 +18,21 @@ import { MapResponse } from '@core/models/api.models';
 @Component({
   selector: 'app-properties',
   standalone: true,
-  imports: [HeaderComponent, FooterComponent, FilterSidebarComponent, PropertyCardComponent, LoadingComponent, EmptyStateComponent, PropertyMapComponent],
+  imports: [SiteSectionDirective, HeaderComponent, FooterComponent, FilterSidebarComponent, PropertyCardComponent, LoadingComponent, EmptyStateComponent, PropertyMapComponent],
   template: `
     <div class="page-shell">
       <app-header />
-      <main class="section container">
-        <span class="eyebrow">Portfolio SERVE</span>
-        <h1 class="section-title">Imóveis em {{ filters.cidade || 'João Pessoa, Cabedelo e Bananeiras' }}</h1>
-        <div class="layout">
+      <main class="section container" data-site-page="properties">
+        <div appSiteSection="properties.intro"><span class="eyebrow">{{site.text('properties','label')}}</span>
+        <h1 class="section-title">{{site.text('properties','title').replace('{cidade}',filters.cidade || site.text('properties','default_cities'))}}</h1></div>
+        <div class="layout" appSiteSection="properties.catalog">
           <aside class="filters-column">
             <app-filter-sidebar [initialFilters]="filters" (filtersChanged)="applyFilters($event)" />
           </aside>
           <section class="results-column">
             <div class="view-switch" aria-label="Visualização dos imóveis">
-              <button type="button" class="btn btn-secondary" [attr.aria-pressed]="view === 'lista'" (click)="changeView('lista')">Lista</button>
-              <button type="button" class="btn btn-secondary" [attr.aria-pressed]="view === 'mapa'" (click)="changeView('mapa')">Mapa</button>
+              <button type="button" class="btn btn-secondary" [attr.aria-pressed]="view === 'lista'" (click)="changeView('lista')">{{site.text('properties','list_label')}}</button>
+              <button type="button" class="btn btn-secondary" [attr.aria-pressed]="view === 'mapa'" (click)="changeView('mapa')">{{site.text('properties','map_label')}}</button>
             </div>
             @if (loading) {
               <app-loading />
@@ -129,6 +131,7 @@ import { MapResponse } from '@core/models/api.models';
   `],
 })
 export class PropertiesComponent implements OnInit {
+ readonly site=inject(SiteContentService);
   private readonly propertyService = inject(PropertyService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

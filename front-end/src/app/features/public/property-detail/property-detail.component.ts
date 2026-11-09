@@ -1,3 +1,5 @@
+import { SiteContentService } from '@core/services/site-content.service';
+import { SiteSectionDirective } from '@shared/components/site-section.directive';
 import { PhotoComponent } from '@shared/components/photo.component';
 import { CurrencyPipe, Location } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
@@ -18,16 +20,16 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
 @Component({
   selector: 'app-property-detail',
   standalone: true,
-  imports: [PhotoComponent, CurrencyPipe, ReactiveFormsModule, HeaderComponent, FooterComponent, LoadingComponent, PropertyCardComponent, PropertyMapComponent],
+  imports: [SiteSectionDirective, PhotoComponent, CurrencyPipe, ReactiveFormsModule, HeaderComponent, FooterComponent, LoadingComponent, PropertyCardComponent, PropertyMapComponent],
   template: `
     <div class="page-shell">
       <app-header />
       @if (loading) {
         <app-loading />
       } @else if (property) {
-        <main class="container detail">
-          <button class="back-button" type="button" (click)="goBack()">← Voltar</button>
-          <section class="gallery">
+        <main class="container detail" data-site-page="detail">
+          <button class="back-button" type="button" (click)="goBack()">{{site.text('detail','back_label')}}</button>
+          <section class="gallery" appSiteSection="detail.gallery">
             <div class="gallery-stage" tabindex="0" role="group" aria-label="Galeria do imóvel. Use as setas ou deslize para navegar."
               (keydown.arrowleft)="movePhoto(-1); $event.preventDefault()" (keydown.arrowright)="movePhoto(1); $event.preventDefault()"
               (pointerdown)="startSwipe($event)" (pointerup)="finishSwipe($event)" (pointercancel)="cancelSwipe()">
@@ -45,8 +47,8 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
             </div>
           </section>
 
-          <section class="content">
-            <div>
+          <section class="content" style="order:2">
+            <div appSiteSection="detail.description">
               <span class="eyebrow">{{ property.bairro }} · {{ property.cidade }}</span>
               <h1>{{ property.titulo }}</h1>
               <strong class="price">{{ numberValue(property.valor) | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</strong>
@@ -65,22 +67,22 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
               }
             </div>
 
-            <aside class="lead-card card">
-              <h2>Tenho interesse</h2>
+            <aside class="lead-card card" appSiteSection="detail.interest">
+              <h2>{{site.text('detail','interest_title')}}</h2>
               <form [formGroup]="leadForm" (ngSubmit)="sendLead()">
                 <input formControlName="nome" placeholder="Nome">
                 <input formControlName="email" placeholder="Email">
                 <input formControlName="telefone" placeholder="Telefone">
                 <textarea formControlName="mensagem" placeholder="Mensagem"></textarea>
-                <button class="btn btn-primary" type="submit" [disabled]="leadForm.invalid">Enviar interesse</button>
+                <button class="btn btn-primary" type="submit" [disabled]="leadForm.invalid">{{site.text('detail','interest_button')}}</button>
               </form>
               <a class="btn btn-secondary whatsapp" [href]="whatsappLink" target="_blank" rel="noopener noreferrer" aria-label="Conversar pelo WhatsApp" title="Conversar pelo WhatsApp"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 32 32" fill="currentColor"><path d="M16 .8A15.1 15.1 0 0 0 3.04 23.7L.9 31l7.5-2A15.2 15.2 0 1 0 16 .8Zm0 27.6a12.4 12.4 0 0 1-6.3-1.7l-.45-.27-4.45 1.17 1.2-4.34-.3-.47a12.45 12.45 0 1 1 10.3 5.61Zm6.82-9.27c-.37-.19-2.21-1.1-2.55-1.22-.34-.12-.59-.19-.83.19-.25.37-.96 1.22-1.18 1.46-.22.25-.43.28-.8.1-.37-.19-1.57-.58-2.99-1.85-1.1-.99-1.85-2.21-2.07-2.58-.22-.37-.02-.57.16-.75.17-.17.37-.43.56-.65.19-.22.25-.37.37-.62.12-.25.06-.46-.03-.65-.09-.19-.83-2.01-1.14-2.76-.3-.72-.6-.62-.83-.63h-.7c-.25 0-.65.09-.99.46-.34.37-1.3 1.27-1.3 3.1s1.33 3.6 1.51 3.84c.19.25 2.6 3.97 6.3 5.57.88.38 1.57.61 2.11.78.89.28 1.7.24 2.34.15.71-.11 2.21-.9 2.52-1.77.31-.87.31-1.61.22-1.77-.09-.15-.34-.25-.71-.43Z"/></svg></a>
             </aside>
           </section>
 
           @if (similar.length) {
-            <section class="section">
-              <h2>Imóveis semelhantes</h2>
+            <section class="section" appSiteSection="detail.similar">
+              <h2>{{site.text('detail','similar_title')}}</h2>
               <div class="similar-grid">
                 @for (item of similar; track item.id) {
                   <app-property-card [property]="item" />
@@ -287,6 +289,7 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
   `],
 })
 export class PropertyDetailComponent implements OnInit {
+ readonly site=inject(SiteContentService);
   readonly typeLabel = propertyTypeLabel;
 
   get area() {
@@ -350,7 +353,7 @@ export class PropertyDetailComponent implements OnInit {
 
   get whatsappLink(): string {
     const text = encodeURIComponent(`Olá, tenho interesse no imóvel ${this.property?.titulo}`);
-    return `https://wa.me/${environment.whatsappNumber}?text=${text}`;
+    return `${this.site.whatsapp()}?text=${text}`;
   }
 
   numberValue(value: string | number): number {

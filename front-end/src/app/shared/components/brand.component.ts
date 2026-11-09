@@ -1,10 +1,11 @@
-import { Component, Input } from '@angular/core';
+import { SiteContentService } from '@core/services/site-content.service';
+import { Component, Input, inject } from '@angular/core';
 
 @Component({
   selector: 'app-brand', standalone: true,
-  template: `<div class="brand" [attr.aria-label]="showSecondary ? 'SERVE byJB — Negócios Imobiliários, CRECI RESP 15202' : 'SERVE byJB'">
-    <div class="main-word">SERVE<span>byJB</span></div>
-    @if (showSecondary) { <div class="secondary-word">NEGÓCIOS IMOBILIÁRIOS<span>CRECI RESP 15202</span></div> }
+  template: `<div class="brand" [attr.aria-label]="site.text('general','brand_name') + ' ' + site.text('general','brand_signature')">
+    @if(site.text('general','logo')) { <img class="brand-logo" [src]="site.text('general','logo')" [alt]="site.text('general','brand_name')" style="max-width:180px;max-height:64px;object-fit:contain"> } @else { <div class="main-word">{{site.text('general','brand_name')}}<span>{{site.text('general','brand_signature')}}</span></div> }
+    @if (showSecondary) { <div class="secondary-word">NEGÓCIOS IMOBILIÁRIOS<span>{{site.text('general','creci')}}</span></div> }
   </div>`,
   styles: [`
     .brand { display:flex; align-items:center; gap:clamp(24px,3vw,44px); width:max-content; max-width:100%; color:#fff; white-space:nowrap; }
@@ -15,4 +16,4 @@ import { Component, Input } from '@angular/core';
     @media(max-width:560px) { .brand{gap:14px;} .main-word{font-size:clamp(22px,5vw,30px)} .secondary-word{font-size:clamp(8px,1.8vw,10px)} .secondary-word span{font-size:9px} }
   `]
 })
-export class BrandComponent { @Input() showSecondary = false; }
+export class BrandComponent { readonly site=inject(SiteContentService); @Input() showSecondary = false; }

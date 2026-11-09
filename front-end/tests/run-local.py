@@ -22,6 +22,13 @@ with tempfile.TemporaryDirectory(prefix='serve-regression-') as scratch:
     env = dict(os.environ, DEBUG='False', SECURE_SSL_REDIRECT='False', DJANGO_SETTINGS_MODULE='config.test_settings', TEST_DATABASE_NAME=str(Path(scratch) / 'db.sqlite3'),
                TEST_MEDIA_ROOT=str(Path(scratch) / 'media'), E2E_USERNAME='local-regression-admin',
                E2E_PASSWORD=secrets.token_urlsafe(24))
+    if not env.get('E2E_IMAGE'):
+        from PIL import Image
+        image = Image.open(root / 'front-end/src/assets/hero-joao-pessoa.jpg')
+        image.thumbnail((800, 600))
+        fixture = Path(scratch) / 'fixture.jpg'
+        image.save(fixture, quality=85)
+        env['E2E_IMAGE'] = str(fixture)
     manage = [sys.executable, 'manage.py']
     subprocess.run(manage + ['migrate', '--settings=config.test_settings', '--noinput'], cwd=root / 'back-end', env=env, check=True, stdout=subprocess.DEVNULL)
     subprocess.run(manage + ['shell', '--settings=config.test_settings', '-c',
@@ -63,6 +70,7 @@ with tempfile.TemporaryDirectory(prefix='serve-regression-') as scratch:
 
         def do_POST(self): self.proxy()
         def do_PATCH(self): self.proxy()
+        def do_PUT(self): self.proxy()
         def do_DELETE(self): self.proxy()
         def log_message(self, *_): pass
 

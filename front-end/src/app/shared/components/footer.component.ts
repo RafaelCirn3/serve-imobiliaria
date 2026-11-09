@@ -1,30 +1,32 @@
-import { Component } from '@angular/core';
+import { SiteContentService } from '@core/services/site-content.service';
+import { SiteSectionDirective } from '@shared/components/site-section.directive';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { BrandComponent } from './brand.component';
 
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [RouterLink, BrandComponent],
+  imports: [SiteSectionDirective, RouterLink, BrandComponent],
   template: `
-    <footer>
+    <footer appSiteSection="general.footer">
       <div class="container footer-grid">
         <div>
           <app-brand />
-          <small class="footer-creci">RESP CRECI 15202</small>
-          <p>Curadoria imobiliária em João Pessoa, Cabedelo e Bananeiras, com foco em localização e atendimento direto.</p>
+          <small class="footer-creci">{{site.text('general','creci')}}</small>
+          <p>{{site.text('general','footer_description')}}</p>
         </div>
         <div>
-          <strong>Navegação</strong>
-          <a routerLink="/imoveis">Imóveis</a>
-          <a routerLink="/sobre">Sobre</a>
-          <a routerLink="/contato">Contato</a>
+          <strong>{{site.text('general','footer_nav')}}</strong>
+          <a routerLink="/imoveis">{{site.text('general','nav_properties')}}</a>
+          <a routerLink="/sobre">{{site.text('general','nav_about')}}</a>
+          <a routerLink="/contato">{{site.text('general','nav_contact')}}</a>
         </div>
         <div>
-          <strong>Contato</strong>
-          <a href="https://wa.me/5583988168587" target="_blank" rel="noopener noreferrer">WhatsApp: (83) 98816-8587</a>
-          <a href="mailto:servenegociosimobiliarios@gmail.com">servenegociosimobiliarios&#64;gmail.com</a>
-          <span>Atendimento em João Pessoa, Cabedelo e Bananeiras/PB</span>
+          <strong>{{site.text('general','footer_contact')}}</strong>
+          <a [href]="site.whatsapp()" target="_blank" rel="noopener noreferrer">WhatsApp: {{site.text('general','phone_label')}}</a>
+          <a [href]="'mailto:' + site.text('general','email')">{{site.text('general','email')}}</a>
+          <span>{{site.text('general','service_area')}}</span>
         </div>
       </div>
     </footer>
@@ -78,6 +80,6 @@ import { BrandComponent } from './brand.component';
     }
   `],
 })
-export class FooterComponent {}
+export class FooterComponent { readonly site=inject(SiteContentService);}
 
 

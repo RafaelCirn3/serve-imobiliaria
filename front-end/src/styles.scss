@@ -301,3 +301,21 @@ body:has(app-sale-dialog) app-footer footer { padding-bottom: 110px; }
 .admin-layout .content .dialog p { color:#647580; }
 
 @media(max-width:760px) { .admin-layout .content .admin-header { flex-direction:row; flex-wrap:wrap; align-items:flex-start; } .admin-layout .content .admin-header>div { flex:1; min-width:180px; } }
+
+[data-site-section][hidden] { display:none !important; }
+[data-site-page] { display:flex; flex-direction:column; }
+[data-site-page] > app-header { order:-100; }
+[data-site-page] > app-footer { order:10000; }
+[data-site-tone=light] { background:#f5f7f8 !important; color:#23313a !important; }
+[data-site-tone=light] p,[data-site-tone=light] h1,[data-site-tone=light] h2,[data-site-tone=light] h3,[data-site-tone=light] span,[data-site-tone=light] strong { color:inherit !important; }
+[data-site-tone=light] .card { background:#fff; border-color:#dae2e7; }
+[data-site-tone=dark] { background:#111417 !important; color:#f5f5f5 !important; }
+
+[data-site-tone=light] a,[data-site-tone=light] nav { color:#23313a !important; }
+[data-site-tone=light] app-brand .brand { color:#23313a; }
+[data-site-tone=light] .login { color:#23313a !important; border-color:#b8c5ce; }
+[data-site-tone=light] .btn-primary { background:#23313a; color:white !important; }
+[data-site-tone=light] .btn-secondary { color:#23313a; border-color:#bac8d0; }
+[data-site-align=center] h1,[data-site-align=center] h2,[data-site-align=center] p { margin-inline:auto; }
+[data-site-tone=light] .section { background:transparent; }
+.detail[data-site-page]>.back-button { align-self:flex-start; order:0; }
