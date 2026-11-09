@@ -17,8 +17,8 @@ import { BrandComponent } from './brand.component';
           <a routerLink="/imoveis" routerLinkActive="active">{{site.text('general','nav_properties')}}</a>
           <a routerLink="/sobre" routerLinkActive="active">{{site.text('general','nav_about')}}</a>
           <a routerLink="/contato" routerLinkActive="active">{{site.text('general','nav_contact')}}</a>
+          <a routerLink="/admin">{{site.text('general','nav_login')}}</a>
         </nav>
-        <a class="login" routerLink="/admin/login">{{site.text('general','nav_login')}}</a>
       </div>
     </header>
   `,
@@ -78,20 +78,6 @@ import { BrandComponent } from './brand.component';
     nav a:hover::after,
     nav a.active::after {
       transform: scaleX(1);
-    }
-
-    .login {
-      border: 1px solid rgba(255, 255, 255, 0.42);
-      border-radius: 8px;
-      color: #ffffff;
-      font-weight: 800;
-      padding: 10px 14px;
-      transition: background 0.18s ease, transform 0.18s ease;
-    }
-
-    .login:hover {
-      background: rgba(255, 255, 255, 0.08);
-      transform: translateY(-1px);
     }
 
     @media (max-width: 860px) {

@@ -18,7 +18,7 @@ export const SITE_DEFAULTS: SiteDocument = {
       "nav_properties": "Imóveis",
       "nav_about": "Sobre nós",
       "nav_contact": "Contato",
-      "nav_login": "Entrar",
+      "nav_login": "Dashboard",
       "footer_nav": "Navegação",
       "footer_contact": "Contato",
       "floating_label": "Quer Vender ou Alugar seu Imóvel? Descreva Aqui!"
