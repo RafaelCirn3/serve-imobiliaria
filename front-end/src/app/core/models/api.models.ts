@@ -6,7 +6,7 @@ export interface PaginatedResponse<T> {
 }
 
 export type PropertyStatus = 'rascunho' | 'publicado' | 'vendido' | 'alugado' | 'inativo';
-export type PropertyType = 'apartamento' | 'casa' | 'cobertura' | 'terreno' | 'comercial' | 'condominio' | 'flat';
+export type PropertyType = 'apartamento' | 'casa' | 'cobertura' | 'terreno' | 'comercial' | 'condominio' | 'flat' | 'lancamento';
 export type PropertyPurpose = 'venda' | 'aluguel';
 export type LeadStatus = 'novo' | 'em_atendimento' | 'finalizado' | 'descartado';
 
@@ -49,6 +49,7 @@ export interface Property {
   suites: number;
   banheiros: number;
   vagas: number;
+  vagas_rotativas: boolean;
   aceita_financiamento: boolean;
   mobiliado: boolean;
   possui_piscina: boolean;
@@ -81,6 +82,7 @@ export interface PropertyFilters {
   quartos?: string | number;
   suites?: string | number;
   vagas?: string | number;
+  vagas_rotativas?: string;
   area_min?: string | number;
   area_max?: string | number;
   area_total_min?: string | number;

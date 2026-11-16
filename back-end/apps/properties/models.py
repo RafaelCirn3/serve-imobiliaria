@@ -14,6 +14,7 @@ class Property(models.Model):
         COMERCIAL = "comercial", "Comercial"
         CONDOMINIO = "condominio", "Condomínio fechado"
         FLAT = "flat", "Flat"
+        LANCAMENTO = "lancamento", "Lançamento"
 
     class Finalidade(models.TextChoices):
         VENDA = "venda", "Venda"
@@ -63,6 +64,7 @@ class Property(models.Model):
     suites = models.PositiveSmallIntegerField(default=0)
     banheiros = models.PositiveSmallIntegerField(default=0)
     vagas = models.PositiveSmallIntegerField(default=0)
+    vagas_rotativas = models.BooleanField(default=False)
     aceita_financiamento = models.BooleanField(default=False)
     mobiliado = models.BooleanField(default=False)
     possui_piscina = models.BooleanField(default=False)

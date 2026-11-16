@@ -38,6 +38,16 @@ class CustomizationTests(APITestCase):
         response=self.put(data);self.assertEqual(response.status_code,200,response.data)
         self.assertEqual(self.client.get('/api/site-content/').data['config']['about']['title'],'Sobre personalizado')
 
+    def test_carousel_interval_is_validated_and_published(self):
+        data=self.document()
+        self.assertEqual(data['config']['home']['hero_interval_seconds'],'3')
+        for value in ('0','61','abc'):
+            data['config']['home']['hero_interval_seconds']=value
+            self.assertEqual(self.put(data).status_code,400)
+        data['config']['home']['hero_interval_seconds']='5'
+        self.assertEqual(self.put(data).status_code,200)
+        self.assertEqual(self.client.get('/api/site-content/').data['config']['home']['hero_interval_seconds'],'5')
+
     def test_all_pages_general_and_home_content_save_together(self):
         data=self.document()
         for page in ['home','properties','about','contact','detail']:data['config'][page][next(iter(data['config'][page]))]='Texto atualizado'

@@ -41,6 +41,15 @@ export async function customizationFlow(page,context,base,photo,name){
  await slides.locator('input[type=file]').last().setInputFiles(photo('preview.jpg'));
  await frame.locator('.hero-slide').first().waitFor();
  await page.waitForFunction(()=>!document.body.textContent.includes('Preparando imagem…'));
+ await input('Intervalo do carrossel').fill('1');
+ await slides.getByRole('button',{name:'+ Adicionar',exact:true}).click();
+ await slides.locator('input[type=file]').last().setInputFiles(photo('preview-second.jpg'));
+ await page.waitForFunction(()=>!document.body.textContent.includes('Preparando imagem…'));
+ await frame.locator('.hero-slide').nth(1).waitFor({state:'attached'});
+ const visible=frame.locator('.hero-controls span');
+ const previous=await visible.textContent();
+ await frame.locator('.hero-controls span').filter({hasNotText:previous.trim()}).waitFor();
+ await frame.getByRole('button',{name:'Próximo slide',exact:true}).click();
  const vitrines=page.locator('.editor-section').filter({has:page.getByRole('heading',{name:'Vitrines de imóveis',exact:true})});
  await vitrines.getByRole('button',{name:'+ Adicionar',exact:true}).click();
  await vitrines.locator('input[type=checkbox]').last().check();
@@ -50,7 +59,7 @@ export async function customizationFlow(page,context,base,photo,name){
  await page.getByRole('button',{name:'Salvar alterações',exact:true}).first().click();
  await page.getByText('Alterações salvas e publicadas no site.',{exact:true}).waitFor();
  publicData=await (await context.request.get(base+'/api/site-content/')).json();
- assert.equal(publicData.config.about.title,title);assert.equal(publicData.config.contact.title,contactTitle);assert.equal(publicData.banners.length,original.banners.length+1);
+ assert.equal(publicData.config.about.title,title);assert.equal(publicData.config.contact.title,contactTitle);assert.equal(publicData.config.home.hero_interval_seconds,'1');assert.equal(publicData.banners.length,original.banners.length+2);
  const visitor=await context.newPage();await visitor.goto(base+'/sobre');await visitor.getByRole('heading',{name:title,exact:true}).waitFor();await visitor.close();
  await page.getByRole('button',{name:'Sobre nós',exact:true}).click();await input('Título da página').fill('Descartar esta alteração');
  await frame.getByRole('heading',{name:'Descartar esta alteração',exact:true}).waitFor();

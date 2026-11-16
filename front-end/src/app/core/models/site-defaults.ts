@@ -6,7 +6,7 @@ export const SITE_DEFAULTS: SiteDocument = {
       "brand_name": "SERVE",
       "brand_signature": "byJB",
       "creci": "RESP CRECI 15202",
-      "logo": "",
+      "logo": "/assets/serve-official.svg",
       "phone": "5583988168587",
       "phone_label": "(83) 98816-8587",
       "email": "servenegociosimobiliarios@gmail.com",
@@ -24,6 +24,7 @@ export const SITE_DEFAULTS: SiteDocument = {
       "floating_label": "Quer Vender ou Alugar seu Imóvel? Descreva Aqui!"
     },
     "home": {
+      "hero_interval_seconds": "3",
       "search_title": "Encontre seu imóvel ideal",
       "search_body": "Pesquise por bairro, cidade, tipo de imóvel e faixa de preço.",
       "all_properties": "Ver todos os imóveis →",

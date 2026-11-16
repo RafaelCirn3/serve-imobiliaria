@@ -3,7 +3,7 @@ import { CurrencyPipe } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Property } from '@core/models/api.models';
-import { propertyArea, propertyTypeLabel } from '@core/models/property-options';
+import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/property-options';
 
 @Component({
   selector: 'app-property-card',
@@ -25,7 +25,7 @@ import { propertyArea, propertyTypeLabel } from '@core/models/property-options';
         <div class="features">
           <span>{{ property.quartos }} quartos</span>
           <span>{{ property.suites }} suítes</span>
-          <span>{{ property.vagas }} vagas</span>
+          <span>{{ parkingLabel(property) }}</span>
           <span>{{ area.label }}: {{ area.value ?? '—' }} m²</span>
         </div>
       </div>
@@ -135,6 +135,7 @@ import { propertyArea, propertyTypeLabel } from '@core/models/property-options';
 })
 export class PropertyCardComponent {
   readonly typeLabel = propertyTypeLabel;
+  readonly parkingLabel = parkingLabel;
   @Input({ required: true }) property!: Property;
 
   get area() { return propertyArea(this.property); }

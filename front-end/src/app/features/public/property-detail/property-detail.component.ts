@@ -7,7 +7,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { environment } from '@env/environment';
 import { Property } from '@core/models/api.models';
-import { propertyArea, propertyTypeLabel } from '@core/models/property-options';
+import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/property-options';
 import { LeadService } from '@core/services/lead.service';
 import { NotificationService } from '@core/services/notification.service';
 import { PropertyService } from '@core/services/property.service';
@@ -57,7 +57,7 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
                 <span>{{ property.quartos }} quartos</span>
                 <span>{{ property.suites }} suítes</span>
                 <span>{{ property.banheiros }} banheiros</span>
-                <span>{{ property.vagas }} vagas</span>
+                <span>{{ parkingLabel(property) }}</span>
                 <span>{{ area.label }}: {{ area.value ?? '—' }} m²</span>
               </div>
               <p class="description">{{ property.descricao }}</p>
@@ -291,6 +291,7 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
 export class PropertyDetailComponent implements OnInit {
  readonly site=inject(SiteContentService);
   readonly typeLabel = propertyTypeLabel;
+  readonly parkingLabel = parkingLabel;
 
   get area() {
     return this.property ? propertyArea(this.property) : { value: null, label: 'Área' };

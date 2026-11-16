@@ -8,6 +8,7 @@ export const PROPERTY_TYPES: ReadonlyArray<{ value: PropertyType; label: string 
   { value: 'flat', label: 'Flat' },
   { value: 'cobertura', label: 'Cobertura' },
   { value: 'comercial', label: 'Comercial' },
+  { value: 'lancamento', label: 'Lançamento' },
 ];
 
 export const SERVICE_CITIES = ['João Pessoa', 'Cabedelo', 'Bananeiras'] as const;
@@ -18,6 +19,12 @@ export function normalizedLocation(value: unknown): string {
 
 export function propertyTypeLabel(type: PropertyType): string {
   return PROPERTY_TYPES.find((option) => option.value === type)?.label ?? type;
+}
+
+export function parkingLabel(property: Property): string {
+  return property.vagas_rotativas
+    ? (property.vagas > 0 ? `${property.vagas} vaga(s) rotativa(s)` : 'Vagas rotativas')
+    : `${property.vagas} vagas`;
 }
 
 export function propertyArea(property: Property): { value: string | number | null | undefined; label: string } {
