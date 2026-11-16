@@ -14,7 +14,7 @@ const photo = name => ({ name, mimeType: 'image/jpeg', buffer: fixture });
 const results = [];
 for (const [name, engine, options] of [
   ['desktop-chromium', chromium, { viewport: { width: 1440, height: 900 } }],
-  ['mobile-webkit', webkit, { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 3 }],
+  [process.env.E2E_MOBILE_CHROMIUM ? 'mobile-chromium' : 'mobile-webkit', process.env.E2E_MOBILE_CHROMIUM ? chromium : webkit, { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 3 }],
 ]) {
  const browser = await engine.launch({ headless: true });
  const context = await browser.newContext(options);
@@ -26,22 +26,15 @@ for (const [name, engine, options] of [
  const tab = label => page.locator('nav.tabs button').filter({ hasText: label }).click();
  try {
   await page.goto(base);
-  const cta = page.locator('.sale-trigger');
+  const cta = page.locator('.hero .owner-hero-cta');
   await cta.waitFor({ state: 'visible' });
   const before = await cta.boundingBox();
   assert(before && before.y > 0 && before.y + before.height <= options.viewport.height);
-  await page.evaluate(() => {
-    const button = document.querySelector('.sale-trigger');
-    const r = button.getBoundingClientRect();
-    const input = document.createElement('input'); input.id = 'overlap-probe';
-    Object.assign(input.style, { position: 'fixed', left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`, zIndex: '999999' });
-    document.body.append(input);
-  });
-  assert(await cta.evaluate(button => { const r = button.getBoundingClientRect(); return document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2) === button; }));
-  await page.evaluate(() => document.querySelector('#overlap-probe').remove());
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await page.waitForTimeout(500);
-  assert(Math.abs((await cta.boundingBox()).y - before.y) < 2);
+  assert.equal(await page.locator('.sale-trigger').count(),0);
+  const search=await page.locator('.search-section').boundingBox();
+  assert(search && before.y+before.height<=search.y);
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+  await page.waitForFunction(()=>document.querySelector('app-header .brand-logo')?.naturalWidth>0);
   await cta.click();
   await page.locator('dialog[open]').waitFor();
   await page.getByRole('button', { name: 'Enviar imóvel', exact: true }).click();
@@ -89,6 +82,8 @@ for (const [name, engine, options] of [
   assert(await field('cep').isVisible()); assert(await page.locator('.error-summary').getByText(/CEP/).isVisible());
   await field('cep').fill('');
   await tab('Publicação'); await field('status').selectOption('publicado'); await field('destaque').check();
+  await tab('Informações básicas'); await field('tipo').selectOption('lancamento');
+  await tab('Características'); await field('vagas_rotativas').check(); await field('vagas').fill('2');
   await page.getByRole('button', { name: 'Salvar', exact: true }).click();
   await page.waitForURL(/\/admin\/imoveis\/\d+\/editar$/);
   await tab('Fotos');
@@ -113,6 +108,13 @@ for (const [name, engine, options] of [
   const tokenForRead = await page.evaluate(() => localStorage.getItem('serve_access_token'));
   const propertyResponse = await context.request.get(`${base}/api/admin/imoveis/${propertyId}/`, {headers:{Authorization:`Bearer ${tokenForRead}`}});
   const property = await propertyResponse.json();
+  assert.equal(property.tipo,'lancamento'); assert.equal(property.vagas_rotativas,true);
+  await page.goto(base+'/imoveis');
+  await field('tipo').selectOption('lancamento'); await field('vagas_rotativas').selectOption('true');
+  await field('valor_min').fill('200000'); await field('valor_max').fill('300000');
+  await page.getByRole('button',{name:'Aplicar',exact:true}).click();
+  await page.getByText(property.titulo,{exact:true}).first().waitFor();
+  await page.getByText('2 vaga(s) rotativa(s)',{exact:true}).first().waitFor();
   // An old HTTP media URL must be upgraded to this site's media path in the UI.
   await page.route(`**/api/imoveis/${property.slug}/`, async route => { const response=await route.fetch();const data=await response.json();data.imagens.forEach(image=>{image.imagem='http://old-origin.invalid'+new URL(image.imagem,base).pathname;});await route.fulfill({response,json:data}); });
   await page.goto(`${base}/imoveis/${property.slug}`);

@@ -48,6 +48,7 @@ function validRanges(control: AbstractControl): ValidationErrors | null {
       <div class="pair">
         <label>Quartos (mín.)<input type="number" min="0" step="1" formControlName="quartos"></label>
         <label>Vagas (mín.)<input type="number" min="0" step="1" formControlName="vagas"></label>
+        <label>Modalidade de garagem<select formControlName="vagas_rotativas"><option value="">Todas</option><option value="true">Rotativa</option><option value="false">Não rotativa</option></select></label>
       </div>
       <div class="pair">
         <label>Área privativa mín. (m²)<input type="number" min="0" step="0.01" formControlName="area_min"></label>
@@ -167,6 +168,7 @@ export class FilterSidebarComponent implements OnChanges {
     valor_max: ['', Validators.min(0)],
     quartos: ['', Validators.min(0)],
     vagas: ['', Validators.min(0)],
+    vagas_rotativas: [''],
     area_min: ['', Validators.min(0)],
     area_max: ['', Validators.min(0)],
     area_total_min: ['', Validators.min(0)],

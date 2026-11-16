@@ -89,6 +89,7 @@ import { MapProperty } from '@core/models/api.models';
             <label class="field">Suítes<input type="number" min="0" step="1" inputmode="numeric" formControlName="suites"><app-control-hint [control]="form.controls.suites" [required]="false" /></label>
             <label class="field">Banheiros<input type="number" min="0" step="1" inputmode="numeric" formControlName="banheiros"><app-control-hint [control]="form.controls.banheiros" [required]="false" /></label>
             <label class="field">Vagas<input type="number" min="0" step="1" inputmode="numeric" formControlName="vagas"><app-control-hint [control]="form.controls.vagas" [required]="false" /></label>
+            <label class="field">Vagas rotativas <input type="checkbox" formControlName="vagas_rotativas"></label>
             <label class="check"><input type="checkbox" formControlName="aceita_financiamento"> Aceita financiamento</label>
             <label class="check"><input type="checkbox" formControlName="mobiliado"> Mobiliado</label>
             <label class="check"><input type="checkbox" formControlName="possui_piscina"> Piscina</label>
@@ -261,6 +262,7 @@ export class PropertyFormComponent implements OnInit, OnDestroy {
     suites: [0, [Validators.min(0), Validators.max(32767), Validators.pattern(/^\d+$/)]],
     banheiros: [0, [Validators.min(0), Validators.max(32767), Validators.pattern(/^\d+$/)]],
     vagas: [0, [Validators.min(0), Validators.max(32767), Validators.pattern(/^\d+$/)]],
+    vagas_rotativas: [false],
     aceita_financiamento: [false],
     mobiliado: [false],
     possui_piscina: [false],
@@ -313,7 +315,7 @@ export class PropertyFormComponent implements OnInit, OnDestroy {
 
     const values = this.form.getRawValue();
     const payload = { ...values, latitude: values.latitude || null, longitude: values.longitude || null,
-      quartos: values.quartos ?? 0, suites: values.suites ?? 0, banheiros: values.banheiros ?? 0, vagas: values.vagas ?? 0,
+      quartos: values.quartos ?? 0, suites: values.suites ?? 0, banheiros: values.banheiros ?? 0, vagas: values.vagas ?? 0, vagas_rotativas: values.vagas_rotativas,
     } as PropertyPayload;
     const request = this.propertyId
       ? this.propertiesService.updateProperty(this.propertyId, payload)

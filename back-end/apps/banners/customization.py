@@ -36,6 +36,7 @@ def validate_config(data):
             value=data[page][key]
             if not isinstance(value,str) or len(value)>(5000 if kind=='textarea' else 500):raise serializers.ValidationError({'config':f'{label}: texto inválido ou muito longo.'})
             if kind=='email':serializers.EmailField().run_validation(value)
+            if kind=='seconds' and (not value.isascii() or not value.isdigit() or not 1<=int(value)<=60):raise serializers.ValidationError({'config':'Intervalo do carrossel deve ser de 1 a 60 segundos.'})
             if kind=='phone' and (not value.isascii() or not value.isdigit() or not 10<=len(value)<=15):raise serializers.ValidationError({'config':'Informe WhatsApp apenas com dígitos, país e DDD.'})
             if kind=='image' and value:
                 if not (value.startswith('/media/') or value.startswith('/assets/') or value.startswith('https://')):raise serializers.ValidationError({'config':f'{label}: imagem não enviada.'})

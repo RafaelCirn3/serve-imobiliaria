@@ -105,6 +105,21 @@ class PropertyProfileTests(APITestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(response.data["tipo"], property_type)
 
+    def test_launch_and_rotating_parking(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.patch(f"/api/admin/imoveis/{self.flat.id}/", {
+            "tipo": "lancamento", "vagas_rotativas": True, "vagas": 2,
+        })
+        self.assertEqual(response.status_code, 200)
+        self.client.force_authenticate(user=None)
+        result = self.client.get("/api/imoveis/", {
+            "tipo": "lancamento", "vagas_rotativas": "true", "vagas": 2,
+        })
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.data["count"], 1)
+        self.assertTrue(result.data["results"][0]["vagas_rotativas"])
+        self.assertEqual(result.data["results"][0]["vagas"], 2)
+
 
 class PropertyMapTests(APITestCase):
     def setUp(self):

@@ -37,6 +37,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
           @if (totalPublicProperties !== null) {
             <p aria-live="polite">{{ totalPublicProperties }} {{ totalPublicProperties === 1 ? 'imóvel disponível' : 'imóveis disponíveis' }} no catálogo.</p>
           }
+          <button appSiteSection="general.floating" class="owner-hero-cta" type="button" (click)="saleDialog.open()" aria-haspopup="dialog">{{site.text('general','floating_label')}}</button>
         </div>
         @if (banners.length > 1) {
           <div class="hero-controls">
@@ -204,6 +205,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
     .hero-slide::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,20,26,.68), rgba(10,20,26,.12) 75%), linear-gradient(0deg, rgba(10,20,26,.75), transparent 65%); }
     .hero > .container, .hero-controls { position: relative; z-index: 1; }
     .hero-cta { width: fit-content; }
+    .owner-hero-cta { justify-self:start; max-width:100%; border:1px solid #ffffff50; border-radius:28px; background:#f5f5f5; color:#111417; padding:14px 20px; font-weight:800; box-shadow:0 6px 28px #0006; white-space:normal; }
     .hero-controls { display:flex; justify-content:center; align-items:center; gap:18px; z-index:2; }
     .hero-controls button { border:1px solid #aaa; background:#171c20c9; color:white; border-radius:50%; width:40px; height:40px; font-size:26px; }
     .hero-content {
@@ -211,7 +213,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
       gap: 16px;
       width: min(560px, calc(100% - 48px));
       max-width: 560px;
-      transform: translateY(58px);
+      transform: none;
       margin-left: clamp(24px, 3.5vw, 60px);
       margin-right: auto;
       text-shadow: 0 2px 18px rgba(0, 0, 0, 0.34);
@@ -415,7 +417,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
       .hero-content {
         width: calc(100% - 32px);
         max-width: 700px;
-        transform: translateY(18px);
+        transform: none;
         margin-left: 16px;
         margin-right: 16px;
       }
@@ -478,7 +480,7 @@ export class HomeComponent implements OnInit {
     return Array.from({ length: this.maxFeaturedIndex + 1 }, (_, index) => index);
   }
 
-  constructor(){effect(()=>{
+  constructor(){effect((onCleanup)=>{
     const document=this.site.document();this.content=document.home;
     this.banners=document.banners.filter(row=>row.ativo).sort((a,b)=>a.ordem-b.ordem);
     this.regions=document.regions.filter(row=>row.ativo).slice(0,6);
@@ -486,6 +488,12 @@ export class HomeComponent implements OnInit {
     this.tourismImages=document.section_images.filter(row=>row.active && row.section==='tourism').sort((a,b)=>a.position-b.position);
     this.investmentImages=document.section_images.filter(row=>row.active && row.section==='investment').sort((a,b)=>a.position-b.position);
     this.heroIndex=Math.min(this.heroIndex,Math.max(0,this.banners.length-1));this.tourismIndex=Math.min(this.tourismIndex,Math.max(0,this.tourismImages.length-1));this.investmentIndex=Math.min(this.investmentIndex,Math.max(0,this.investmentImages.length-1));
+    const seconds=Number(this.site.text('home','hero_interval_seconds'));
+    const interval=Number.isInteger(seconds)&&seconds>=1&&seconds<=60?seconds:3;
+    if(this.banners.length>1){
+      const timer=setInterval(()=>this.moveHero(1),interval*1000);
+      onCleanup(()=>clearInterval(timer));
+    }
   });}
   ngOnInit(): void {
     this.propertyService.listPublicProperties().subscribe({

@@ -62,6 +62,7 @@ class PropertyFilter(django_filters.FilterSet):
             "quartos",
             "suites",
             "vagas",
+            "vagas_rotativas",
             "area_min",
             "area_max",
             "area_total_min",

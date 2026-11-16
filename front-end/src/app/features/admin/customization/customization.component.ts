@@ -29,8 +29,9 @@ import { PhotoComponent } from '@shared/components/photo.component';
     @for(field of draft.fields[selected];track field.key){<label class="field" [class.full]="field.type==='textarea' || field.type==='image'">{{field.label}}
       @if(field.type==='textarea'){<textarea [attr.maxlength]="field.max" [(ngModel)]="draft.config[selected][field.key]" (ngModelChange)="change()" rows="3"></textarea>}
       @else if(field.type==='image'){<div class="image-field"><app-photo [src]="draft.config[selected][field.key]" [alt]="field.label" [eager]="true"/><div><input type="file" accept="image/*,.heic,.heif" [attr.aria-label]="field.label" (change)="pickConfigImage(field.key,$event)"><small>JPEG, PNG, WebP ou HEIC. A imagem só entra no site ao salvar.</small><button class="btn btn-secondary" type="button" (click)="draft.config[selected][field.key]='';change()">Remover imagem</button></div></div>}
+      @else if(field.type==='seconds'){<input type="text" inputmode="numeric" pattern="[1-9]|[1-5][0-9]|60" maxlength="2" [(ngModel)]="draft.config[selected][field.key]" (ngModelChange)="change()">}
       @else{<input [type]="field.type==='email' ? 'email' : 'text'" [attr.maxlength]="field.max" [(ngModel)]="draft.config[selected][field.key]" (ngModelChange)="change()">}
-      <small class="field-note">{{field.type==='image' ? 'Imagem personalizável' : (draft.config[selected][field.key].length || 0) + ' / ' + field.max + ' caracteres'}}</small>
+      <small class="field-note">{{field.type==='image' ? 'Imagem personalizável' : field.type==='seconds' ? 'Padrão: 3 segundos. Configure entre 1 e 60.' : (draft.config[selected][field.key].length || 0) + ' / ' + field.max + ' caracteres'}}</small>
     </label>}
    </div></section>
    @if(selected==='home'){

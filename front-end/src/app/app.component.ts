@@ -12,13 +12,14 @@ import { SaleDialogComponent } from './shared/components/sale-dialog.component';
   template: `
     <router-outlet />
     <app-toast />
-    @if (publicPage()) { <app-sale-dialog /> }
+    @if (publicPage()) { <app-sale-dialog [showTrigger]="!homePage()" /> }
   `,
 })
 export class AppComponent {
   private readonly router = inject(Router);
   private readonly url = toSignal(this.router.events.pipe(filter((event) => event instanceof NavigationEnd), map((event) => event.urlAfterRedirects), startWith(this.router.url)), { initialValue: this.router.url });
   readonly publicPage = computed(() => !this.url().split('?')[0].startsWith('/admin'));
+  readonly homePage = computed(() => this.url().split('?')[0] === '/');
 }
 
 
