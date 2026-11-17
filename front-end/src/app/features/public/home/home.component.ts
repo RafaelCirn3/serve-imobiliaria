@@ -423,6 +423,16 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
       }
 
       .hero-content { background: none; border-radius: 0; padding: 0; }
+      .owner-hero-cta {
+        width: 55vw;
+        max-width: min(240px, 100%);
+        min-height: 48px;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.25;
+        text-align: left;
+      }
       .search-section { padding: 28px 0 14px; }
       .featured-section { padding-top: 18px; }
       .featured-heading { align-items:flex-start; flex-wrap:wrap; }

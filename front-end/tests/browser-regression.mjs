@@ -30,6 +30,10 @@ for (const [name, engine, options] of [
   await cta.waitFor({ state: 'visible' });
   const before = await cta.boundingBox();
   assert(before && before.y > 0 && before.y + before.height <= options.viewport.height);
+  if (name.startsWith('mobile')) {
+    assert(before.width <= options.viewport.width * 0.56 && before.width >= options.viewport.width * 0.50);
+    assert(before.height >= 48);
+  }
   assert.equal(await page.locator('.sale-trigger').count(),0);
   const search=await page.locator('.search-section').boundingBox();
   assert(search && before.y+before.height<=search.y);
