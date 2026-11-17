@@ -18,26 +18,29 @@ import { LocationFiltersComponent } from './location-filters.component';
           <option value="aluguel">Alugar</option>
         </select>
       }
-      <select formControlName="tipo" aria-label="Tipo de imóvel">
-        <option value="">Todos os tipos</option>
-        @for (type of propertyTypes; track type.value) {
-          <option [value]="type.value">{{ type.label }}</option>
-        }
-      </select>
-      <app-location-filters [form]="form" [compact]="true" />
-      <select formControlName="valor_max" aria-label="Valor máximo">
-        <option value="">Faixa de preço</option>
-        <option value="500000">Até R$ 500 mil</option>
-        <option value="900000">Até R$ 900 mil</option>
-        <option value="1500000">Até R$ 1,5 mi</option>
-      </select>
+      <button class="btn btn-secondary filters-toggle" type="button" (click)="showFilters = !showFilters" [attr.aria-expanded]="showFilters" aria-controls="home-advanced-filters">{{ showFilters ? '− Filtros' : '+ Filtros' }}{{ activeFilterCount ? ' (' + activeFilterCount + ')' : '' }}</button>
+      <div id="home-advanced-filters" class="advanced-filters" [hidden]="!showFilters">
+        <select formControlName="tipo" aria-label="Tipo de imóvel">
+          <option value="">Todos os tipos</option>
+          @for (type of propertyTypes; track type.value) {
+            <option [value]="type.value">{{ type.label }}</option>
+          }
+        </select>
+        <app-location-filters [form]="form" [compact]="true" />
+        <select formControlName="valor_max" aria-label="Valor máximo">
+          <option value="">Faixa de preço</option>
+          <option value="500000">Até R$ 500 mil</option>
+          <option value="900000">Até R$ 900 mil</option>
+          <option value="1500000">Até R$ 1,5 mi</option>
+        </select>
+      </div>
       <button class="btn btn-primary" type="submit">Buscar</button>
     </form>
   `,
   styles: [`
     .search {
       display: grid;
-      grid-template-columns: 1.3fr 1fr 3fr 1fr auto;
+      grid-template-columns: minmax(0, 1.5fr) auto auto;
       align-items: end;
       gap: 10px;
       padding: 12px;
@@ -50,7 +53,7 @@ import { LocationFiltersComponent } from './location-filters.component';
       width: 100%;
       margin: 0;
       padding: 0;
-      grid-template-columns: minmax(180px,1.5fr) minmax(115px,.8fr) minmax(140px,1fr) minmax(225px,1.6fr) minmax(140px,1fr) auto;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto auto;
       background: transparent;
       border: 0;
       box-shadow: none;
@@ -87,27 +90,35 @@ import { LocationFiltersComponent } from './location-filters.component';
       background: #ffffff;
     }
 
-    @media (max-width: 1120px) {
-      .hero-search { grid-template-columns: repeat(3,minmax(0,1fr)); }
-      .hero-search app-location-filters { grid-column: span 2; }
+    .filters-toggle { min-height: 46px; white-space: nowrap; }
+    .advanced-filters {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) minmax(0, 1fr);
+      gap: 10px;
+      align-items: end;
     }
+    .advanced-filters[hidden] { display: none; }
+    .search > button[type="submit"] { grid-column: -2 / -1; grid-row: 1; }
     @media (max-width: 900px) {
-      .search {
-        grid-template-columns: 1fr 1fr;
-      }
-      .search app-location-filters { grid-column: 1 / -1; }
-      .hero-search { grid-template-columns: 1fr 1fr; }
+      .search, .hero-search { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .search > button[type="submit"] { grid-column: 2; grid-row: 2; }
+      .advanced-filters { grid-template-columns: 1fr 1fr; grid-row: 3; }
+      .advanced-filters app-location-filters { grid-column: 1 / -1; }
     }
-
     @media (max-width: 560px) {
-      .search {
-        grid-template-columns: 1fr;
-      }
-      .hero-search { grid-template-columns: 1fr; }
+      .search, .hero-search, .advanced-filters { grid-template-columns: 1fr; }
+      .search > button[type="submit"], .advanced-filters { grid-row: auto; grid-column: 1; }
     }
   `],
 })
 export class SearchBarComponent {
+  showFilters = false;
+  get activeFilterCount(): number {
+    return Object.entries(this.form.getRawValue()).filter(([key, value]) =>
+      key !== 'search' && key !== 'finalidade' && value !== '' && value != null
+    ).length;
+  }
   readonly propertyTypes = PROPERTY_TYPES;
   readonly cities = SERVICE_CITIES;
   @Input() variant: 'default' | 'hero' = 'default';

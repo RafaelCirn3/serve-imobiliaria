@@ -22,58 +22,61 @@ function validRanges(control: AbstractControl): ValidationErrors | null {
   imports: [ReactiveFormsModule, LocationFiltersComponent],
   template: `
     <form class="filters card" [formGroup]="form" (ngSubmit)="apply()">
-      <h2>Filtros</h2>
+
       <label>Busca<input formControlName="search" placeholder="Título, bairro ou cidade"></label>
-      <app-location-filters [form]="form" />
-      <label>CEP<input formControlName="cep" placeholder="00000-000" maxlength="9"></label>
-      <label>Tipo
-        <select formControlName="tipo">
-          <option value="">Todos</option>
-          @for (type of propertyTypes; track type.value) {
-            <option [value]="type.value">{{ type.label }}</option>
-          }
-        </select>
-      </label>
       <label>Finalidade
         <select formControlName="finalidade">
-          <option value="">Todas</option>
-          <option value="venda">Venda</option>
-          <option value="aluguel">Aluguel</option>
+          <option value="">Comprar ou alugar</option>
+          <option value="venda">Comprar</option>
+          <option value="aluguel">Alugar</option>
         </select>
       </label>
-      <div class="pair">
-        <label>Valor mínimo (R$)<input type="number" min="0" step="0.01" formControlName="valor_min"></label>
-        <label>Valor máximo (R$)<input type="number" min="0" step="0.01" formControlName="valor_max"></label>
+      <button class="btn btn-secondary" type="button" (click)="showFilters = !showFilters" [attr.aria-expanded]="showFilters" aria-controls="catalog-advanced-filters">{{ showFilters ? '− Filtros' : '+ Filtros' }}{{ activeFilterCount ? ' (' + activeFilterCount + ')' : '' }}</button>
+      <div id="catalog-advanced-filters" class="advanced-filters" [hidden]="!showFilters">
+        <app-location-filters [form]="form" />
+        <label>CEP<input formControlName="cep" placeholder="00000-000" maxlength="9"></label>
+        <label>Tipo
+          <select formControlName="tipo">
+            <option value="">Todos</option>
+            @for (type of propertyTypes; track type.value) {
+              <option [value]="type.value">{{ type.label }}</option>
+            }
+          </select>
+        </label>
+        <div class="pair">
+          <label>Valor mínimo (R$)<input type="number" min="0" step="0.01" formControlName="valor_min"></label>
+          <label>Valor máximo (R$)<input type="number" min="0" step="0.01" formControlName="valor_max"></label>
+        </div>
+        <div class="pair">
+          <label>Quartos (mín.)<input type="number" min="0" step="1" formControlName="quartos"></label>
+          <label>Vagas (mín.)<input type="number" min="0" step="1" formControlName="vagas"></label>
+          <label>Modalidade de garagem<select formControlName="vagas_rotativas"><option value="">Todas</option><option value="true">Rotativa</option><option value="false">Não rotativa</option></select></label>
+        </div>
+        <div class="pair">
+          <label>Área privativa mín. (m²)<input type="number" min="0" step="0.01" formControlName="area_min"></label>
+          <label>Área privativa máx. (m²)<input type="number" min="0" step="0.01" formControlName="area_max"></label>
+        </div>
+        <div class="pair">
+          <label>Área total mín. (m²)<input type="number" min="0" step="0.01" formControlName="area_total_min"></label>
+          <label>Área total máx. (m²)<input type="number" min="0" step="0.01" formControlName="area_total_max"></label>
+        </div>
+        <p class="hint">Para áreas e terrenos, use a área total. As faixas preenchidas são combinadas.</p>
+        <label>Ordenar
+          <select formControlName="ordering">
+            <option value="">Relevancia</option>
+            <option value="valor">Menor preço</option>
+            <option value="-valor">Maior preço</option>
+            <option value="-publicado_em">Mais recentes</option>
+            <option value="-destaque">Destaques</option>
+          </select>
+        </label>
+        <button class="btn btn-secondary" type="button" (click)="clear()">Limpar filtros</button>
       </div>
-      <div class="pair">
-        <label>Quartos (mín.)<input type="number" min="0" step="1" formControlName="quartos"></label>
-        <label>Vagas (mín.)<input type="number" min="0" step="1" formControlName="vagas"></label>
-        <label>Modalidade de garagem<select formControlName="vagas_rotativas"><option value="">Todas</option><option value="true">Rotativa</option><option value="false">Não rotativa</option></select></label>
-      </div>
-      <div class="pair">
-        <label>Área privativa mín. (m²)<input type="number" min="0" step="0.01" formControlName="area_min"></label>
-        <label>Área privativa máx. (m²)<input type="number" min="0" step="0.01" formControlName="area_max"></label>
-      </div>
-      <div class="pair">
-        <label>Área total mín. (m²)<input type="number" min="0" step="0.01" formControlName="area_total_min"></label>
-        <label>Área total máx. (m²)<input type="number" min="0" step="0.01" formControlName="area_total_max"></label>
-      </div>
-      <p class="hint">Para áreas e terrenos, use a área total. As faixas preenchidas são combinadas.</p>
       @if (form.invalid) {
-        <p class="validation-error" role="alert">Use valores não negativos e máximos maiores ou iguais aos mínimos.</p>
+        <p class="validation-error" role="alert">Revise os valores em + Filtros: use valores não negativos e máximos maiores ou iguais aos mínimos.</p>
       }
-      <label>Ordenar
-        <select formControlName="ordering">
-          <option value="">Relevancia</option>
-          <option value="valor">Menor preço</option>
-          <option value="-valor">Maior preço</option>
-          <option value="-publicado_em">Mais recentes</option>
-          <option value="-destaque">Destaques</option>
-        </select>
-      </label>
       <div class="actions">
-        <button class="btn btn-primary" type="submit" [disabled]="form.invalid">Aplicar</button>
-        <button class="btn btn-secondary" type="button" (click)="clear()">Limpar</button>
+        <button class="btn btn-primary" type="submit" [disabled]="form.invalid">Buscar</button>
       </div>
     </form>
   `,
@@ -87,9 +90,8 @@ function validRanges(control: AbstractControl): ValidationErrors | null {
       top: 96px;
     }
 
-    h2 {
-      margin: 0;
-    }
+    .advanced-filters { display: grid; gap: 14px; min-width: 0; }
+    .advanced-filters[hidden] { display: none; }
 
     .hint, .validation-error {
       margin: 0;
@@ -131,7 +133,7 @@ function validRanges(control: AbstractControl): ValidationErrors | null {
 
     .actions {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 10px;
     }
 
@@ -150,6 +152,12 @@ function validRanges(control: AbstractControl): ValidationErrors | null {
   `],
 })
 export class FilterSidebarComponent implements OnChanges {
+  showFilters = false;
+  get activeFilterCount(): number {
+    return Object.entries(this.form.getRawValue()).filter(([key, value]) =>
+      key !== 'search' && key !== 'finalidade' && value !== '' && value != null
+    ).length;
+  }
   readonly propertyTypes = PROPERTY_TYPES;
   readonly cities = SERVICE_CITIES;
   @Input() initialFilters: PropertyFilters = {};
