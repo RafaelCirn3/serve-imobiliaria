@@ -6,7 +6,7 @@ export interface PaginatedResponse<T> {
 }
 
 export type PropertyStatus = 'rascunho' | 'publicado' | 'vendido' | 'alugado' | 'inativo';
-export type PropertyType = 'apartamento' | 'casa' | 'cobertura' | 'terreno' | 'comercial' | 'condominio' | 'flat' | 'lancamento';
+export type PropertyType = 'apartamento' | 'casa' | 'cobertura' | 'terreno' | 'comercial' | 'condominio' | 'flat' | 'lancamento' | 'em_construcao' | 'novo' | 'pronto';
 export type PropertyPurpose = 'venda' | 'aluguel';
 export type LeadStatus = 'novo' | 'em_atendimento' | 'finalizado' | 'descartado';
 

@@ -12,6 +12,18 @@ services:
       retries: 10
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   api:
     build:
       context: ./back-end
@@ -42,7 +54,43 @@ services:
       - api
     restart: unless-stopped
 
+  worker:
+    build:
+      context: ./back-end
+      dockerfile: Dockerfile
+    env_file:
+      - ./back-end/.env.production
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+    command: celery -A config worker --loglevel=info --concurrency=1
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  beat:
+    build:
+      context: ./back-end
+      dockerfile: Dockerfile
+    env_file:
+      - ./back-end/.env.production
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+    command: celery -A config beat --loglevel=info --schedule=/app/celerybeat-schedule/celerybeat-schedule
+    volumes:
+      - beat_data:/app/celerybeat-schedule
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   media_data:
   static_data:
+  redis_data:
+  beat_data:

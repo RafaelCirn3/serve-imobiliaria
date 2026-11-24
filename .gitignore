@@ -3,6 +3,8 @@ documents/
 back-end/.env
 back-end/media/
 back-end/staticfiles/
+back-end/reports/
+back-end/celerybeat-schedule/
 front-end/node_modules/
 front-end/dist/
 front-end/.angular/

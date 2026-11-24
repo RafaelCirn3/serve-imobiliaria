@@ -15,6 +15,17 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   api:
     build: .
     command: sh -c "python manage.py migrate && python manage.py seed && python manage.py runserver 0.0.0.0:8000"
@@ -36,6 +47,47 @@ services:
       db:
         condition: service_healthy
 
+  worker:
+    build: .
+    command: celery -A config worker --loglevel=info --concurrency=1
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      POSTGRES_DB: serve
+      POSTGRES_USER: serve
+      POSTGRES_PASSWORD: serve
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+      CELERY_BROKER_URL: redis://redis:6379/0
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  beat:
+    build: .
+    command: celery -A config beat --loglevel=info --schedule=/app/celerybeat-schedule/celerybeat-schedule
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      POSTGRES_HOST: db
+      CELERY_BROKER_URL: redis://redis:6379/0
+    volumes:
+      - .:/app
+      - beat_data:/app/celerybeat-schedule
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   media_data:
+  redis_data:
+  beat_data:

@@ -9,6 +9,9 @@ export const PROPERTY_TYPES: ReadonlyArray<{ value: PropertyType; label: string 
   { value: 'cobertura', label: 'Cobertura' },
   { value: 'comercial', label: 'Comercial' },
   { value: 'lancamento', label: 'Lançamento' },
+  { value: 'em_construcao', label: 'Em construção' },
+  { value: 'novo', label: 'Novo' },
+  { value: 'pronto', label: 'Pronto' },
 ];
 
 export const SERVICE_CITIES = ['João Pessoa', 'Cabedelo', 'Bananeiras'] as const;

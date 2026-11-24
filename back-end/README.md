@@ -126,6 +126,71 @@ Os tipos aceitos são `apartamento`, `terreno` (Área/Terreno), `casa`,
 Os identificadores existentes foram preservados. Aplique a migração com
 `python manage.py migrate` no ambiente configurado antes de utilizar a nova versão.
 
+Também são aceitos `lancamento` (Lançamento), `em_construcao` (Em construção),
+`novo` (Novo) e `pronto` (Pronto) no campo `tipo`.
+
+## Robô de fontes do Google Drive
+
+As fontes iniciais são as pastas **EMPREENDIMENTOS** e **TABELAS MGA CONSTRUCOES**.
+Elas são cadastradas pela migração e podem ser ativadas, desativadas ou ampliadas no
+Django admin em **Fontes do Drive**. Compartilhe ambas as pastas com o e-mail da
+conta de serviço do Google com permissão de leitura e ative a Google Drive API no
+projeto dessa conta. Configure uma das opções no back-end:
+
+```dotenv
+GOOGLE_DRIVE_CREDENTIALS_JSON={"type":"service_account",...}
+# ou, para execução local:
+GOOGLE_DRIVE_CREDENTIALS_FILE=/caminho/privado/credenciais.json
+```
+
+O JSON deve estar em uma linha e fora do repositório. Se nenhuma opção for definida,
+o robô tenta as credenciais padrão da aplicação (ADC). Em Docker, o caminho de um
+arquivo precisa existir **dentro** do contêiner; a variável JSON evita esse volume.
+Para pastas configuradas como **Qualquer pessoa com o link**, também é possível usar
+`GOOGLE_DRIVE_API_KEY` em `back-end/.env`. A chave de API não acessa pastas restritas;
+nesse caso, use a conta de serviço e compartilhe cada pasta com o e-mail dela.
+Se houver chave de API e credenciais de conta de serviço, estas têm prioridade.
+No PowerShell local, após ativar o ambiente virtual, também é possível definir o
+arquivo apenas para a sessão atual:
+
+```powershell
+$env:GOOGLE_DRIVE_CREDENTIALS_FILE = 'C:\caminho\privado\credenciais.json'
+python manage.py mapear-fontes
+```
+
+O Celery Beat agenda `consultar_fontes_drive` a cada 24 horas, com Redis como broker.
+O worker percorre as subpastas e páginas da API do Drive. Para cada pasta de primeiro
+nível que contenha arquivos, cria uma **divulgação encontrada** pendente de revisão
+no Django admin. Arquivos na raiz viram uma divulgação da própria fonte. Novas
+execuções atualizam a lista de arquivos sem duplicar a divulgação nem alterar uma
+decisão de revisão. Esses registros **não são imóveis publicados**: preço, endereço,
+tipo e conteúdo editorial devem ser conferidos antes do cadastro em `Imóveis`.
+
+Para executar a consulta imediatamente, com o worker ativo:
+
+```bash
+celery -A config call apps.robot.tasks.consultar_fontes_drive
+```
+
+### Planilha de mapeamento manual
+
+Execute dentro de `back-end`:
+
+```bash
+python manage.py mapear-fontes
+python manage.py mapear-fontes --output reports/minhas-fontes.xlsx
+```
+
+O comando é **manual** e não integra a rotina diária. A planilha `.xlsx` tem abas
+Resumo, Fontes, Pastas e Arquivos, com caminhos completos, níveis, IDs, links,
+tipos MIME, tamanhos e datas informados pelo Drive. Ela inclui pastas vazias e
+consulta todas as páginas de cada pasta. O destino padrão é `reports/`, ignorado
+pelo Git. Se qualquer fonte falhar, o comando termina sem gravar um inventário
+parcial. O mapeamento apenas lê o Drive e não altera os registros de divulgação.
+Se o PostgreSQL estiver indisponível, o comando usa as duas fontes iniciais e avisa
+no terminal. Fontes adicionadas no Django admin exigem conexão com o banco para
+aparecer na planilha. A rotina diária do robô sempre exige o banco de dados.
+
 `area_min` e `area_max` continuam filtrando **área privativa** em m².
 `area_total_min` e `area_total_max` filtram **área total**, inclusive terrenos
 sem área privativa. As faixas são inclusivas e combinadas com cidade, bairro,

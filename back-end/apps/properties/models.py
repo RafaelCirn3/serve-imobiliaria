@@ -15,6 +15,9 @@ class Property(models.Model):
         CONDOMINIO = "condominio", "Condomínio fechado"
         FLAT = "flat", "Flat"
         LANCAMENTO = "lancamento", "Lançamento"
+        EM_CONSTRUCAO = "em_construcao", "Em construção"
+        NOVO = "novo", "Novo"
+        PRONTO = "pronto", "Pronto"
 
     class Finalidade(models.TextChoices):
         VENDA = "venda", "Venda"

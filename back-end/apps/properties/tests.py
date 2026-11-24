@@ -99,7 +99,7 @@ class PropertyProfileTests(APITestCase):
 
     def test_existing_types_remain_valid_for_admin(self):
         self.client.force_authenticate(user=self.admin)
-        for property_type in ("apartamento", "casa", "cobertura", "terreno", "comercial", "condominio"):
+        for property_type in ("apartamento", "casa", "cobertura", "terreno", "comercial", "condominio", "lancamento", "em_construcao", "novo", "pronto"):
             with self.subTest(property_type=property_type):
                 response = self.client.patch(f"/api/admin/imoveis/{self.flat.id}/", {"tipo": property_type})
                 self.assertEqual(response.status_code, 200)
