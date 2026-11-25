@@ -23,10 +23,10 @@ import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/prop
         <h3><a [routerLink]="['/imoveis', property.slug]">{{ property.titulo }}</a></h3>
         <strong class="price">{{ numericPrice | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</strong>
         <div class="features">
-          <span>{{ property.quartos }} quartos</span>
-          <span>{{ property.suites }} suítes</span>
-          <span>{{ parkingLabel(property) }}</span>
-          <span>{{ area.label }}: {{ area.value ?? '—' }} m²</span>
+          @if (property.quartos > 0) { <span>{{ property.quartos }} quartos</span> }
+          @if (property.suites > 0) { <span>{{ property.suites }} suítes</span> }
+          @if (property.vagas > 0 || property.vagas_rotativas) { <span>{{ parkingLabel(property) }}</span> }
+          @if (hasArea) { <span>{{ area.label }}: {{ area.value }} m²</span> }
         </div>
       </div>
     </article>
@@ -139,6 +139,7 @@ export class PropertyCardComponent {
   @Input({ required: true }) property!: Property;
 
   get area() { return propertyArea(this.property); }
+  get hasArea() { return Number(this.area.value) > 0; }
 
   get coverImage(): string {
     return this.property.imagens?.find((image) => image.imagem_capa)?.imagem

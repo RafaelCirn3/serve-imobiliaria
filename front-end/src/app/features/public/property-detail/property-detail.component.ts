@@ -54,11 +54,11 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
               <strong class="price">{{ numberValue(property.valor) | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</strong>
               <div class="features">
                 <span>{{ typeLabel(property.tipo) }}</span>
-                <span>{{ property.quartos }} quartos</span>
-                <span>{{ property.suites }} suítes</span>
-                <span>{{ property.banheiros }} banheiros</span>
-                <span>{{ parkingLabel(property) }}</span>
-                <span>{{ area.label }}: {{ area.value ?? '—' }} m²</span>
+                @if (property.quartos > 0) { <span>{{ property.quartos }} quartos</span> }
+                @if (property.suites > 0) { <span>{{ property.suites }} suítes</span> }
+                @if (property.banheiros > 0) { <span>{{ property.banheiros }} banheiros</span> }
+                @if (property.vagas > 0 || property.vagas_rotativas) { <span>{{ parkingLabel(property) }}</span> }
+                @if (hasArea) { <span>{{ area.label }}: {{ area.value }} m²</span> }
               </div>
               <p class="description">{{ property.descricao }}</p>
               @if (property.latitude != null && property.longitude != null) {
@@ -313,6 +313,8 @@ export class PropertyDetailComponent implements OnInit {
  readonly site=inject(SiteContentService);
   readonly typeLabel = propertyTypeLabel;
   readonly parkingLabel = parkingLabel;
+
+  get hasArea() { return Number(this.area.value) > 0; }
 
   get area() {
     return this.property ? propertyArea(this.property) : { value: null, label: 'Área' };
