@@ -58,11 +58,15 @@ import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/prop
     .media {
       position: relative;
       display: block;
-      aspect-ratio: 1.38;
+      flex: none;
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
       background: #111417;
     }
 
     app-photo {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -91,13 +95,14 @@ import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/prop
       flex: 1;
       flex-direction: column;
       min-width: 0;
-      padding: 18px;
+      padding: 16px;
+      gap: 8px;
     }
 
     .location {
-      margin: 0 0 8px;
+      margin: 0;
       color: #ffffff;
-      font-size: 0.82rem;
+      font-size: 0.72rem;
       font-weight: 800;
       text-transform: uppercase;
       overflow: hidden;
@@ -106,9 +111,10 @@ import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/prop
     }
 
     h3 {
-      margin: 0 0 12px;
-      font-size: 1.15rem;
-      line-height: 1.25;
+      margin: 0;
+      min-height: 2.7em;
+      font-size: 1.05rem;
+      line-height: 1.35;
       overflow-wrap: anywhere;
     }
 
@@ -116,23 +122,26 @@ import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/prop
       display: block;
       color: #e6e8eb;
       font-size: 1.25rem;
-      margin-bottom: 14px;
+      margin: 0;
       overflow-wrap: anywhere;
     }
+    .price > span { display: block; font-size: .78rem; font-weight: 600; color: #b8b8b8; margin-bottom: 2px; }
 
     .features {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      margin-top: auto;
+      gap: 6px;
+      margin-top: 8px;
+      padding-top: 12px;
+      border-top: 1px solid #30363d;
     }
 
     .features span {
       border: 1px solid #30363d;
       border-radius: 999px;
       color: #b8b8b8;
-      padding: 5px 9px;
-      font-size: 0.78rem;
+      padding: 4px 8px;
+      font-size: 0.72rem;
     }
   `],
 })
