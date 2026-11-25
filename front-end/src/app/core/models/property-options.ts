@@ -25,12 +25,18 @@ export function propertyTypeLabel(type: PropertyType): string {
 }
 
 export function parkingLabel(property: Property): string {
+  if (property.vagas_min && property.vagas_max && property.vagas_min !== property.vagas_max) {
+    return `${property.vagas_min} a ${property.vagas_max} vagas`;
+  }
   return property.vagas_rotativas
     ? (property.vagas > 0 ? `${property.vagas} vaga(s) rotativa(s)` : 'Vagas rotativas')
     : `${property.vagas} vagas`;
 }
 
 export function propertyArea(property: Property): { value: string | number | null | undefined; label: string } {
+  if (!Number(property.area_privativa) && !Number(property.area_total) && Number(property.area_informada) > 0) {
+    return { value: property.area_informada, label: 'Área' };
+  }
   if (property.tipo === 'terreno' || property.area_privativa == null || property.area_privativa === '') {
     return { value: property.area_total, label: 'Área total' };
   }

@@ -54,6 +54,16 @@ import { MapProperty } from '@core/models/api.models';
             <label class="field">Finalidade<select formControlName="finalidade"><option value="venda">Venda</option><option value="aluguel">Aluguel</option></select><app-control-hint [control]="form.controls.finalidade" [required]="false" /></label>
             <label class="field">Condomínio<input type="number" min="0" step="0.01" inputmode="decimal" formControlName="valor_condominio"><app-control-hint [control]="form.controls.valor_condominio" [required]="false" /></label>
             <label class="field">IPTU<input type="number" min="0" step="0.01" inputmode="decimal" formControlName="valor_iptu"><app-control-hint [control]="form.controls.valor_iptu" [required]="false" /></label>
+            <label class="field">Empreendimento<input formControlName="empreendimento"></label>
+            <label class="field">Construtora<input formControlName="construtora"></label>
+            <label class="field">Torre<input formControlName="torre"></label>
+            <label class="field">Unidade (somente admin)<input formControlName="unidade"></label>
+            <label class="field">Andar (somente admin)<input formControlName="andar"></label>
+            <label class="field">Tipologia da tabela<input formControlName="tipologia"></label>
+            <label class="field">Previsão de entrega<input type="month" formControlName="previsao_entrega"></label>
+            <label class="field">Registro de incorporação<input formControlName="registro_incorporacao"></label>
+            <label class="field">Área informada (m²)<input type="number" step="0.01" min="0.01" formControlName="area_informada"></label>
+            <label class="check"><input type="checkbox" formControlName="agrupar_publicacao"> Agrupar publicação por torre, quartos/suítes e área</label>
           </div>
         </div>
 
@@ -69,6 +79,7 @@ import { MapProperty } from '@core/models/api.models';
             <app-control-hint [control]="form.controls.regiao" [required]="false" /></label>
             <app-address-editor [form]="form" listId="admin-address" />
             <label class="field full">Endereço anterior / referência<input formControlName="endereco"><app-control-hint [control]="form.controls.endereco" [required]="false" /></label>
+            <button type="button" class="btn btn-secondary" [disabled]="geocoding || saving || loading" (click)="organizeAddress()">{{ geocoding ? 'Consultando endereço…' : 'Organizar endereço, CEP e localização' }}</button>
             <label class="field">Latitude<input formControlName="latitude"><app-control-hint [control]="form.controls.latitude" [required]="false" /></label>
             <label class="field">Longitude<input formControlName="longitude"><app-control-hint [control]="form.controls.longitude" [required]="false" /></label>
             <button type="button" class="btn btn-secondary" [disabled]="geocoding" (click)="geocode()">{{ geocoding ? 'Localizando…' : 'Localizar endereço no mapa' }}</button>
@@ -159,7 +170,10 @@ export class PropertyFormComponent implements OnInit, OnDestroy {
   private readonly notification = inject(NotificationService);
   private readonly locations = inject(LocationService);
   private readonly destroyRef = inject(DestroyRef);
-  readonly requiredFields = ['titulo','descricao','valor','cidade','bairro'] as const;
+  get requiredFields(): Array<'titulo'|'descricao'|'valor'|'cidade'|'bairro'> {
+    return this.form.controls.agrupar_publicacao.value && this.form.controls.status.value === 'rascunho'
+      ? ['titulo','descricao','valor'] : ['titulo','descricao','valor','cidade','bairro'];
+  }
   loading = false; loadError = ''; private pendingPreview = '';
   get completedRequired(): number { return this.requiredFields.filter(field => this.form.controls[field].valid).length; }
   get previewCover(): string { return this.pendingPreview || this.images.find(image=>image.imagem_capa)?.imagem || this.images[0]?.imagem || ''; }
@@ -175,6 +189,26 @@ export class PropertyFormComponent implements OnInit, OnDestroy {
   moveStep(direction:number):void { const index=this.tabs.findIndex(item=>item.id===this.tab);this.tab=this.tabs[Math.min(this.tabs.length-1,Math.max(0,index+direction))].id; }
   ngOnDestroy():void { if(this.pendingPreview) URL.revokeObjectURL(this.pendingPreview); }
   geocoding = false;
+  organizeAddress(): void {
+    const snapshot = this.form.getRawValue();
+    this.geocoding = true;
+    const source = snapshot.endereco.trim() ? {...snapshot, logradouro:'', numero:'', bairro:''} : snapshot;
+    this.locations.organize({...source, latitude:null, longitude:null, localizacao_exata:false}).subscribe({
+      next: (result) => {
+        const current = this.form.getRawValue();
+        const keys = ['endereco','logradouro','numero','bairro','cidade','uf','cep'] as const;
+        if (keys.some(key => snapshot[key] !== current[key])) {
+          this.notification.show({type:'error',text:'O endereço mudou durante a consulta. Consulte novamente.'});
+        } else {
+          this.form.patchValue(result.fields as never);
+          this.form.markAsDirty();
+          this.notification.show({type:result.warnings.length ? 'error' : 'success',text:result.warnings.length ? 'Endereço organizado. Confira os campos de CEP e localização que ficaram pendentes.' : 'Endereço, CEP e localização preenchidos. Salve para aplicar.'});
+        }
+        this.geocoding = false;
+      },
+      error: () => { this.geocoding=false; this.notification.show({type:'error',text:'Não foi possível consultar. Você pode preencher os campos manualmente.'}); },
+    });
+  }
   saving = false;
   pendingImages: File[] = [];
   private previewKey = '';
@@ -210,8 +244,17 @@ export class PropertyFormComponent implements OnInit, OnDestroy {
       if (draft) { this.form.patchValue(JSON.parse(draft)); this.draftRestored = true; }
     } catch { /* Storage may be unavailable in private browsing. */ }
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.updateLocationRequirements();
       try { sessionStorage.setItem(this.draftKey, JSON.stringify(this.form.getRawValue())); } catch { /* Keep in-memory values. */ }
     });
+    this.updateLocationRequirements();
+  }
+  private updateLocationRequirements(): void {
+    const draft = this.form.controls.agrupar_publicacao.value && this.form.controls.status.value === 'rascunho';
+    this.form.controls.cidade.setValidators(draft ? [] : [Validators.required]);
+    this.form.controls.bairro.setValidators(draft ? [Validators.maxLength(120)] : [Validators.required, Validators.pattern(/\S/), Validators.maxLength(120)]);
+    this.form.controls.cidade.updateValueAndValidity({emitEvent:false});
+    this.form.controls.bairro.updateValueAndValidity({emitEvent:false});
   }
   discardDraft(): void {
     this.form.patchValue(this.loadedValues);
@@ -239,6 +282,9 @@ export class PropertyFormComponent implements OnInit, OnDestroy {
 
   readonly form = this.fb.nonNullable.group({
     titulo: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(180)]],
+    empreendimento: [''], construtora: [''], torre: [''], unidade: [''], andar: [''], tipologia: [''],
+    area_informada: [null as number | null], agrupar_publicacao: [false],
+    previsao_entrega: [''], registro_incorporacao: [''],
     descricao: ['', [Validators.required, Validators.pattern(/\S/)]],
     tipo: ['apartamento'],
     finalidade: ['venda'],

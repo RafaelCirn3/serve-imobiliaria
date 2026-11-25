@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
@@ -34,8 +35,14 @@ class Property(models.Model):
     empreendimento = models.CharField(max_length=180, blank=True)
     unidade = models.CharField(max_length=80, blank=True)
     torre = models.CharField(max_length=80, blank=True)
+    andar = models.CharField(max_length=40, blank=True)
+    tipologia = models.CharField(max_length=80, blank=True)
+    previsao_entrega = models.CharField(max_length=7, blank=True, validators=[RegexValidator(r"^\d{4}-(0[1-9]|1[0-2])$")])
+    registro_incorporacao = models.CharField(max_length=80, blank=True)
     construtora = models.CharField(max_length=180, blank=True)
     origem_comercial = models.CharField(max_length=180, blank=True)
+    agrupar_publicacao = models.BooleanField(default=False)
+    grupo_publicacao = models.CharField(max_length=64, blank=True, editable=False, db_index=True)
     medidas = models.CharField(max_length=80, blank=True)
     area_informada = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
@@ -98,6 +105,12 @@ class Property(models.Model):
     def __str__(self):
         return self.titulo
 
+    @property
+    def situacao_obra(self):
+        if not self.previsao_entrega:
+            return ""
+        return "em_construcao" if self.previsao_entrega >= timezone.localdate().strftime("%Y-%m") else "entrega_a_confirmar"
+
     def clean(self):
         super().clean()
         if self.finalidade == self.Finalidade.VENDA and self.status == self.Status.ALUGADO:
@@ -106,6 +119,11 @@ class Property(models.Model):
             raise ValidationError({"status": "Imóvel com finalidade de aluguel não pode ter status vendido."})
 
     def save(self, *args, **kwargs):
+        from .publications import PublicationPolicy
+
+        self.grupo_publicacao = PublicationPolicy.key(self)
+        if kwargs.get("update_fields"):
+            kwargs["update_fields"] = set(kwargs["update_fields"]) | {"grupo_publicacao"}
         for field in ("cidade", "bairro", "logradouro"):
             setattr(self, f"{field}_busca", normalized(getattr(self, field)))
         if kwargs.get("update_fields"):

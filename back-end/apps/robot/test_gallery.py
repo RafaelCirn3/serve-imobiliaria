@@ -14,6 +14,20 @@ from .sources import DEFAULT_SOURCES
 
 
 class GalleryPlanTests(SimpleTestCase):
+    def test_same_developer_gets_different_sequence_and_cover_when_possible(self):
+        assets = [SimpleNamespace(pk=i * 20 + n, file_id=f"id-{i}-{n}", category=category)
+                  for i, category in enumerate(CAPS) for n in range(6)]
+        lookup = {a.pk: a.file_id for a in assets}
+        sequence = lambda plan: tuple(lookup[pk] for category in CAPS for pk in plan["pools"][category][:plan["quotas"][category]])
+        first = build_plan(assets, 100)
+        previous = sequence(first)
+        second = build_plan(assets, 100, [previous])
+        self.assertNotEqual(previous, sequence(second))
+        self.assertNotEqual(previous[0], sequence(second)[0])
+        self.assertEqual(second, build_plan(assets, 100, [previous]))
+        single = [SimpleNamespace(pk=1, file_id="only", category="fachada")]
+        self.assertEqual(build_plan(single, 1, [("only",)])["diversity"], "acervo_sem_variacao")
+
     def test_caps_order_randomness_and_stable_seed(self):
         assets = [SimpleNamespace(pk=i * 20 + n, file_id=f"id-{i}-{n}", category=category)
                   for i, category in enumerate(CAPS) for n in range(10)]
@@ -107,6 +121,21 @@ class GalleryAttachmentTests(TestCase):
         ids = [p.origem_drive_id for p in photos]
         attach_images(self.unit.pk, lambda asset: self.fail("Repeat must not download again"))
         self.assertEqual([p.origem_drive_id for p in self.property.imagens.all()], ids)
+
+    def test_persisted_galleries_for_same_developer_have_different_sequences(self):
+        self.property.construtora = "MGA"
+        self.property.save()
+        attach_images(self.unit.pk, self.image)
+        other = Property.objects.create(titulo="Makai 102", empreendimento="Makai", unidade="102", construtora="MGA",
+            tipo="apartamento", finalidade="venda", valor="1000000", cidade="Cabedelo", bairro="Camboinha")
+        unit = TableUnit.objects.create(document=self.document, index=2, imported_property=other, fields={"empreendimento": "Makai", "unidade": "102"})
+        attach_images(unit.pk, self.image)
+        first = list(self.property.imagens.values_list("origem_drive_id", flat=True))
+        second = list(other.imagens.values_list("origem_drive_id", flat=True))
+        self.assertNotEqual(first, second)
+        self.assertNotEqual(first[0], second[0])
+        attach_images(unit.pk, self.image)
+        self.assertEqual(second, list(other.imagens.values_list("origem_drive_id", flat=True)))
 
     def test_identical_contents_are_not_repeated_to_fill_quota(self):
         raw = self.image(self.assets[0])

@@ -6,7 +6,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { environment } from '@env/environment';
-import { Property } from '@core/models/api.models';
+import { Property, PropertyUnit } from '@core/models/api.models';
 import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/property-options';
 import { LeadService } from '@core/services/lead.service';
 import { NotificationService } from '@core/services/notification.service';
@@ -51,16 +51,37 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
             <div appSiteSection="detail.description">
               <span class="eyebrow">{{ property.bairro }} · {{ property.cidade }}</span>
               <h1>{{ property.titulo }}</h1>
-              <strong class="price">{{ numberValue(property.valor) | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</strong>
+              <strong class="price">@if (property.agrupado) { <span>A partir de: </span> }{{ numberValue(property.valor_exibicao ?? property.valor) | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</strong>
               <div class="features">
                 <span>{{ typeLabel(property.tipo) }}</span>
+                @if (property.torre) { <span>Torre {{ property.torre }}</span> }
+                @if (property.situacao_obra === 'em_construcao') { <span>Em construção</span> }
+                @if (property.previsao_entrega) { <span>Entrega prevista: {{ property.previsao_entrega.slice(5) }}/{{ property.previsao_entrega.slice(0,4) }}</span> }
                 @if (property.quartos > 0) { <span>{{ property.quartos }} quartos</span> }
                 @if (property.suites > 0) { <span>{{ property.suites }} suítes</span> }
                 @if (property.banheiros > 0) { <span>{{ property.banheiros }} banheiros</span> }
-                @if (property.vagas > 0 || property.vagas_rotativas) { <span>{{ parkingLabel(property) }}</span> }
+                @if (property.vagas > 0 || property.vagas_rotativas || property.vagas_max) { <span>{{ parkingLabel(property) }}</span> }
                 @if (hasArea) { <span>{{ area.label }}: {{ area.value }} m²</span> }
               </div>
               <p class="description">{{ property.descricao }}</p>
+              @if (property.agrupado) {
+                <section class="unit-options" aria-label="Unidades disponíveis">
+                  <h2>Opções disponíveis</h2>
+                  <p class="muted">O valor “a partir de” é arredondado para baixo. Confira os valores totais.</p>
+                  @if (unitsError) {
+                    <p role="status">Não foi possível carregar as unidades. Consulte nossa equipe.</p>
+                  } @else if (unitsLoading) {
+                    <p role="status">Carregando unidades…</p>
+                  } @else {
+                    <div class="unit-table-scroll"><table>
+                      <thead><tr><th>Torre</th><th>Tipologia</th><th>Área</th><th>Vagas</th><th>Valor total</th></tr></thead>
+                      <tbody>@for (unit of units; track $index) {
+                        <tr><td data-label="Torre">{{ unit.torre || '—' }}</td><td data-label="Tipologia">@if (unit.quartos) { {{ unit.quartos }} quartos } @else { {{ typeLabel(unit.tipo) }} } @if (unit.suites) { ({{ unit.suites }} suítes) }</td><td data-label="Área">{{ unit.area_privativa || unit.area_total || unit.area_informada }} m²</td><td data-label="Vagas">{{ unit.vagas || '—' }}</td><td data-label="Valor total">{{ numberValue(unit.valor) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td></tr>
+                      }</tbody>
+                    </table></div>
+                  }
+                </section>
+              }
               @if (property.latitude != null && property.longitude != null) {
                 <h2>Localização {{ property.localizacao_exata ? 'confirmada' : 'aproximada' }}</h2>
                 <app-property-map [properties]="[property]" />
@@ -210,6 +231,12 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
       margin: 22px 0;
     }
 
+    .price span { font-size: .7em; }
+    .unit-table-scroll { overflow-x: auto; }
+    .unit-options table { width: 100%; min-width: 0; border-collapse: collapse; }
+    .unit-options th, .unit-options td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #30363d; }
+    .unit-options th:last-child, .unit-options td:last-child { text-align: right; white-space: nowrap; }
+
     .features span {
       border: 1px solid #30363d;
       border-radius: 999px;
@@ -296,6 +323,15 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
       }
     }
 
+    @media (max-width: 600px) {
+      .unit-options table, .unit-options tbody { display: block; }
+      .unit-options thead { display: none; }
+      .unit-options tr { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #30363d; border-radius: 8px; margin-bottom: 12px; padding: 8px; }
+      .unit-options td { border: 0; }
+      .unit-options td::before { content: attr(data-label); display: block; font-size: .75rem; color: #aaa; margin-bottom: 5px; }
+      .unit-options td:last-child { grid-column: 1 / -1; text-align: left; }
+    }
+
     @keyframes fadeUp {
       from {
         opacity: 0;
@@ -327,6 +363,9 @@ export class PropertyDetailComponent implements OnInit {
   private readonly location = inject(Location);
 
   property: Property | null = null;
+  units: PropertyUnit[] = [];
+  unitsLoading = false;
+  unitsError = false;
   similar: Property[] = [];
   mainImage = '';
   private swipeStart: { x: number; y: number; pointerId: number } | null = null;
@@ -365,6 +404,13 @@ export class PropertyDetailComponent implements OnInit {
     this.propertyService.getPropertyBySlug(slug).subscribe({
       next: (property) => {
         this.property = property;
+        if (property.agrupado) {
+          this.unitsLoading = true;
+          this.propertyService.getUnits(property.slug).subscribe({
+            next: (units) => { this.units = units; this.unitsLoading = false; },
+            error: () => { this.unitsError = true; this.unitsLoading = false; },
+          });
+        }
         this.mainImage = property.imagens?.find(image=>image.imagem_capa)?.imagem || property.imagens?.[0]?.imagem || '';
         this.loading = false;
         this.loadSimilar(property);

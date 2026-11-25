@@ -1,8 +1,9 @@
 from pathlib import Path
 import json
+from time import perf_counter
 
 from django.core.management.base import BaseCommand, CommandError
-from apps.robot.gallery import attach_images, build_plan, index_images, scoped_assets
+from apps.robot.gallery import attach_images, build_plan, index_images, scoped_assets, peer_sequences
 from apps.robot.models import TableUnit
 
 
@@ -12,25 +13,32 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--inventario", type=Path, help="Inventário completo para atualizar o catálogo de imagens")
         parser.add_argument("--imovel", type=int, help="Restringir a um imóvel")
+        parser.add_argument("--empreendimento", help="Restringir ao empreendimento")
         parser.add_argument("--aplicar", action="store_true", help="Baixar e vincular imagens; sem esta opção apenas apresenta prévia")
         parser.add_argument("--output", type=Path)
 
     def handle(self, *args, **options):
+        started = perf_counter()
         if options["inventario"]:
             total = index_images(options["inventario"])
             self.stdout.write(f"{total} imagens categorizadas indexadas.")
         units = TableUnit.objects.filter(imported_property__isnull=False).select_related("document", "imported_property").order_by("imported_property_id", "pk")
         if options["imovel"]:
             units = units.filter(imported_property_id=options["imovel"])
+        if options["empreendimento"]:
+            units = units.filter(imported_property__empreendimento__iexact=options["empreendimento"])
+        total = units.values("imported_property_id").distinct().count()
         results, seen = [], set()
         for unit in units:
             if unit.imported_property_id in seen:
                 continue
             seen.add(unit.imported_property_id)
+            self.stdout.write(f"[{perf_counter() - started:.1f}s] Galeria {len(seen)}/{total}: imóvel {unit.imported_property_id}")
+            self.stdout.flush()
             if options["aplicar"]:
                 result = attach_images(unit.pk, progress=self.stdout.write if options["verbosity"] else None)
             else:
-                plan = build_plan(scoped_assets(unit), seed=unit.imported_property_id)
+                plan = build_plan(scoped_assets(unit), seed=unit.imported_property_id, peer_sequences=peer_sequences(unit.imported_property))
                 result = {"status": "previa", "counts": plan["quotas"], "total": plan["target"]}
             row = {"imovel_id": unit.imported_property_id, "empreendimento": unit.imported_property.empreendimento, **result}
             results.append(row)
@@ -40,3 +48,4 @@ class Command(BaseCommand):
             options["output"].write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
         if not results:
             self.stdout.write("Nenhum imóvel importado encontrado.")
+        self.stdout.write(f"[{perf_counter() - started:.1f}s] Concluído: {len(results)} galerias processadas.")

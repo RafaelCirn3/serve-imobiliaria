@@ -10,6 +10,7 @@ import secrets
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models import Q
 
 from apps.common.images import prepare_images
 from apps.properties.models import Property, PropertyImage
@@ -101,7 +102,22 @@ def scoped_assets(unit):
     return selected
 
 
-def build_plan(assets, seed):
+def build_plan(assets, seed, peer_sequences=()):
+    if peer_sequences:
+        # Sample alternatives from this property's eligible inventory only.
+        # Lexicographic scoring avoids identical galleries, then repeated covers
+        # and positions. Never borrow another project's pictures for diversity.
+        lookup = {asset.pk: asset.file_id for asset in assets}
+        covers = Counter(sequence[0] for sequence in peer_sequences if sequence)
+        def score(plan):
+            sequence = tuple(lookup[pk] for category in CATEGORY_ORDER
+                             for pk in plan["pools"][category][:plan["quotas"][category]])
+            return (sequence in peer_sequences, covers[sequence[0]] if sequence else 0,
+                    sum(sum(a == b for a, b in zip(sequence, peer)) for peer in peer_sequences))
+        candidates = [build_plan(assets, seed + offset) for offset in range(128)]
+        plan = min(candidates, key=score)
+        plan["diversity"] = "acervo_sem_variacao" if score(plan)[0] else "sequencia_distinta"
+        return plan
     rng = random.Random(seed)
     pools = {category: [] for category in CATEGORY_ORDER}
     seen = set()
@@ -118,7 +134,33 @@ def build_plan(assets, seed):
     while sum(quotas.values()) < target:
         choices = [category for category in ("lazer", "internos") if quotas[category] < capacity[category]]
         quotas[rng.choice(choices)] += 1
-    return {"version": "gallery-1.0", "target": target, "quotas": quotas, "pools": pools}
+    return {"version": "gallery-2.0", "target": target, "quotas": quotas, "pools": pools}
+
+
+def peer_sequences(property):
+    companies = [name.strip() for name in property.construtora.split("/") if name.strip()]
+    if not companies:
+        return []
+    query = Q()
+    for company in companies:
+        query |= Q(construtora__icontains=company)
+    peers = Property.objects.filter(query).exclude(pk=property.pk).exclude(status=Property.Status.INATIVO).prefetch_related("imagens").select_related("robot_gallery").order_by("pk")
+    identities = {normalize(name) for name in companies}
+    sequences = []
+    for peer in peers:
+        if not identities.intersection(normalize(name.strip()) for name in peer.construtora.split("/")):
+            continue
+        sequence = tuple(photo.origem_drive_id for photo in peer.imagens.all() if photo.origem_drive_id)
+        if not sequence:
+            # A committed plan reserves its sequence before downloads complete.
+            selection = getattr(peer, "robot_gallery", None)
+            plan = selection.plan if selection else {}
+            ids = [pk for category in CATEGORY_ORDER for pk in plan.get("pools", {}).get(category, [])[:plan.get("quotas", {}).get(category, 0)]]
+            lookup = dict(DriveImageAsset.objects.filter(pk__in=ids).values_list("pk", "file_id"))
+            sequence = tuple(lookup[pk] for pk in ids if pk in lookup)
+        if sequence:
+            sequences.append(sequence)
+    return sequences
 
 
 def download_image(asset):
@@ -176,9 +218,13 @@ def attach_images(unit_id, downloader=None, progress=None):
     assets = scoped_assets(unit)
     selection, _ = PropertyImageSelection.objects.get_or_create(property=property, defaults={"seed": secrets.randbits(63)})
     with transaction.atomic():
+        # Serialize planning for this developer to reserve different sequences
+        # even when two imports run concurrently.
+        if property.construtora:
+            list(Property.objects.filter(construtora=property.construtora).order_by("pk").select_for_update().values_list("pk", flat=True))
         selection = PropertyImageSelection.objects.select_for_update().get(pk=selection.pk)
-        if not selection.plan or selection.plan.get("target", 0) < 6:
-            selection.plan = build_plan(assets, selection.seed)
+        if not selection.plan or selection.plan.get("target", 0) < 6 or selection.plan.get("version") != "gallery-2.0":
+            selection.plan = build_plan(assets, selection.seed, peer_sequences(property))
             selection.save(update_fields=["plan", "updated_at"])
     lookup = {asset.pk: asset for asset in assets}
     errors = []
@@ -227,13 +273,17 @@ def attach_images(unit_id, downloader=None, progress=None):
         photos = list(property.imagens.all())
         if any(not photo.origem_drive_id for photo in photos):
             return {"status": "imagens_manuais_preservadas"}
-        photos.sort(key=lambda photo: (CATEGORY_ORDER.index(photo.categoria), photo.pk))
+        positions = {lookup[pk].file_id: index for category in CATEGORY_ORDER
+                     for index, pk in enumerate(selection.plan["pools"][category]) if pk in lookup}
+        photos.sort(key=lambda photo: (CATEGORY_ORDER.index(photo.categoria), positions.get(photo.origem_drive_id, 100000), photo.pk))
         for index, photo in enumerate(photos):
             PropertyImage.objects.filter(pk=photo.pk).update(ordem=index, imagem_capa=index == 0)
         counts = dict(Counter(photo.categoria for photo in photos))
         warnings = [f"SEM_{category.upper()}" for category in CATEGORY_ORDER if not counts.get(category)]
         if len(photos) < 6:
             warnings.append("ACERVO_INSUFICIENTE_MINIMO_6")
+        if tuple(photo.origem_drive_id for photo in photos) in peer_sequences(property):
+            warnings.append("ACERVO_SEM_VARIACAO_DE_SEQUENCIA")
         result = {"status": "vinculado" if len(photos) >= 6 else "incompleto" if photos else "aguardando_acervo", "total": len(photos), "counts": counts,
                   "warnings": warnings, "errors": errors, "vistoria_pendente": True, "avulso_escopo": "pasta_do_proprio_imovel"}
         selection.result = result

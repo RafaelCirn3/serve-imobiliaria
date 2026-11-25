@@ -21,11 +21,14 @@ import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/prop
         <p class="location">{{ property.bairro }} · {{ property.cidade }}</p>
         <span class="muted">{{ typeLabel(property.tipo) }}</span>
         <h3><a [routerLink]="['/imoveis', property.slug]">{{ property.titulo }}</a></h3>
-        <strong class="price">{{ numericPrice | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</strong>
+        <strong class="price">@if (property.agrupado) { <span>A partir de: </span> }{{ numericPrice | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</strong>
+        @if (property.agrupado) { <small class="muted">{{ property.quantidade_unidades }} unidade(s) disponível(is)</small> }
         <div class="features">
+          @if (property.torre) { <span>Torre {{ property.torre }}</span> }
+          @if (property.situacao_obra === 'em_construcao') { <span>Em construção</span> }
           @if (property.quartos > 0) { <span>{{ property.quartos }} quartos</span> }
           @if (property.suites > 0) { <span>{{ property.suites }} suítes</span> }
-          @if (property.vagas > 0 || property.vagas_rotativas) { <span>{{ parkingLabel(property) }}</span> }
+          @if (property.vagas > 0 || property.vagas_rotativas || property.vagas_max) { <span>{{ parkingLabel(property) }}</span> }
           @if (hasArea) { <span>{{ area.label }}: {{ area.value }} m²</span> }
         </div>
       </div>
@@ -148,7 +151,7 @@ export class PropertyCardComponent {
   }
 
   get numericPrice(): number {
-    return Number(this.property.valor || 0);
+    return Number(this.property.valor_exibicao ?? this.property.valor ?? 0);
   }
 }
 

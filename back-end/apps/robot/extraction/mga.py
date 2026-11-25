@@ -7,6 +7,7 @@ import re
 from statistics import median
 
 from apps.robot.profiles import normalize
+from .document_facts import DocumentFacts
 
 
 HEADER_ALIASES = {
@@ -59,7 +60,7 @@ class DeveloperTableParser(ABC):
 
 
 class MGATableParser(DeveloperTableParser):
-    version = "mga-1.0.0"
+    version = "mga-1.4.0"
 
     def header(self, cells):
         mapping = {}
@@ -70,11 +71,42 @@ class MGATableParser(DeveloperTableParser):
                 if normalized in aliases:
                     mapping[index] = key
                     break
+        # PDF grids may merge several header cells while preserving separate
+        # data columns. Recover their spans before falling back to coordinates;
+        # otherwise a boundary between R$ / 2 / .122.036,00 truncates the price.
+        aliases = sorted(((alias, key) for key, values in HEADER_ALIASES.items() for alias in values),
+                         key=lambda item: len(item[0]), reverse=True)
+        pattern = r"(?<!\w)(?:" + "|".join(re.escape(alias) for alias, _ in aliases) + r")(?!\w)"
+        keys = dict(aliases)
+        for index, cell in enumerate(cells):
+            first = normalize(str(cell or "").split("\n")[0])
+            matches = list(re.finditer(pattern, first))
+            end = next((i for i in range(index + 1, len(cells)) if cells[i] is not None), len(cells))
+            if len(matches) > 1 and len(matches) <= end - index:
+                for offset, match in enumerate(matches):
+                    mapping[index + offset] = keys[match.group()]
         return mapping if "unidade" in mapping.values() and "valor" in mapping.values() else {}
 
     def table_rows(self, table):
         mapping = {}
         other_headers = {}
+        last_floor = ""
+
+        def with_floor(values):
+            nonlocal last_floor
+            if "andar" not in values:
+                return values
+            original = values["andar"]
+            parts = original.split()
+            if parts and len(set(parts)) == 1 and parts[0].isdigit():
+                values["andar"] = parts[0]
+                last_floor = parts[0]
+            elif not original and last_floor:
+                values["andar"] = last_floor
+            if values["andar"] != original:
+                values["andar_original"] = original
+                values["andar_origem"] = "celula_mesclada_da_grade"
+            return values
         for index, cells in enumerate(table):
             header = self.header(cells)
             if header:
@@ -85,7 +117,7 @@ class MGATableParser(DeveloperTableParser):
                 remainder = ["\n".join(str(cell or "").split("\n")[1:]) for cell in cells]
                 values = {key: text(remainder[column]) for column, key in mapping.items()}
                 if values.get("unidade"):
-                    yield index + 1, values, 1.0
+                    yield index + 1, with_floor(values), 1.0
                 continue
             if mapping:
                 values = {key: text(cells[column]) for column, key in mapping.items() if column < len(cells)}
@@ -94,7 +126,7 @@ class MGATableParser(DeveloperTableParser):
                     # sinal/mensais com valor total do imóvel.
                     values["condicoes_originais"] = list(cells)
                     values["condicoes_pagamento"] = {label: text(cells[column]) for column, label in other_headers.items() if column < len(cells)}
-                    yield index + 1, values, 1.0
+                    yield index + 1, with_floor(values), 1.0
 
     def word_rows(self, page):
         words = page.words
@@ -151,7 +183,7 @@ class MGATableParser(DeveloperTableParser):
             return None
         page_text = normalize(page.text, metadata=True)
         rental = "locacao mensal" in page_text or "lojas mondo locacao" in page_text
-        data = {"empreendimento": name, "unidade": unit, "torre": raw.get("torre", ""), "medidas": raw.get("medidas", ""),
+        data = {"empreendimento": name, "unidade": unit, "torre": raw.get("torre", ""), "andar": raw.get("andar", ""), "tipologia": raw.get("tipologia", ""), "medidas": raw.get("medidas", ""),
                 "area_informada": decimal_br(raw.get("area_informada")), "valor": decimal_br(raw.get("valor")),
                 "endereco": raw.get("endereco", ""), "descricao": raw.get("descricao", ""),
                 "tipo": "", "cidade": "", "bairro": "", "uf": "PB", "finalidade": "aluguel" if rental else "venda" if "vendas" in page_text else context.get("document_purpose", ""),
@@ -172,6 +204,8 @@ class MGATableParser(DeveloperTableParser):
                 if re.match(r"\s*(?:R\.|Rua |Av\.|Avenida |Rodovia )", line, re.I):
                     data["endereco"] = re.split(r"Registro de incorpora|Previs[aã]o de Entrega", line, flags=re.I)[0].strip()
                     break
+        if not data["endereco"] and context.get("document_facts", {}).get("endereco"):
+            data["endereco"] = context["document_facts"]["endereco"]
         address = normalize(data["endereco"], metadata=True)
         for normalized, city in (("joao pessoa", "João Pessoa"), ("bananeiras", "Bananeiras"), ("cabedelo", "Cabedelo")):
             if normalized in address:
@@ -185,6 +219,16 @@ class MGATableParser(DeveloperTableParser):
                 data[field_name] = int(found.group(1))
         if raw.get("vagas", "").isdigit():
             data["vagas"] = int(raw["vagas"])
+        if data.get("suites"):
+            data["quartos"] = max(data.get("quartos", 0), data["suites"])
+        for key, value in context.get("document_facts", {}).items():
+            if not data.get(key):
+                data[key] = value
+        if context.get("document_evidence"):
+            raw["documento"] = context["document_evidence"]
+        if context.get("natureza_area") and data["area_informada"]:
+            data["area_total" if context["natureza_area"] == "total" else "area_privativa"] = data["area_informada"]
+            raw["natureza_area_contexto"] = context["natureza_area"]
         if "mobiliada" in description or "mobiliado" in description:
             data["mobiliado"] = True
         # Contexto fornecido pelo operador é explícito e permanece na auditoria.
@@ -202,10 +246,18 @@ class MGATableParser(DeveloperTableParser):
             warnings.append("UNIDADE_NAO_DISPONIVEL")
         if score < .95:
             warnings.append("BAIXA_CONFIANCA_OCR")
+        if data["valor"] and data["finalidade"] != "aluguel" and Decimal(data["valor"]) < 1000:
+            warnings.append("PRECO_SUSPEITO")
         return ExtractedUnit(data, raw, page.number, row, page.method, warnings, score)
 
     def parse(self, pages, context):
         context = dict(context)
+        # Operator-approved interpretation of this project's generic area column.
+        if normalize(context.get("empreendimento", "")) == "elevare":
+            context.setdefault("natureza_area", "total")
+        # A catalog of unrelated avulsos cannot inherit one property's footer.
+        if context.get("empreendimento") and not any("empreendimento" in self.header(row).values() for page in pages for table in page.tables for row in table):
+            context["document_facts"], context["document_evidence"] = DocumentFacts.extract(pages)
         if any("vendas" in normalize(page.text, metadata=True) for page in pages):
             context["document_purpose"] = "venda"
         results = []
