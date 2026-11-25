@@ -47,7 +47,7 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
             </div>
           </section>
 
-          <section class="content" style="order:2">
+          <section class="content">
             <div appSiteSection="detail.description">
               <span class="eyebrow">{{ property.bairro }} · {{ property.cidade }}</span>
               <h1>{{ property.titulo }}</h1>
@@ -66,6 +66,7 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
                 <app-property-map [properties]="[property]" />
               }
             </div>
+          </section>
 
             <aside class="lead-card card" appSiteSection="detail.interest">
               <h2>{{site.text('detail','interest_title')}}</h2>
@@ -78,7 +79,6 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
               </form>
               <a class="btn btn-secondary whatsapp" [href]="whatsappLink" target="_blank" rel="noopener noreferrer" aria-label="Conversar pelo WhatsApp" title="Conversar pelo WhatsApp"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 32 32" fill="currentColor"><path d="M16 .8A15.1 15.1 0 0 0 3.04 23.7L.9 31l7.5-2A15.2 15.2 0 1 0 16 .8Zm0 27.6a12.4 12.4 0 0 1-6.3-1.7l-.45-.27-4.45 1.17 1.2-4.34-.3-.47a12.45 12.45 0 1 1 10.3 5.61Zm6.82-9.27c-.37-.19-2.21-1.1-2.55-1.22-.34-.12-.59-.19-.83.19-.25.37-.96 1.22-1.18 1.46-.22.25-.43.28-.8.1-.37-.19-1.57-.58-2.99-1.85-1.1-.99-1.85-2.21-2.07-2.58-.22-.37-.02-.57.16-.75.17-.17.37-.43.56-.65.19-.22.25-.37.37-.62.12-.25.06-.46-.03-.65-.09-.19-.83-2.01-1.14-2.76-.3-.72-.6-.62-.83-.63h-.7c-.25 0-.65.09-.99.46-.34.37-1.3 1.27-1.3 3.1s1.33 3.6 1.51 3.84c.19.25 2.6 3.97 6.3 5.57.88.38 1.57.61 2.11.78.89.28 1.7.24 2.34.15.71-.11 2.21-.9 2.52-1.77.31-.87.31-1.61.22-1.77-.09-.15-.34-.25-.71-.43Z"/></svg></a>
             </aside>
-          </section>
 
           @if (similar.length) {
             <section class="section" appSiteSection="detail.similar">
@@ -96,22 +96,33 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
     </div>
   `,
   styles: [`
-    .detail {
-      padding: 40px 0 0;
+    .detail[data-site-page] {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      grid-template-areas: 'gallery interest' 'content interest' 'similar similar';
+      align-items: start;
+      gap: 28px 32px;
+      padding: 28px 0 0;
     }
 
     .back-button {
+      position: absolute;
+      top: 8px;
+      left: -32px;
+      z-index: 5;
       display: inline-flex;
       align-items: center;
       gap: 8px;
       min-height: 42px;
       border: 1px solid rgba(255, 255, 255, 0.38);
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.07);
+      background: rgba(17, 20, 23, 0.88);
+      backdrop-filter: blur(10px);
       color: #e6e8eb;
       font-weight: 900;
       padding: 0 16px;
-      margin-bottom: 18px;
+      margin: 0;
       transition: background 0.18s ease, transform 0.18s ease;
     }
 
@@ -121,6 +132,8 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
     }
 
     .gallery {
+      grid-area: gallery;
+      min-width: 0;
       display: grid;
       gap: 12px;
       animation: fadeUp 0.45s ease both;
@@ -173,10 +186,8 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
     }
 
     .content {
-      display: grid;
-      grid-template-columns: 1fr 360px;
-      gap: 32px;
-      margin-top: 34px;
+      grid-area: content;
+      min-width: 0;
       animation: fadeUp 0.5s ease both;
       animation-delay: 0.08s;
     }
@@ -213,6 +224,9 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
 
     .map,
     .lead-card {
+      grid-area: interest;
+      min-width: 0;
+      align-self: start;
       padding: 20px;
     }
 
@@ -251,8 +265,13 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
       gap: 18px;
     }
 
+    .detail > .section { grid-area: similar; min-width: 0; }
+
+    @media (max-width: 1280px) {
+      .back-button { left: 8px; }
+    }
+
     @media (max-width: 900px) {
-      .content,
       .similar-grid {
         grid-template-columns: 1fr;
       }
@@ -261,7 +280,9 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
         position: static;
       }
 
-      .detail {
+      .detail[data-site-page] {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: 'gallery' 'content' 'interest' 'similar';
         padding-top: 22px;
       }
 
