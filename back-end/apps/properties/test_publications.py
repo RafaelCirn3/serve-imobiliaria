@@ -90,6 +90,11 @@ class GroupedPublicationTests(TestCase):
         result = self.client.get("/api/imoveis/", {"ordering": "valor"}).data
         self.assertEqual([p["torre"] for p in result["results"]], ["A", "B", "C"])
 
+    def test_featured_groups_default_to_highest_price_first(self):
+        Property.objects.filter(status="publicado").update(destaque=True)
+        result = self.client.get("/api/imoveis/destaques/").data
+        self.assertEqual([p["torre"] for p in result["results"]], ["C", "A", "B"])
+
     def test_same_tower_different_suites_or_area_gets_separate_publications(self):
         self.unit("A", "201", "2800000", quartos=4, suites=4, area_informada="191.16")
         self.unit("A", "301", "2900000", quartos=4, suites=4, area_informada="191.160")

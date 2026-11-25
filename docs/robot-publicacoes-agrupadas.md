@@ -128,7 +128,11 @@ registra `ACERVO_SEM_VARIACAO_DE_SEQUENCIA`, sem usar material de outro imóvel.
 - Elevare: 122 unidades cadastradas como rascunhos em seis grupos por torre,
   suítes e área; 48 linhas sem preço continuam pendentes. Repetir a preparação
   cria zero unidades e reconhece 122 existentes. Todas têm endereço, previsão
-  de entrega e metadados administrativos. Nenhum Elevare foi publicado.
+  de entrega e metadados administrativos. Após validação e solicitação do
+  operador, as 122 unidades foram publicadas no localhost, em seis anúncios.
+  Os dois anúncios de maior valor por torre (350,07 m² na A e 262,43 m² na B)
+  estão em destaque, ordenados por preço decrescente. Com os dois Makai, o
+  catálogo local tem oito anúncios. As 48 linhas sem preço permanecem pendentes.
 - As 122 unidades Elevare receberam 760 fotos do acervo do empreendimento,
   com 122 sequências distintas. Nenhuma unidade ficou sem galeria. A conferência
   validou limites, ordem, capa, origem e existência dos arquivos; amostras dos

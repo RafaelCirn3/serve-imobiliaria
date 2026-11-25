@@ -89,7 +89,7 @@ class PublicPropertyViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="destaques")
     def destaques(self, request):
-        queryset = self.filter_queryset(self.get_queryset().filter(destaque=True))
+        queryset = self.filter_queryset(self.get_queryset().filter(destaque=True).order_by("-valor"))
         return Response({"count": queryset.count(), "next": None, "previous": None,
                          "results": self.get_serializer(queryset, many=True).data})
 
