@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from decimal import Decimal
 
 from .models import Property, PropertyImage
 from apps.locations.normalization import canonical_city, normalized
@@ -7,8 +8,8 @@ from apps.locations.normalization import canonical_city, normalized
 class PropertyImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = PropertyImage
-        fields = ["id", "imagem", "legenda", "ordem", "imagem_capa", "criado_em"]
-        read_only_fields = ["id", "criado_em"]
+        fields = ["id", "imagem", "legenda", "ordem", "imagem_capa", "criado_em", "categoria", "vistoria_pendente"]
+        read_only_fields = ["id", "criado_em", "categoria", "vistoria_pendente"]
 
 
 class PublicPropertySerializer(serializers.ModelSerializer):
@@ -43,6 +44,7 @@ class PublicPropertySerializer(serializers.ModelSerializer):
     class Meta:
         model = Property
         fields = [
+            "empreendimento", "unidade", "torre", "construtora", "origem_comercial", "medidas", "area_informada",
             "id",
             "titulo",
             "slug",
@@ -84,6 +86,7 @@ class PublicPropertySerializer(serializers.ModelSerializer):
 
 class AdminPropertySerializer(serializers.ModelSerializer):
     imagens = PropertyImageSerializer(many=True, read_only=True)
+    area_informada = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal("0.01"), required=False, allow_null=True)
     latitude = serializers.DecimalField(max_digits=10, decimal_places=7, min_value=-90, max_value=90, required=False, allow_null=True)
     longitude = serializers.DecimalField(max_digits=10, decimal_places=7, min_value=-180, max_value=180, required=False, allow_null=True)
 
@@ -123,6 +126,7 @@ class AdminPropertySerializer(serializers.ModelSerializer):
     class Meta:
         model = Property
         fields = [
+            "empreendimento", "unidade", "torre", "construtora", "origem_comercial", "medidas", "area_informada",
             "id",
             "titulo",
             "slug",

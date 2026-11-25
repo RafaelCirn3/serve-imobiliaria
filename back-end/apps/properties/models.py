@@ -31,6 +31,13 @@ class Property(models.Model):
         INATIVO = "inativo", "Inativo"
 
     titulo = models.CharField(max_length=180)
+    empreendimento = models.CharField(max_length=180, blank=True)
+    unidade = models.CharField(max_length=80, blank=True)
+    torre = models.CharField(max_length=80, blank=True)
+    construtora = models.CharField(max_length=180, blank=True)
+    origem_comercial = models.CharField(max_length=180, blank=True)
+    medidas = models.CharField(max_length=80, blank=True)
+    area_informada = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     descricao = models.TextField()
     tipo = models.CharField(max_length=20, choices=Tipo.choices)
@@ -128,10 +135,20 @@ class PropertyImage(models.Model):
     legenda = models.CharField(max_length=180, blank=True)
     ordem = models.PositiveIntegerField(default=0)
     imagem_capa = models.BooleanField(default=False)
+    categoria = models.CharField(max_length=16, blank=True, choices=[("fachada", "Fachada"), ("lazer", "Área de lazer"), ("internos", "Ambientes internos")])
+    origem_drive_id = models.CharField(max_length=128, blank=True)
+    origem_drive_url = models.URLField(max_length=500, blank=True)
+    origem_pasta_id = models.CharField(max_length=128, blank=True)
+    conteudo_sha256 = models.CharField(max_length=64, blank=True)
+    vistoria_pendente = models.BooleanField(default=False)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["ordem", "id"]
+        constraints = [
+            models.UniqueConstraint(fields=["imovel", "origem_drive_id"], condition=~models.Q(origem_drive_id=""), name="unique_property_drive_image"),
+            models.UniqueConstraint(fields=["imovel", "conteudo_sha256"], condition=~models.Q(conteudo_sha256=""), name="unique_property_image_content"),
+        ]
 
     def __str__(self):
         return f"Imagem {self.id} - {self.imovel}"

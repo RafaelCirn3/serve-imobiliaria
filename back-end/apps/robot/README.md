@@ -1,7 +1,18 @@
 # Motor de fontes do Drive V2
 
-O robô interpreta metadados de 16 fontes. Não baixa arquivos, extrai PDFs ou
-publica imóveis. A origem comercial não comprova a construtora responsável.
+Galerias dos imóveis importados: consulte
+[`docs/robot-galerias.md`](../../../docs/robot-galerias.md). O comando
+`vincular-imagens` aplica seleção sortida por categoria e vínculo específico de avulsos.
+
+O MVP de extração MGA adiciona leitura de caracteres, OCR local quando necessário,
+área de conferência e importação de rascunhos por CLI, API e MCP. Consulte
+[`docs/robot-mga-mvp.md`](../../../docs/robot-mga-mvp.md) para execução e resultados.
+No Windows, execute `back-end\mga-demo.cmd` a partir da raiz para demonstrar a
+importação em SQLite isolado. O comando principal é `python manage.py robot-mga`.
+
+O mapeamento interpreta metadados de 16 fontes. A extração seletiva e a importação
+MGA são executadas pelo comando `robot-mga`, descrito no guia acima.
+A origem comercial não comprova a construtora responsável.
 As 13 empresas conhecidas e os perfis por `folder_id` ficam em
 `profile_defaults.py`. `DriveSource.perfil` permite personalização no admin.
 `get_profile()` completa campos opcionais de perfis V1 com defaults V2 sem

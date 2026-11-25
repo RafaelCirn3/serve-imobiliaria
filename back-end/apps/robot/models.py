@@ -1,4 +1,5 @@
 from django.db import models
+import uuid
 
 
 class DriveSource(models.Model):
@@ -52,3 +53,63 @@ class DrivePublication(models.Model):
 
     def __str__(self):
         return self.titulo
+
+
+class TableImport(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    identity = models.CharField(max_length=64, unique=True)
+    content_sha256 = models.CharField(max_length=64)
+    filename = models.CharField(max_length=255)
+    source_folder_id = models.CharField(max_length=128, blank=True)
+    drive_file_id = models.CharField(max_length=128, blank=True)
+    developer_profile = models.CharField(max_length=40, default="mga")
+    parser_version = models.CharField(max_length=40)
+    context = models.JSONField(default=dict)
+    extraction = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class TableUnit(models.Model):
+    document = models.ForeignKey(TableImport, related_name="units", on_delete=models.CASCADE)
+    index = models.PositiveIntegerField()
+    fields = models.JSONField(default=dict)
+    evidence = models.JSONField(default=dict)
+    warnings = models.JSONField(default=list)
+    reviewed = models.BooleanField(default=False)
+    imported_property = models.ForeignKey("properties.Property", null=True, blank=True, on_delete=models.PROTECT, related_name="table_origins")
+    imported_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["document", "index"], name="unique_table_unit_index")]
+
+
+class ImportedUnitIdentity(models.Model):
+    """Unidade física estável entre versões da tabela; imóveis existentes não são sobrescritos."""
+    key = models.CharField(max_length=64, unique=True)
+    property = models.OneToOneField("properties.Property", on_delete=models.PROTECT, related_name="robot_identity")
+
+
+class DriveImageAsset(models.Model):
+    source_id = models.CharField(max_length=128)
+    file_id = models.CharField(max_length=128)
+    folder_id = models.CharField(max_length=128)
+    name = models.CharField(max_length=500)
+    path = models.TextField()
+    mime_type = models.CharField(max_length=120)
+    project_name = models.CharField(max_length=300)
+    project_normalized = models.CharField(max_length=300, db_index=True)
+    category = models.CharField(max_length=16)
+    url = models.URLField(max_length=1000)
+    metadata = models.JSONField(default=dict)
+    active = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["source_id", "file_id"], name="unique_source_image_asset")]
+
+
+class PropertyImageSelection(models.Model):
+    property = models.OneToOneField("properties.Property", on_delete=models.CASCADE, related_name="robot_gallery")
+    seed = models.PositiveBigIntegerField()
+    plan = models.JSONField(default=dict)
+    result = models.JSONField(default=dict)
+    updated_at = models.DateTimeField(auto_now=True)

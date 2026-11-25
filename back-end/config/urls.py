@@ -13,8 +13,11 @@ from apps.leads.views import AdminLeadViewSet, PublicLeadViewSet
 from apps.locations.views import AdminRegionViewSet, PublicRegionViewSet
 from apps.locations.views import LocationViewSet
 from apps.properties.views import AdminPropertyViewSet, PublicPropertyViewSet
+from apps.robot.api import MGAImportViewSet, MGAUnitViewSet
 
 router = DefaultRouter()
+router.register("admin/robot/mga/extracoes", MGAImportViewSet, basename="robot-mga-extracoes")
+router.register("admin/robot/mga/unidades", MGAUnitViewSet, basename="robot-mga-unidades")
 router.register("localizacao", LocationViewSet, basename="localizacao")
 router.register("imoveis", PublicPropertyViewSet, basename="public-imoveis")
 router.register("leads", PublicLeadViewSet, basename="public-leads")

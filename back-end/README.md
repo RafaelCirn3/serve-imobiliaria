@@ -131,6 +131,11 @@ Também são aceitos `lancamento` (Lançamento), `em_construcao` (Em construçã
 
 ## Robô de fontes do Google Drive
 
+O MVP MGA extrai as tabelas com texto primeiro e OCR local como fallback, mantendo
+evidências e candidatos antes de criar imóveis em rascunho. Há CLI, API com JWT
+administrativo e servidor MCP stdio. Execução de demonstração no Windows:
+`mga-demo.cmd` dentro de `back-end`. Guia: [MVP MGA](../docs/robot-mga-mvp.md).
+
 As 16 fontes padrão incluem **EMPREENDIMENTOS**, **TABELAS MGA CONSTRUCOES** e as
 14 pastas adicionais listadas em `apps/robot/sources.py`. As adicionais usam nomes
 de **Fonte adicional 01** a **Fonte adicional 14**, editáveis no admin; o inventário
