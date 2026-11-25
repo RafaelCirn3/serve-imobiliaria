@@ -11,7 +11,7 @@ import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/prop
   imports: [PhotoComponent, RouterLink, CurrencyPipe],
   template: `
     <article class="property-card card">
-      <a [routerLink]="['/imoveis', property.slug]" class="media">
+      <a [routerLink]="['/imoveis', property.slug]" class="media card-media">
         <app-photo [src]="coverImage" [alt]="property.titulo" />
         @if (property.destaque) {
           <span>Destaque</span>
@@ -56,20 +56,10 @@ import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/prop
     }
 
     .media {
-      position: relative;
-      display: block;
-      flex: none;
-      aspect-ratio: 4 / 3;
-      overflow: hidden;
       background: #111417;
     }
 
     app-photo {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
       transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), filter 0.2s ease;
     }
 

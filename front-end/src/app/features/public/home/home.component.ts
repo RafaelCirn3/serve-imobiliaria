@@ -133,7 +133,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
             <div class="region-grid">
               @for (region of regions; track region.id) {
                 <article class="region-card card">
-                  <img [src]="regionImage(region)" [alt]="region.nome">
+                  <figure class="card-media"><img [src]="regionImage(region)" [alt]="region.nome"></figure>
                   <div><h3>{{ region.nome }}</h3><p>{{ region.descricao || 'Região estratégica para morar ou investir em ' + region.cidade + '.' }}</p></div>
                 </article>
               }
@@ -344,12 +344,6 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
 
     .region-card {
       overflow: hidden;
-    }
-
-    .region-card img {
-      width: 100%;
-      aspect-ratio: 1.55;
-      object-fit: cover;
     }
 
     .region-card div {

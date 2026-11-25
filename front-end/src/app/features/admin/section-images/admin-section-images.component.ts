@@ -34,7 +34,7 @@ import { NotificationService } from '@core/services/notification.service';
     <div class="gallery">
       @for (item of images; track item.id) {
         <div class="card image-card">
-          <app-photo [src]="item.image" [alt]="item.caption || 'Imagem da seção'" />
+          <div class="card-media"><app-photo [src]="item.image" [alt]="item.caption || 'Imagem da seção'" /></div>
           <strong>{{ item.section === 'tourism' ? 'Pontos Turísticos' : 'Orla' }}</strong>
           <span>{{ item.caption || 'Sem legenda' }} · Ordem {{ item.position }} · {{ item.active ? 'Ativa' : 'Inativa' }}</span>
           <div class="actions">
@@ -49,7 +49,7 @@ import { NotificationService } from '@core/services/notification.service';
     .editor{display:grid;gap:12px;padding:20px;margin:16px 0 24px;max-width:720px}
     .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
     .image-card{display:grid;gap:10px;padding:12px}
-    .image-card app-photo{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:6px}
+    .image-card .card-media{border-radius:6px}
     .actions{display:flex;gap:8px;flex-wrap:wrap}
     .check{display:flex;gap:8px;align-items:center}
   `]
