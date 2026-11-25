@@ -1,8 +1,12 @@
 """Leitura completa e paginada das fontes de divulgação no Google Drive."""
 
 import json
+from time import sleep
 
 from django.conf import settings
+
+from .profiles import get_profile
+from .mapping import annotate_inventory
 
 
 FOLDER_MIME = "application/vnd.google-apps.folder"
@@ -16,13 +20,17 @@ class DriveAccessError(Exception):
 def execute(request):
     from googleapiclient.errors import HttpError
 
-    try:
-        return request.execute()
-    except HttpError as exc:
-        raise DriveAccessError(
-            f"Google Drive API retornou HTTP {exc.resp.status}. "
-            "Confira a ativação da API, as restrições da chave e o acesso às pastas."
-        ) from None
+    for attempt in range(3):
+        try:
+            return request.execute()
+        except HttpError as exc:
+            if exc.resp.status in (429, 500, 502, 503, 504) and attempt < 2:
+                sleep(2 ** attempt)
+                continue
+            raise DriveAccessError(
+                f"Google Drive API retornou HTTP {exc.resp.status}. "
+                "Confira a ativação da API, as restrições da chave e o acesso às pastas."
+            ) from None
 
 
 def drive_service():
@@ -55,6 +63,8 @@ def drive_service():
 
 def scan_source(service, source):
     """Retorna pastas e arquivos sem omitir páginas nem atravessar atalhos."""
+    profile = get_profile(source)
+    project_depth = profile.depth if profile else 1
     api = service.files()
     root = execute(api.get(fileId=source.pasta_id, fields="id,name,mimeType,webViewLink", supportsAllDrives=True))
     if root["mimeType"] != FOLDER_MIME:
@@ -71,7 +81,7 @@ def scan_source(service, source):
             continue
         visited.add(folder_id)
         path = f"{parent_path}/{folder['name']}" if parent_path else folder["name"]
-        project_id = folder_id if depth == 1 else project_id
+        project_id = folder_id if depth == project_depth else project_id
         folders.append({
             "source_id": source.pk, "source_name": source.nome, "id": folder_id,
             "name": folder["name"], "path": path, "parent_id": folder.get("parent_id", ""),
@@ -83,7 +93,7 @@ def scan_source(service, source):
         while True:
             result = execute(api.list(
                 q=f"'{folder_id}' in parents and trashed = false",
-                fields="nextPageToken,files(id,name,mimeType,size,modifiedTime,webViewLink,description)",
+                fields="nextPageToken,files(id,name,mimeType,size,modifiedTime,webViewLink,description,md5Checksum,sha256Checksum,imageMediaMetadata(width,height))",
                 pageSize=1000,
                 pageToken=page_token,
                 supportsAllDrives=True,
@@ -104,6 +114,11 @@ def scan_source(service, source):
                     "size": int(child["size"]) if child.get("size") else None,
                     "modified_time": child.get("modifiedTime", ""),
                     "description": child.get("description", ""),
+                    "md5_checksum": child.get("md5Checksum", ""),
+                    "sha256_checksum": child.get("sha256Checksum", ""),
+                    "image_metadata": child.get("imageMediaMetadata", {}),
                     "url": child.get("webViewLink") or f"https://drive.google.com/file/d/{child['id']}/view",
                 })
+    if profile:
+        annotate_inventory(source, folders, files)
     return folders, files

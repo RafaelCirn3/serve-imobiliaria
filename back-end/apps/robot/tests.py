@@ -13,6 +13,7 @@ from openpyxl import load_workbook
 from .drive import FOLDER_MIME, drive_service, scan_source
 from .models import DrivePublication, DriveSource
 from .sync import sync_sources
+from .sources import DEFAULT_SOURCES
 
 
 class FakeRequest:
@@ -65,6 +66,21 @@ class DriveSyncTests(TestCase):
         DriveSource.objects.exclude(pasta_id="root").update(ativa=False)
         self.source = DriveSource.objects.create(nome="Fonte A", pasta_id="root")
 
+    def test_migrations_register_all_default_sources(self):
+        self.assertEqual(len(DEFAULT_SOURCES), 16)
+        self.assertEqual(
+            set(DriveSource.objects.exclude(pasta_id="root").values_list("nome", "pasta_id")),
+            set(DEFAULT_SOURCES),
+        )
+        migration = import_module("apps.robot.migrations.0002_add_drive_sources")
+        from django.apps import apps
+        from django.db import connection
+
+        DriveSource.objects.filter(pasta_id=DEFAULT_SOURCES[2][1]).update(nome="Nome personalizado")
+        migration.create_sources(apps, SimpleNamespace(connection=connection))
+        self.assertEqual(DriveSource.objects.count(), 17)
+        self.assertTrue(DriveSource.objects.filter(nome="Nome personalizado", ativa=False).exists())
+
     def test_sync_creates_pending_divulgations_and_is_idempotent(self):
         self.assertEqual(sync_sources(FakeDrive()), {"criadas": 2, "atualizadas": 0})
         self.assertEqual(sync_sources(FakeDrive()), {"criadas": 0, "atualizadas": 0})
@@ -103,7 +119,11 @@ class DriveSyncTests(TestCase):
                  patch.object(command_module, "scan_source", return_value=([], [])) as scan:
                 mocked_source.objects.filter.side_effect = OperationalError("bad password")
                 call_command("mapear-fontes", output=output, stderr=stderr)
-            self.assertEqual(scan.call_count, 2)
-            self.assertIn("usando as duas fontes padrão", stderr.getvalue())
+            self.assertEqual(scan.call_count, len(DEFAULT_SOURCES))
+            self.assertEqual(
+                {call.args[1].pasta_id for call in scan.call_args_list},
+                {folder_id for _, folder_id in DEFAULT_SOURCES},
+            )
+            self.assertIn("usando as 16 fontes padrão", stderr.getvalue())
             book = load_workbook(output)
-            self.assertEqual(book["Fontes"].max_row, 3)
+            self.assertEqual(book["Fontes"].max_row, len(DEFAULT_SOURCES) + 1)

@@ -131,9 +131,13 @@ Também são aceitos `lancamento` (Lançamento), `em_construcao` (Em construçã
 
 ## Robô de fontes do Google Drive
 
-As fontes iniciais são as pastas **EMPREENDIMENTOS** e **TABELAS MGA CONSTRUCOES**.
+As 16 fontes padrão incluem **EMPREENDIMENTOS**, **TABELAS MGA CONSTRUCOES** e as
+14 pastas adicionais listadas em `apps/robot/sources.py`. As adicionais usam nomes
+de **Fonte adicional 01** a **Fonte adicional 14**, editáveis no admin; o inventário
+consulta os nomes reais das pastas no Drive. Execute `python manage.py migrate`
+para cadastrar as novas fontes, preservando nomes e estados das já existentes.
 Elas são cadastradas pela migração e podem ser ativadas, desativadas ou ampliadas no
-Django admin em **Fontes do Drive**. Compartilhe ambas as pastas com o e-mail da
+Django admin em **Fontes do Drive**. Compartilhe todas as pastas com o e-mail da
 conta de serviço do Google com permissão de leitura e ative a Google Drive API no
 projeto dessa conta. Configure uma das opções no back-end:
 
@@ -179,17 +183,34 @@ Execute dentro de `back-end`:
 ```bash
 python manage.py mapear-fontes
 python manage.py mapear-fontes --output reports/minhas-fontes.xlsx
+python manage.py mapear-filtros --output reports/materiais-filtrados.xlsx
 ```
+
+`mapear-fontes` inclui todas as pastas e arquivos das fontes ativas.
+`mapear-filtros` inclui apenas materiais com categoria identificada pelos perfis
+e sem exclusões. A V2 preserva a hierarquia completa para auditar os descartes,
+e acrescenta abas de revisão, cobertura, duplicidades, regras e auditoria.
+Ambos aceitam `--source ID_DA_PASTA`. Detalhes em `apps/robot/README.md`.
 
 O comando é **manual** e não integra a rotina diária. A planilha `.xlsx` tem abas
 Resumo, Fontes, Pastas e Arquivos, com caminhos completos, níveis, IDs, links,
 tipos MIME, tamanhos e datas informados pelo Drive. Ela inclui pastas vazias e
 consulta todas as páginas de cada pasta. O destino padrão é `reports/`, ignorado
-pelo Git. Se qualquer fonte falhar, o comando termina sem gravar um inventário
-parcial. O mapeamento apenas lê o Drive e não altera os registros de divulgação.
-Se o PostgreSQL estiver indisponível, o comando usa as duas fontes iniciais e avisa
+pelo Git. Falhas de uma fonte são isoladas, e a execução parcial é explicitamente
+identificada; `--strict` interrompe na primeira falha. Se todas falharem, não há XLSX.
+O mapeamento apenas lê o Drive e não altera os registros de divulgação.
+Se o PostgreSQL estiver indisponível, o comando usa as 16 fontes padrão e avisa
 no terminal. Fontes adicionadas no Django admin exigem conexão com o banco para
 aparecer na planilha. A rotina diária do robô sempre exige o banco de dados.
+
+Também é possível reprocessar o inventário completo sem banco nem Drive:
+
+```bash
+python manage.py mapear-filtros --input-inventory reports/mapa-fontes-20261124-203554.xlsx --compare-to reports/mapa-filtros-20261124-210140.xlsx --output reports/mapa-filtros-v2.xlsx --comparison-output reports/comparativo-v1-v2.xlsx
+```
+
+O CSV de amostra gerado junto ao mapa permite homologação humana e cálculo
+posterior com `avaliar-filtros`. Sem rótulos humanos, não há estimativa de acurácia.
 
 `area_min` e `area_max` continuam filtrando **área privativa** em m².
 `area_total_min` e `area_total_max` filtram **área total**, inclusive terrenos

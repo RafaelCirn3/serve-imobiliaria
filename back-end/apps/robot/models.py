@@ -6,11 +6,22 @@ class DriveSource(models.Model):
     pasta_id = models.CharField(max_length=128, unique=True)
     ativa = models.BooleanField(default=True)
     ultima_consulta_em = models.DateTimeField(null=True, blank=True)
+    perfil = models.JSONField(default=dict, blank=True, help_text="Origem, empresas relacionadas, agrupamento e filtros por categoria.")
 
     class Meta:
         ordering = ["nome"]
         verbose_name = "Fonte do Drive"
         verbose_name_plural = "Fontes do Drive"
+
+    def __str__(self):
+        return self.nome
+
+
+class DriveProject(models.Model):
+    chave = models.CharField(max_length=300, unique=True)
+    nome = models.CharField(max_length=180)
+    construtoras = models.JSONField(default=list)
+    confianca = models.CharField(max_length=24, default="revisao")
 
     def __str__(self):
         return self.nome
@@ -23,6 +34,7 @@ class DrivePublication(models.Model):
         IGNORADA = "ignorada", "Ignorada"
 
     fonte = models.ForeignKey(DriveSource, on_delete=models.PROTECT, related_name="divulgacoes")
+    empreendimento = models.ForeignKey(DriveProject, null=True, blank=True, on_delete=models.PROTECT, related_name="origens")
     pasta_id = models.CharField(max_length=128)
     titulo = models.CharField(max_length=180)
     caminho = models.TextField()
