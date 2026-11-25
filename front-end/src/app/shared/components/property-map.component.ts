@@ -93,7 +93,11 @@ export class PropertyMapComponent implements AfterViewInit, OnChanges, OnDestroy
       const image = document.createElement('img'); image.src = mediaUrl(photo); image.alt = property.titulo; node.appendChild(image);
     }
     const title = document.createElement('strong'); title.textContent = property.titulo; node.appendChild(title);
-    const price = document.createElement('p'); price.textContent = (property.agrupado ? 'A partir de: ' : '') + new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(Number(property.valor_exibicao ?? property.valor)); node.appendChild(price);
+    const price = document.createElement('p');
+    const priceValue = property.valor_exibicao ?? property.valor;
+    price.textContent = priceValue == null ? 'Valor sob consulta' :
+      (property.agrupado ? 'A partir de: ' : '') + new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(Number(priceValue));
+    node.appendChild(price);
     const location = document.createElement('p'); location.textContent = `${property.bairro} · ${property.cidade} — ${property.localizacao_exata ? 'Localização confirmada' : 'Localização aproximada'}`; node.appendChild(location);
     if (property.slug) {
       const link = document.createElement('a'); link.href = `/imoveis/${encodeURIComponent(property.slug)}`; link.textContent = 'Ver imóvel';

@@ -7,6 +7,9 @@ from io import BytesIO
 import json
 from pathlib import Path
 from types import SimpleNamespace
+from time import sleep
+from urllib.parse import urlencode
+from urllib.request import urlopen
 
 from django.conf import settings
 from django.db import transaction
@@ -55,16 +58,28 @@ class MGASynchronizer:
             return path.read_bytes()
         if (file.get("size") or 0) > MAX_BYTES:
             raise ExtractionError("Tabela excede 15 MB.")
+        from googleapiclient.errors import HttpError
         from googleapiclient.http import MediaIoBaseDownload
         self.service = self.service or drive_service()
         buffer = BytesIO()
         downloader = MediaIoBaseDownload(buffer,self.service.files().get_media(fileId=file["id"],supportsAllDrives=True),chunksize=1024*1024)
         done = False
-        while not done:
-            _, done = downloader.next_chunk(num_retries=2)
-            if buffer.tell() > MAX_BYTES:
-                raise ExtractionError("Tabela excede 15 MB.")
-        content = buffer.getvalue()
+        try:
+            while not done:
+                _, done = downloader.next_chunk(num_retries=2)
+                if buffer.tell() > MAX_BYTES:
+                    raise ExtractionError("Tabela excede 15 MB.")
+            content = buffer.getvalue()
+        except HttpError:
+            # Public source files can still be downloaded when the API media
+            # endpoint temporarily rejects automated requests.
+            if not expected:
+                raise
+            url = "https://drive.google.com/uc?" + urlencode({"export": "download", "id": file["id"]})
+            with urlopen(url, timeout=30) as response:
+                content = response.read(MAX_BYTES + 1)
+            if len(content) > MAX_BYTES or not content.startswith(b"%PDF"):
+                raise ExtractionError("Download público não retornou um PDF válido.")
         if expected and hashlib.md5(content).hexdigest() != expected:
             raise ExtractionError("Tabela mudou durante o download; tente novamente.")
         path.parent.mkdir(parents=True,exist_ok=True)
@@ -202,4 +217,11 @@ class MGASynchronizer:
         output.parent.mkdir(parents=True,exist_ok=True)
         temporary=output.with_suffix(output.suffix+".tmp")
         temporary.write_text(json.dumps(report,ensure_ascii=False,indent=2,default=str),encoding="utf-8")
-        temporary.replace(output)
+        for attempt in range(6):
+            try:
+                temporary.replace(output)
+                break
+            except PermissionError:
+                if attempt == 5:
+                    raise
+                sleep(0.1 * (attempt + 1))

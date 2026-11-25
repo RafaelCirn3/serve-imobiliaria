@@ -51,7 +51,7 @@ class Property(models.Model):
     finalidade = models.CharField(max_length=20, choices=Finalidade.choices)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.RASCUNHO)
     destaque = models.BooleanField(default=False)
-    valor = models.DecimalField(max_digits=14, decimal_places=2)
+    valor = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     valor_condominio = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     valor_iptu = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     regiao = models.ForeignKey(

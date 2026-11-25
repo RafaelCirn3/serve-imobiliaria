@@ -51,7 +51,7 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
             <div appSiteSection="detail.description">
               <span class="eyebrow">{{ property.bairro }} · {{ property.cidade }}</span>
               <h1>{{ property.titulo }}</h1>
-              <strong class="price">@if (property.agrupado) { <span>A partir de: </span> }{{ numberValue(property.valor_exibicao ?? property.valor) | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</strong>
+              <strong class="price">@if (property.valor_exibicao ?? property.valor; as price) { @if (property.agrupado) { <span>A partir de: </span> }{{ numberValue(price) | currency:'BRL':'symbol':'1.0-0':'pt-BR' }} } @else { Valor sob consulta }</strong>
               <div class="features">
                 <span>{{ typeLabel(property.tipo) }}</span>
                 @if (property.torre) { <span>Torre {{ property.torre }}</span> }
@@ -67,7 +67,7 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
               @if (property.agrupado) {
                 <section class="unit-options" aria-label="Unidades disponíveis">
                   <h2>Opções disponíveis</h2>
-                  <p class="muted">O valor “a partir de” é arredondado para baixo. Confira os valores totais.</p>
+                  @if (property.valor_exibicao != null) { <p class="muted">O valor “a partir de” é arredondado para baixo. Confira os valores totais.</p> }
                   @if (unitsError) {
                     <p role="status">Não foi possível carregar as unidades. Consulte nossa equipe.</p>
                   } @else if (unitsLoading) {
@@ -76,7 +76,7 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
                     <div class="unit-table-scroll"><table>
                       <thead><tr><th>Torre</th><th>Tipologia</th><th>Área</th><th>Vagas</th><th>Valor total</th></tr></thead>
                       <tbody>@for (unit of units; track $index) {
-                        <tr><td data-label="Torre">{{ unit.torre || '—' }}</td><td data-label="Tipologia">@if (unit.quartos) { {{ unit.quartos }} quartos } @else { {{ typeLabel(unit.tipo) }} } @if (unit.suites) { ({{ unit.suites }} suítes) }</td><td data-label="Área">{{ unit.area_privativa || unit.area_total || unit.area_informada }} m²</td><td data-label="Vagas">{{ unit.vagas || '—' }}</td><td data-label="Valor total">{{ numberValue(unit.valor) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }}</td></tr>
+                        <tr><td data-label="Torre">{{ unit.torre || '—' }}</td><td data-label="Tipologia">@if (unit.quartos) { {{ unit.quartos }} quartos } @else { {{ typeLabel(unit.tipo) }} } @if (unit.suites) { ({{ unit.suites }} suítes) }</td><td data-label="Área">{{ unit.area_privativa || unit.area_total || unit.area_informada }} m²</td><td data-label="Vagas">{{ unit.vagas || '—' }}</td><td data-label="Valor total">@if (unit.valor != null) { {{ numberValue(unit.valor) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }} } @else { Sob consulta }</td></tr>
                       }</tbody>
                     </table></div>
                   }

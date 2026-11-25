@@ -32,10 +32,10 @@ export interface Property {
   finalidade: PropertyPurpose;
   status?: PropertyStatus;
   destaque: boolean;
-  valor: string | number;
+  valor: string | number | null;
   agrupado?: boolean;
   quantidade_unidades?: number;
-  valor_exibicao?: string | number;
+  valor_exibicao?: string | number | null;
   valor_condominio?: string | number | null;
   valor_iptu?: string | number | null;
   regiao?: number | null;
@@ -102,8 +102,8 @@ export interface PropertyFilters {
 }
 
 export interface MapProperty {
-  agrupado?: boolean; valor_exibicao?: string | number; quantidade_unidades?: number;
-  id: number; titulo: string; slug: string; valor: string | number; cidade: string; bairro: string;
+  agrupado?: boolean; valor_exibicao?: string | number | null; quantidade_unidades?: number;
+  id: number; titulo: string; slug: string; valor: string | number | null; cidade: string; bairro: string;
   latitude?: string | number | null; longitude?: string | number | null; localizacao_exata?: boolean;
   foto?: string | null; imagens?: PropertyImage[];
 }
@@ -114,7 +114,7 @@ export interface MapResponse {
 
 export interface PropertyUnit {
   torre: string; tipo: PropertyType; finalidade: PropertyPurpose;
-  valor: string | number; area_informada: string | number | null;
+  valor: string | number | null; area_informada: string | number | null;
   area_total: string | number | null; area_privativa: string | number | null;
   quartos: number; suites: number; banheiros: number; vagas: number;
 }

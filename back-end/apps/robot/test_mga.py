@@ -117,6 +117,25 @@ class MGAExtractionTests(SimpleTestCase):
 
 
 class MGAImportTests(TestCase):
+    def test_missing_price_stays_null_and_defaults_to_sale(self):
+        source = next(d for d in json.loads((FIXTURES / "native-tables.json").read_text(encoding="utf-8"))
+                      if d["context"].get("empreendimento") == "Makai")
+        pages = [ExtractedPage(**page) for page in source["pages"]]
+        with patch.object(DocumentExtractor, "extract", return_value=pages):
+            result = inspect_table(b"unpriced Makai fixture", "TABELA MAKAI.pdf",
+                                   {**source["context"], "construtora": "MGA"})
+        result["units"][0]["fields"]["valor"] = None
+        result["units"][0]["fields"]["finalidade"] = ""
+        document, _ = stage_table(result)
+        unit = document.units.order_by("index").first()
+        self.assertNotIn("valor", validation_issues(unit))
+        property, created = commit_unit(unit.pk, with_images=False)
+        self.assertTrue(created)
+        self.assertIsNone(property.valor)
+        self.assertEqual(property.finalidade, "venda")
+        self.assertEqual(property.status, "rascunho")
+        self.assertTrue(property.grupo_publicacao)
+
     def test_preparation_links_images_unless_explicitly_deferred(self):
         source = next(d for d in json.loads((FIXTURES / "native-tables.json").read_text(encoding="utf-8"))
                       if d["context"].get("empreendimento") == "Makai")
@@ -230,18 +249,19 @@ class MGAImportTests(TestCase):
         property.refresh_from_db()
         self.assertEqual(property.valor, 2820000)
 
-    def test_ocr_needs_explicit_approval_and_never_accepts_publish_field(self):
+    def test_ocr_can_be_drafted_but_never_published_without_review(self):
         result = extracted()
         result["units"][0]["warnings"].append("OCR_REQUER_CONFERENCIA")
         document, _ = stage_table(result)
         unit = document.units.order_by("index").first()
         with self.assertRaises(ValidationError):
-            commit_unit(unit.pk)
-        with self.assertRaises(ValidationError):
             review_unit(unit.pk, {"status": "publicado"}, approve=True)
-        review_unit(unit.pk, {}, approve=True)
-        property, _ = commit_unit(unit.pk)
+        property, _ = commit_unit(unit.pk, with_images=False)
         self.assertEqual(property.status, "rascunho")
+        from .publication import MGAPublicationPolicy
+        self.assertIn("CONFERENCIA_DA_TABELA_PENDENTE", MGAPublicationPolicy().evaluate(property)["issues"])
+        review_unit(unit.pk, {}, approve=True)
+        self.assertNotIn("CONFERENCIA_DA_TABELA_PENDENTE", MGAPublicationPolicy().evaluate(property)["issues"])
 
     def test_cli_applies_drafts_and_repeat_does_not_duplicate(self):
         with TemporaryDirectory() as directory:

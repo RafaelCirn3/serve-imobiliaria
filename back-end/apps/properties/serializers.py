@@ -51,7 +51,7 @@ class PublicPropertySerializer(serializers.ModelSerializer):
 
     def get_valor_exibicao(self, obj):
         # The policy sets the price after collecting the whole group.
-        return str(obj.valor)
+        return str(obj.valor) if obj.valor is not None else None
 
     def to_representation(self, instance):
         return self.group_policy(instance).apply(instance, super().to_representation(instance))
@@ -125,6 +125,7 @@ class PublicPropertySerializer(serializers.ModelSerializer):
 
 class AdminPropertySerializer(serializers.ModelSerializer):
     imagens = PropertyImageSerializer(many=True, read_only=True)
+    valor = serializers.DecimalField(max_digits=14, decimal_places=2, min_value=Decimal("0.01"), required=False, allow_null=True)
     area_informada = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal("0.01"), required=False, allow_null=True)
     latitude = serializers.DecimalField(max_digits=10, decimal_places=7, min_value=-90, max_value=90, required=False, allow_null=True)
     longitude = serializers.DecimalField(max_digits=10, decimal_places=7, min_value=-180, max_value=180, required=False, allow_null=True)

@@ -21,7 +21,7 @@ import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/prop
         <p class="location">{{ property.bairro }} · {{ property.cidade }}</p>
         <span class="muted">{{ typeLabel(property.tipo) }}</span>
         <h3><a [routerLink]="['/imoveis', property.slug]">{{ property.titulo }}</a></h3>
-        <strong class="price">@if (property.agrupado) { <span>A partir de: </span> }{{ numericPrice | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</strong>
+        <strong class="price">@if (numericPrice !== null) { @if (property.agrupado) { <span>A partir de: </span> }{{ numericPrice | currency:'BRL':'symbol':'1.0-0':'pt-BR' }} } @else { Valor sob consulta }</strong>
         @if (property.agrupado) { <small class="muted">{{ property.quantidade_unidades }} unidade(s) disponível(is)</small> }
         <div class="features">
           @if (property.torre) { <span>Torre {{ property.torre }}</span> }
@@ -149,8 +149,9 @@ export class PropertyCardComponent {
       || '';
   }
 
-  get numericPrice(): number {
-    return Number(this.property.valor_exibicao ?? this.property.valor ?? 0);
+  get numericPrice(): number | null {
+    const value = this.property.valor_exibicao ?? this.property.valor;
+    return value == null ? null : Number(value);
   }
 }
 

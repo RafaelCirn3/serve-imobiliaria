@@ -16,11 +16,6 @@ class PublicationPolicy:
         # Sale and rental offers, cities and towers must never share a price.
         identity = [normalized(getattr(property, name)) for name in
                     ("construtora", "empreendimento", "cidade", "torre", "finalidade", "tipo")]
-        area, kind = PublicationPolicy.area(property)
-        identity.extend([str(property.quartos), str(property.suites), kind, str(area.normalize()) if area else ""])
-        if not area:
-            # Unknown dimensions are not evidence of identical floor plans.
-            identity.append(property.unidade or str(property.pk or property.slug))
         return hashlib.sha256("|".join(identity).encode()).hexdigest()
 
     @staticmethod
@@ -44,8 +39,15 @@ class PublicationPolicy:
         return title
 
     @staticmethod
-    def slug(property):
-        return slugify(PublicationPolicy.title(property))[:140] + "-" + property.grupo_publicacao
+    def group_title(members):
+        representative = members[0]
+        if len({(p.quartos, p.suites, PublicationPolicy.area(p)) for p in members}) == 1:
+            return PublicationPolicy.title(representative)
+        return representative.empreendimento + (f" — Torre {representative.torre}" if representative.torre else "")
+
+    @staticmethod
+    def slug(property, title=None):
+        return slugify(title or PublicationPolicy.title(property))[:140] + "-" + property.grupo_publicacao
 
     @staticmethod
     def starting_price(value):
@@ -74,15 +76,18 @@ class PublicationGroups:
     def apply(self, property, data):
         members = self.for_property(property)
         grouped = bool(property.grupo_publicacao)
-        minimum = min(p.valor for p in members)
+        priced = [p.valor for p in members if p.valor is not None and p.valor > 0]
+        minimum = min(priced) if priced else None
         data.update(agrupado=grouped, quantidade_unidades=len(members),
-                    valor_exibicao=str(PublicationPolicy.starting_price(minimum) if grouped else minimum))
+                    valor_exibicao=str(PublicationPolicy.starting_price(minimum) if grouped else minimum)
+                    if minimum is not None else None)
         if not grouped:
             return data
         representative = members[0]
+        title = PublicationPolicy.group_title(members)
         data.update(id=representative.pk, slug=representative.slug,
-                    titulo=PublicationPolicy.title(property), valor=str(minimum))
-        data["slug"] = PublicationPolicy.slug(property)
+                    titulo=title, valor=str(minimum) if minimum is not None else None)
+        data["slug"] = PublicationPolicy.slug(property, title)
         if "unidade" in data:
             data["unidade"] = ""
         if "tipo" in data and len({p.tipo for p in members}) > 1:

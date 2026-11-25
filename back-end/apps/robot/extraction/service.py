@@ -60,11 +60,15 @@ def stage_table(result, source_folder_id="", drive_file_id=""):
 
 def property_payload(unit):
     data = {key: value for key, value in unit.fields.items() if key in EDITABLE_FIELDS | {"origem_comercial"}}
+    if not data.get("valor"):
+        data["valor"] = None
     name, number = data.get("empreendimento", ""), data.get("unidade", "")
     data["titulo"] = f"{name} — unidade {number}"[:180]
     data["descricao"] = data.get("descricao") or f"{name}, unidade {number}. Dados extraídos da tabela comercial; cadastro em revisão."
     data["status"] = "rascunho"
     data, _ = CommercialDefaults.apply(data, avulso="avulsos" in normalize(unit.document.filename, metadata=True))
+    if not data.get("finalidade") and data["valor"] is None:
+        data["finalidade"] = "venda"
     from apps.locations.addressing import AddressNormalizer
     data.update(AddressNormalizer.parse(data))
     return data
@@ -77,13 +81,14 @@ def validation_issues(unit):
     for key in ("empreendimento", "unidade"):
         if not unit.fields.get(key):
             errors[key] = ["Campo obrigatório para identificar a unidade."]
-    try:
-        value = Decimal(str(unit.fields.get("valor")))
-        valid_value = value.is_finite() and value > 0
-    except InvalidOperation:
-        valid_value = False
-    if not valid_value:
-        errors["valor"] = ["Preço total positivo e explícito obrigatório."]
+    if unit.fields.get("valor") not in (None, ""):
+        try:
+            value = Decimal(str(unit.fields["valor"]))
+            valid_value = value.is_finite() and value > 0
+        except (InvalidOperation, ValueError, TypeError):
+            valid_value = False
+        if not valid_value:
+            errors["valor"] = ["Se informado, o preço total deve ser positivo."]
     return errors
 
 
@@ -96,6 +101,16 @@ def review_unit(unit_id, changes, approve=False):
     if set(changes) - EDITABLE_FIELDS:
         raise ValidationError("Campos de revisão não permitidos.")
     unit = TableUnit.objects.select_for_update().get(pk=unit_id)
+    if unit.imported_property_id and approve and not changes:
+        if unit.imported_property.status != "rascunho":
+            raise ValidationError("Somente rascunhos importados podem receber revisão da tabela.")
+        if validation_issues(unit):
+            raise ValidationError(validation_issues(unit))
+        unit.reviewed = True
+        unit.evidence = {**unit.evidence, "reviews": [*unit.evidence.get("reviews", []),
+                         {"before": unit.fields, "changes": {}, "approved": True, "at": timezone.now().isoformat()}]}
+        unit.save(update_fields=["reviewed", "evidence"])
+        return unit
     if unit.imported_property_id:
         raise ValidationError("Unidade já importada. Revise o imóvel pelo cadastro administrativo.")
     before = dict(unit.fields)
@@ -120,8 +135,7 @@ def commit_unit(unit_id, with_images=True):
     errors = validation_issues(unit)
     if errors:
         raise ValidationError(errors)
-    if not unit.reviewed and any(warning in unit.warnings for warning in ("OCR_REQUER_CONFERENCIA", "UNIDADE_NAO_DISPONIVEL", "UNIDADE_DUPLICADA_NO_DOCUMENTO", "BAIXA_CONFIANCA_OCR", "CONFLITO_FINALIDADE", "CONFLITO_TIPOLOGIA", "PRECO_SUSPEITO")):
-        raise ValidationError("Conferência explícita obrigatória para preço suspeito, OCR, conflitos, indisponibilidade ou unidade duplicada.")
+    # Warnings remain on the draft; publication requires their review.
     # Sem condomínio/cidade/tipo/torre/unidade completos não há identidade segura.
     fields = property_payload(unit)
     key = hashlib.sha256("|".join(normalize(fields.get(field, "")) for field in
@@ -132,8 +146,10 @@ def commit_unit(unit_id, with_images=True):
         # disponibilidade de um imóvel já existente por uma tabela mais antiga.
         unit.imported_property = previous.property
         unit.imported_at = timezone.now()
-        unit.evidence = {**unit.evidence, "import_decision": {"created": False, "existing_price": str(previous.property.valor),
-                         "table_price": str(fields["valor"]), "existing_data_changed": False}}
+        unit.evidence = {**unit.evidence, "import_decision": {"created": False,
+                         "existing_price": str(previous.property.valor) if previous.property.valor is not None else None,
+                         "table_price": str(fields["valor"]) if fields["valor"] is not None else None,
+                         "existing_data_changed": False}}
         unit.save(update_fields=["imported_property", "imported_at", "evidence"])
         schedule_location(unit.pk)
         if with_images:

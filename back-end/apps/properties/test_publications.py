@@ -49,6 +49,22 @@ class GroupedPublicationTests(TestCase):
         self.a2.refresh_from_db()
         self.assertEqual(self.a2.valor, Decimal("2122036"))
 
+    def test_unpriced_unit_joins_its_tower_without_lowering_starting_price(self):
+        self.unit("A", "105", None)
+        result = self.client.get("/api/imoveis/").data
+        group = next(p for p in result["results"] if p["torre"] == "A")
+        self.assertEqual(group["quantidade_unidades"], 3)
+        self.assertEqual(group["valor"], "2122036.00")
+        self.assertEqual(group["valor_exibicao"], "2000000")
+        units = self.client.get(f"/api/imoveis/{group['slug']}/unidades/").data
+        self.assertEqual(sum(row["valor"] is None for row in units), 1)
+
+    def test_group_without_any_price_is_sob_consulta(self):
+        self.unit("D", "101", None)
+        group = next(p for p in self.client.get("/api/imoveis/").data["results"] if p["torre"] == "D")
+        self.assertIsNone(group["valor"])
+        self.assertIsNone(group["valor_exibicao"])
+
     def test_detail_of_any_unit_resolves_group_and_exact_units_exclude_drafts(self):
         group = self.client.get(f"/api/imoveis/{self.a2.slug}/").data
         self.assertEqual(group["id"], self.a1.pk)
@@ -95,11 +111,16 @@ class GroupedPublicationTests(TestCase):
         result = self.client.get("/api/imoveis/destaques/").data
         self.assertEqual([p["torre"] for p in result["results"]], ["C", "A", "B"])
 
-    def test_same_tower_different_suites_or_area_gets_separate_publications(self):
+    def test_same_tower_different_layouts_share_publication_without_false_dimensions(self):
         self.unit("A", "201", "2800000", quartos=4, suites=4, area_informada="191.16")
         self.unit("A", "301", "2900000", quartos=4, suites=4, area_informada="191.160")
         self.unit("A", "202", "2300000", area_informada="162.16")
-        self.assertEqual(self.client.get("/api/imoveis/").data["count"], 5)
+        result = self.client.get("/api/imoveis/").data
+        self.assertEqual(result["count"], 3)
+        group = next(p for p in result["results"] if p["torre"] == "A")
+        self.assertEqual(group["titulo"], "Elevare — Torre A")
+        self.assertIsNone(group["area_informada"])
+        self.assertEqual(group["suites"], 0)
 
     def test_private_unit_and_floor_remain_in_admin_api(self):
         from django.contrib.auth import get_user_model

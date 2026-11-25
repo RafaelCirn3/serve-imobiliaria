@@ -88,7 +88,9 @@ class Command(BaseCommand):
             groups.setdefault(property.grupo_publicacao, []).append(property)
         from apps.properties.publications import PublicationPolicy
         report["groups"] = [{"title": PublicationPolicy.title(rows[0]), "count":len(rows),
-                             "min_price":str(min(p.valor for p in rows))} for rows in groups.values()]
+                             "min_price":str(min(prices)) if prices else None}
+                            for rows in groups.values()
+                            for prices in [[p.valor for p in rows if p.valor is not None and p.valor > 0]]]
         report["duration_seconds"] = round(perf_counter() - started, 3)
         options["output"].parent.mkdir(parents=True, exist_ok=True)
         options["output"].write_text(json.dumps(report, ensure_ascii=False, indent=2, default=str), encoding="utf-8")

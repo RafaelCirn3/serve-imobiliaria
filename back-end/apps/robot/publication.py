@@ -12,7 +12,7 @@ from .models import TableUnit
 
 
 class MGAPublicationPolicy:
-    version = "mga-publication-1.0"
+    version = "mga-publication-1.1"
     review_warnings = {
         "OCR_REQUER_CONFERENCIA", "UNIDADE_NAO_DISPONIVEL",
         "UNIDADE_DUPLICADA_NO_DOCUMENTO", "BAIXA_CONFIANCA_OCR",
@@ -31,8 +31,8 @@ class MGAPublicationPolicy:
                 issues.append("DADOS_DA_TABELA_PENDENTES")
             if not unit.reviewed and self.review_warnings.intersection(unit.warnings):
                 issues.append("CONFERENCIA_DA_TABELA_PENDENTE")
-        if not property.valor or property.valor <= 0:
-            issues.append("SEM_PRECO")
+        if property.valor is not None and property.valor <= 0:
+            issues.append("PRECO_INVALIDO")
         if not property.cidade or not property.bairro or not property.logradouro:
             issues.append("ENDERECO_INCOMPLETO")
         if not PublicationPolicy.area(property)[0]:

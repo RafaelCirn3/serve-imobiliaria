@@ -46,7 +46,7 @@ import { MapProperty } from '@core/models/api.models';
         <div [hidden]="tab !== 'basic'">
           <div class="form-grid">
             <label class="field">Título *<input formControlName="titulo"><app-control-hint [control]="form.controls.titulo" [required]="true" /></label>
-            <label class="field">Valor *<input type="number" min="0" step="0.01" inputmode="decimal" formControlName="valor"><app-control-hint [control]="form.controls.valor" [required]="true" /></label>
+            <label class="field">Valor (opcional)<input type="number" min="0.01" step="0.01" inputmode="decimal" formControlName="valor"><app-control-hint [control]="form.controls.valor" /></label>
             <label class="field full">Descrição *<textarea formControlName="descricao"></textarea><app-control-hint [control]="form.controls.descricao" [required]="true" /></label>
             <label class="field">Tipo<select formControlName="tipo">
               @for (type of propertyTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }
@@ -170,16 +170,16 @@ export class PropertyFormComponent implements OnInit, OnDestroy {
   private readonly notification = inject(NotificationService);
   private readonly locations = inject(LocationService);
   private readonly destroyRef = inject(DestroyRef);
-  get requiredFields(): Array<'titulo'|'descricao'|'valor'|'cidade'|'bairro'> {
+  get requiredFields(): Array<'titulo'|'descricao'|'cidade'|'bairro'> {
     return this.form.controls.agrupar_publicacao.value && this.form.controls.status.value === 'rascunho'
-      ? ['titulo','descricao','valor'] : ['titulo','descricao','valor','cidade','bairro'];
+      ? ['titulo','descricao'] : ['titulo','descricao','cidade','bairro'];
   }
   loading = false; loadError = ''; private pendingPreview = '';
   get completedRequired(): number { return this.requiredFields.filter(field => this.form.controls[field].valid).length; }
   get previewCover(): string { return this.pendingPreview || this.images.find(image=>image.imagem_capa)?.imagem || this.images[0]?.imagem || ''; }
   sectionComplete(id: string): boolean {
     if (this.tabHasErrors(id)) return false;
-    if (id === 'basic') return ['titulo','descricao','valor'].every(field=>this.form.get(field)?.valid);
+    if (id === 'basic') return ['titulo','descricao'].every(field=>this.form.get(field)?.valid);
     if (id === 'location') return ['cidade','bairro'].every(field=>this.form.get(field)?.valid);
     if (id === 'photos') return !!(this.images.length + this.pendingImages.length);
     if (id === 'seo') return this.form.controls.status.value === 'publicado';
@@ -290,7 +290,7 @@ export class PropertyFormComponent implements OnInit, OnDestroy {
     finalidade: ['venda'],
     status: ['rascunho'],
     destaque: [false],
-    valor: [0, [Validators.required, Validators.min(0)]],
+    valor: [null as number | null, Validators.min(0.01)],
     valor_condominio: [null as number | null, Validators.min(0)],
     valor_iptu: [null as number | null, Validators.min(0)],
     regiao: [null as number | null],

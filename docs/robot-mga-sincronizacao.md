@@ -6,7 +6,8 @@
   da tabela permanece preservado. Esta é uma regra da aplicação.
 - Avulsos sem finalidade explícita: preço positivo inferior a R$ 100.000
   recebe Aluguel; a partir desse valor recebe Venda. A finalidade explícita
-  prevalece. Preço ausente ou inválido continua pendente.
+  prevalece. Sem preço, a finalidade padrão é Venda; preço informado inválido
+  continua pendente.
 - MONDO 2 e Mondo são o mesmo empreendimento, em João Pessoa, bairro Bessa.
   Ambos usam identidade Mondo e compartilham imagens desse empreendimento.
   As salas de locação mantêm Aluguel. Dados de unidades distintas são mantidos.
@@ -44,13 +45,13 @@ Alterações manuais e galerias manuais são preservadas.
 
 ## Publicação automática pelo padrão aprovado
 
-A classe `MGAPublicationPolicy` centraliza a versão `mga-publication-1.0`.
+A classe `MGAPublicationPolicy` centraliza a versão `mga-publication-1.1`.
 O padrão foi conferido contra os 223 imóveis já aprovados: todos atendem.
 É executado na sincronização completa e após a montagem das imagens nas
 importações por CLI, API e MCP. A decisão e suas pendências ficam na evidência
 do candidato (`publication`) e no relatório de sincronização por unidade.
 
-São necessários: origem MGA, dados da tabela válidos, preço positivo,
+São necessários: origem MGA, dados da tabela válidos, preço positivo quando informado,
 cidade/bairro/logradouro, área positiva e quartos ou suítes para apartamentos.
 Avisos de OCR, preço suspeito, indisponibilidade, duplicidade ou conflitos
 exigem revisão explícita do candidato. CEP e coordenadas não são inventados
@@ -86,7 +87,7 @@ ordem Fachada → Lazer → Internos e limites de 2/4/3 imagens por categoria.
 Avulsos utilizam exclusivamente seu próprio acervo. Imagens ilustrativas
 seguem marcadas para vistoria; não há inspeção visual automática.
 
-## Resultado local em 25/11/2026
+## Execução anterior em 25/11/2026
 
 Foram consultados 2.397 arquivos em quatro fontes. Das 12 referências de tabela,
 duas eram cópias: dez documentos distintos totalizaram 313 linhas candidatas.
@@ -98,7 +99,7 @@ Mondo reúne 63 unidades, todas com bairro Bessa e logradouro preenchido.
 Após a aprovação solicitada pelo operador, o banco conserva 223 unidades
 publicadas (91 anúncios agrupados) e 41 rascunhos.
 
-Pendências que impedem considerar todo o acervo pronto para divulgação:
+Pendências registradas nessa execução anterior:
 
 - 48 linhas do Elevare não possuem preço na própria tabela.
 - Uma linha do Soleil apresenta conflito de tipologia e exige revisão.
@@ -111,3 +112,31 @@ Pendências que impedem considerar todo o acervo pronto para divulgação:
   onde a tabela ou os serviços de localização não oferecem evidência suficiente.
 
 O detalhe por unidade está em `back-end/reports/mga/final-audit.json`.
+
+## Atualização no banco local em 25/11/2026
+
+O preço da unidade passou a ser opcional. Um valor ausente permanece `null`,
+sem ser substituído por zero ou por uma estimativa. Sem finalidade explícita,
+a unidade recebe Venda. A identidade da publicação usa construtora,
+empreendimento, cidade, torre, finalidade e tipo; diferenças de metragem ou
+quartos na mesma torre não criam anúncios separados. O título agrupado omite
+essas medidas quando variam entre as unidades. O valor "a partir de" usa apenas
+preços positivos de unidades publicadas do mesmo grupo. Sem preço disponível,
+o anúncio exibe "Valor sob consulta". Conflitos da tabela podem ser cadastrados
+como rascunhos; a publicação automática continua exigindo revisão explícita.
+
+A varredura das quatro fontes encontrou 2.397 arquivos, 12 referências de
+tabela e duas cópias. As dez tabelas distintas produziram 313 unidades. No
+PostgreSQL local, as 313 estão vinculadas a um imóvel: 271 publicados e 42
+rascunhos, com zero candidatas sem cadastro e zero erros de sincronização.
+As 48 unidades do Elevare sem preço estão publicadas, agrupadas e têm ao menos
+uma unidade com preço conhecido no respectivo grupo. Há 1.882 vínculos de
+fotos, com todos os arquivos locais presentes. A API pública apresenta dez
+grupos de anúncios publicados; as unidades exatas permanecem no banco.
+
+Os 42 rascunhos aguardam: 27 galerias do Lumini e sete do Soho com fotos
+insuficientes; cinco unidades do Mondo sem área confirmada; Brisas do
+Atlântico e Alteza com galeria insuficiente e sem fachada; e a unidade LOJA
+do Soleil com conflito de tipologia. O detalhe da execução está em
+`back-end/reports/mga/sync-result-local.json`; o agrupamento aplicado está em
+`back-end/reports/mga/groups-local.json`.

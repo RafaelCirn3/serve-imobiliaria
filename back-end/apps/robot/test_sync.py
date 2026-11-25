@@ -1,4 +1,5 @@
 from copy import deepcopy
+from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -48,6 +49,25 @@ class CommercialDefaultTests(SimpleTestCase):
 
 
 class SyncTests(TestCase):
+    def test_public_pdf_fallback_requires_matching_drive_checksum(self):
+        from googleapiclient.errors import HttpError
+        from httplib2 import Response
+        from unittest.mock import Mock
+        from django.test import override_settings
+
+        content = b"%PDF-1.4\nverified test document"
+        file = {"id": "public-pdf", "name": "Tabela.pdf", "size": len(content),
+                "md5_checksum": hashlib.md5(content).hexdigest()}
+        service = Mock()
+        downloader = Mock()
+        downloader.next_chunk.side_effect = HttpError(Response({"status": "429"}), b"blocked")
+        with TemporaryDirectory() as directory, override_settings(BASE_DIR=Path(directory)), \
+                patch("apps.robot.synchronization.drive_service", return_value=service), \
+                patch("googleapiclient.http.MediaIoBaseDownload", return_value=downloader), \
+                patch("apps.robot.synchronization.urlopen", return_value=BytesIO(content)):
+            self.assertEqual(MGASynchronizer().content(file), content)
+            self.assertEqual((Path(directory) / "reports/mga/input/public-pdf.pdf").read_bytes(), content)
+
     def test_sync_status_requires_admin_and_returns_checkpoint(self):
         from django.contrib.auth import get_user_model
         from django.test import override_settings
