@@ -84,6 +84,22 @@ class MGAImportViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewset
     queryset = TableImport.objects.prefetch_related("units").order_by("-created_at")
     parser_classes = [MultiPartParser, FormParser]
 
+    @extend_schema(responses=OpenApiTypes.OBJECT)
+    @action(detail=False, methods=["get"], url_path="sincronizacao")
+    def synchronization_status(self, request):
+        from django.conf import settings
+        path=settings.BASE_DIR/"reports/mga/sync-result.json"
+        if not path.exists():
+            return Response({"status":"nao_executada"})
+        try:
+            report=json.loads(path.read_text(encoding="utf-8"))
+        except (OSError,ValueError):
+            return Response({"status":"atualizando"})
+        status="concluida" if report.get("finished_at") else "em_execucao"
+        if report.get("finished_at") and (report.get("errors") or report.get("source_errors")):
+            status="parcial"
+        return Response({"status":status,**report})
+
     @extend_schema(request=UploadSerializer, responses={200: OpenApiTypes.OBJECT, 201: TableImportSerializer})
     def create(self, request):
         serializer = UploadSerializer(data=request.data)

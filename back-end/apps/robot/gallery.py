@@ -19,6 +19,7 @@ from .mapping import annotate_inventory
 from .models import DriveImageAsset, DriveSource, PropertyImageSelection, TableUnit
 from .profiles import normalize
 from .sources import DEFAULT_SOURCES
+from .project_context import canonical_project
 
 CATEGORY_ORDER = ("fachada", "lazer", "internos")
 CAPS = {"fachada": 2, "lazer": 4, "internos": 3}
@@ -27,11 +28,14 @@ MAX_IMAGE_BYTES = 64 * 1024 * 1024
 
 def project_identity(name):
     # Apenas sufixos de localização explícitos, sem correspondência aproximada.
-    return normalize(re.sub(r"\s*\([^)]*(?:Bananeiras|João Pessoa|Cabedelo|\bPB\b)[^)]*\)\s*$", "", name, flags=re.I))
+    return normalize(canonical_project(re.sub(r"\s*\([^)]*(?:Bananeiras|João Pessoa|Cabedelo|\bPB\b)[^)]*\)\s*$", "", name, flags=re.I)))
 
 
 def index_images(path):
-    inventories = read_inventory(path)
+    return index_inventories(read_inventory(path))
+
+
+def index_inventories(inventories):
     configured = {source.pasta_id: source.perfil for source in DriveSource.objects.all()}
     assets, sources = [], []
     for source, folders, files in inventories:
@@ -62,6 +66,15 @@ def scoped_assets(unit):
     assets = list(DriveImageAsset.objects.filter(active=True, source_id=source_id, project_normalized=name).order_by("file_id"))
     document_text = unit.document.filename + " " + " ".join(page.get("text", "") for page in unit.document.extraction.get("pages", []))
     avulso = "avulsos" in normalize(document_text, metadata=True)
+    if not avulso:
+        # Canonical project identity + a shared responsible company permits
+        # complementary material from another commercial source. Never avulsos.
+        companies = {normalize(value.strip()) for value in property.construtora.split("/") if value.strip()}
+        company_keys = {key for key,label in (("mga","MGA Construções"),("tropical","Tropical")) if normalize(label) in companies}
+        known = {asset.pk for asset in assets}
+        for asset in DriveImageAsset.objects.filter(active=True,project_normalized=name).exclude(pk__in=known).order_by("file_id"):
+            if company_keys.intersection(asset.metadata.get("identity",{}).get("companies",[])):
+                assets.append(asset)
     related_units = set()
     if avulso:
         for candidate in TableUnit.objects.filter(document__developer_profile=unit.document.developer_profile,
@@ -163,8 +176,9 @@ def peer_sequences(property):
     return sequences
 
 
-def download_image(asset):
+def download_image(asset, prefer_rendition=False):
     from googleapiclient.http import MediaIoBaseDownload
+    from googleapiclient.errors import HttpError
     from .drive import drive_service, execute
 
     if not re.fullmatch(r"[A-Za-z0-9_-]{10,128}", asset.file_id):
@@ -176,8 +190,10 @@ def download_image(asset):
             raise ValueError("Imagem acima de 64 MB.")
         return cache.read_bytes()
     service = drive_service()
-    if (asset.metadata.get("size") or 0) > 10 * 1024 * 1024:
+    if prefer_rendition or (asset.metadata.get("size") or 0) > 1024 * 1024:
         metadata = execute(service.files().get(fileId=asset.file_id, fields="thumbnailLink,capabilities(canDownload)", supportsAllDrives=True))
+        if metadata.get("capabilities", {}).get("canDownload") is False:
+            raise ValueError("O arquivo não permite download.")
         link = metadata.get("thumbnailLink", "")
         parsed = urlparse(link)
         if metadata.get("capabilities", {}).get("canDownload") is not False and parsed.scheme == "https" and (parsed.hostname or "").endswith(".googleusercontent.com"):
@@ -199,10 +215,15 @@ def download_image(asset):
     output = BytesIO()
     downloader = MediaIoBaseDownload(output, service.files().get_media(fileId=asset.file_id, supportsAllDrives=True), chunksize=4 * 1024 * 1024)
     done = False
-    while not done:
-        _, done = downloader.next_chunk(num_retries=2)
-        if output.tell() > MAX_IMAGE_BYTES:
-            raise ValueError("Imagem acima de 64 MB.")
+    try:
+        while not done:
+            _, done = downloader.next_chunk(num_retries=2)
+            if output.tell() > MAX_IMAGE_BYTES:
+                raise ValueError("Imagem acima de 64 MB.")
+    except HttpError:
+        if not prefer_rendition:
+            return download_image(asset, prefer_rendition=True)
+        raise
     cache.parent.mkdir(parents=True, exist_ok=True)
     cache.write_bytes(output.getvalue())
     return output.getvalue()

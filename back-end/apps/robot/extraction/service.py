@@ -14,6 +14,7 @@ from apps.robot.models import ImportedUnitIdentity, TableImport, TableUnit
 from apps.robot.profiles import normalize
 from .document import DocumentExtractor, ExtractionError
 from .mga import MGATableParser
+from .defaults import CommercialDefaults
 
 
 CONTEXT_FIELDS = {"empreendimento", "cidade", "bairro", "tipo", "finalidade", "construtora", "endereco", "natureza_area"}
@@ -31,7 +32,7 @@ def inspect_table(content, filename, context=None, allow_ocr=True, extractor=Non
     if context.get("natureza_area") not in (None, "total", "privativa"):
         raise ExtractionError("Natureza da área deve ser total ou privativa.")
     pages = (extractor or DocumentExtractor()).extract(content, filename, allow_ocr=allow_ocr)
-    units = MGATableParser().parse(pages, context)
+    units = MGATableParser().parse(pages, {**context, "avulso": "avulsos" in normalize(filename, metadata=True)})
     return {"parser_version": MGATableParser.version, "content_sha256": hashlib.sha256(content).hexdigest(),
             "filename": filename, "context": context, "pages": [asdict(page) for page in pages],
             "units": [unit.as_dict() for unit in units], "warnings": [] if units else ["LAYOUT_NAO_RECONHECIDO_OU_SEM_UNIDADES"]}
@@ -63,6 +64,7 @@ def property_payload(unit):
     data["titulo"] = f"{name} — unidade {number}"[:180]
     data["descricao"] = data.get("descricao") or f"{name}, unidade {number}. Dados extraídos da tabela comercial; cadastro em revisão."
     data["status"] = "rascunho"
+    data, _ = CommercialDefaults.apply(data, avulso="avulsos" in normalize(unit.document.filename, metadata=True))
     from apps.locations.addressing import AddressNormalizer
     data.update(AddressNormalizer.parse(data))
     return data
@@ -95,7 +97,6 @@ def review_unit(unit_id, changes, approve=False):
         raise ValidationError("Campos de revisão não permitidos.")
     unit = TableUnit.objects.select_for_update().get(pk=unit_id)
     if unit.imported_property_id:
-        schedule_location(unit.pk)
         raise ValidationError("Unidade já importada. Revise o imóvel pelo cadastro administrativo.")
     before = dict(unit.fields)
     unit.fields = {**unit.fields, **changes}
@@ -112,6 +113,7 @@ def review_unit(unit_id, changes, approve=False):
 def commit_unit(unit_id, with_images=True):
     unit = TableUnit.objects.select_for_update().select_related("document").get(pk=unit_id)
     if unit.imported_property_id:
+        schedule_location(unit.pk)
         if with_images:
             schedule_images(unit.pk)
         return unit.imported_property, False

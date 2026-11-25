@@ -50,7 +50,7 @@ class MGAExtractionTests(SimpleTestCase):
         self.assertEqual(second["valor"], "370000.00")
         self.assertEqual(second["medidas"], "16x25m")
         self.assertEqual(second["tipo"], "terreno")
-        self.assertEqual(second["bairro"], "")
+        self.assertEqual(second["bairro"], "Centro")
 
     def test_real_nine_layouts_and_tower_identity(self):
         documents = json.loads((FIXTURES / "native-tables.json").read_text(encoding="utf-8"))
@@ -204,16 +204,14 @@ class MGAImportTests(TestCase):
         self.assertEqual(Property.objects.count(), 1)
         self.assertFalse(Property.objects.filter(status="publicado").exists())
 
-    def test_unknown_location_blocks_then_review_can_import(self):
+    def test_bananeiras_uses_operator_defined_centro(self):
         document, _ = stage_table(extracted())
         unit = document.units.order_by("index").last()
-        self.assertIn("bairro", validation_issues(unit))
-        with self.assertRaises(ValidationError):
-            commit_unit(unit.pk)
-        review_unit(unit.pk, {"bairro": "Sítio Bezerros"}, approve=True)
+        self.assertNotIn("bairro", validation_issues(unit))
         property, created = commit_unit(unit.pk)
         self.assertTrue(created)
         self.assertEqual(property.tipo, "terreno")
+        self.assertEqual(property.bairro, "Centro")
         self.assertEqual(property.area_informada, 400)
         self.assertIsNone(property.area_privativa)
 
@@ -252,12 +250,12 @@ class MGAImportTests(TestCase):
             args = dict(arquivo=PDF, contexto=context, aplicar=True, sem_ocr=True, cache_dir=Path(directory) / "cache", output=Path(directory) / "result.json", stdout=StringIO())
             call_command("robot-mga", **args)
             result = json.loads(args["output"].read_text(encoding="utf-8"))
-            self.assertEqual(result["created"], 1)
-            self.assertEqual(result["pending"], 1)
+            self.assertEqual(result["created"], 2)
+            self.assertEqual(result["pending"], 0)
             call_command("robot-mga", **args)
             result = json.loads(args["output"].read_text(encoding="utf-8"))
-            self.assertEqual(result["existing"], 1)
-            self.assertEqual(Property.objects.count(), 1)
+            self.assertEqual(result["existing"], 2)
+            self.assertEqual(Property.objects.count(), 2)
 
     def test_api_requires_admin_and_upload_review_import_flow(self):
         client = APIClient()
@@ -288,9 +286,9 @@ class MGAImportTests(TestCase):
 
 
 class MGAMCPTests(SimpleTestCase):
-    def test_official_mcp_sdk_registers_the_four_tools(self):
+    def test_official_mcp_sdk_registers_import_and_sync_tools(self):
         from .mcp_server import create_server
 
         server = create_server()
         tools = asyncio.run(server.list_tools())
-        self.assertEqual({tool.name for tool in tools}, {"mga_extrair_tabela", "mga_consultar_extracao", "mga_revisar_unidade", "mga_importar_rascunho"})
+        self.assertEqual({tool.name for tool in tools}, {"mga_extrair_tabela", "mga_consultar_extracao", "mga_revisar_unidade", "mga_importar_rascunho", "mga_consultar_sincronizacao"})

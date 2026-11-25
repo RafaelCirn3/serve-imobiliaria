@@ -25,6 +25,11 @@ def create_server():
         return response.json()
 
     @server.tool()
+    def mga_consultar_sincronizacao() -> dict:
+        """Consulta andamento e resultado da sincronização completa MGA: imóveis, imagens e pendências."""
+        return request("GET", "/api/admin/robot/mga/extracoes/sincronizacao/")
+
+    @server.tool()
     def mga_extrair_tabela(nome: str, arquivo_base64: str, contexto: dict | None = None, salvar: bool = False) -> dict:
         """Extrai PDF/PNG/JPEG MGA. Por padrão só antecipa dados; salvar cria candidatos, nunca anúncios."""
         import json

@@ -150,6 +150,8 @@ class AdminPropertySerializer(serializers.ModelSerializer):
         if district:
             attrs["bairro"] = district
             attrs["cidade"] = attrs.get("cidade") or "João Pessoa"
+        if canonical_city(attrs.get("cidade", getattr(self.instance, "cidade", ""))) == "Bananeiras":
+            attrs["bairro"] = "Centro"
         latitude = attrs.get("latitude", getattr(self.instance, "latitude", None))
         longitude = attrs.get("longitude", getattr(self.instance, "longitude", None))
         if (latitude is None) != (longitude is None):

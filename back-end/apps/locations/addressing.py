@@ -15,7 +15,8 @@ class AddressNormalizer:
             return None
         matches = []
         for district in JOAO_PESSOA_DISTRICTS:
-            match = re.search(r"(?<!\w)" + re.escape(normalized(district)) + r"(?!\w)", normalized(value))
+            pattern = r"\s*".join(re.escape(part) for part in normalized(district).split())
+            match = re.search(r"(?<!\w)" + pattern + r"(?!\w)", normalized(value))
             if match:
                 matches.append((match.start(), district))
         return min(matches)[1] if matches else None
@@ -28,8 +29,8 @@ class AddressNormalizer:
         parts = [part.strip() for part in raw.split(",")]
         first = parts[0] if parts else ""
         street_and_district = re.split(r"\s+[-–]\s+", first, maxsplit=1)
-        if not result["logradouro"] and re.match(r"^(?:Rua|R\.|Av\.?|Avenida|Rodovia)\s", first, re.I):
-            result["logradouro"] = street_and_district[0]
+        if not result["logradouro"] and re.match(r"^(?:Rua\s+|R\.\s*|Av\.\s*|Av\s+|Avenida\s+|Rodovia\s+)", first, re.I):
+            result["logradouro"] = re.sub(r"^Av\.\s*", "Avenida ", re.sub(r"^R\.\s*", "Rua ", street_and_district[0], flags=re.I), flags=re.I)
         tail = " ".join(parts[1:])
         if len(street_and_district) > 1:
             tail = street_and_district[1] + " " + tail
@@ -39,11 +40,15 @@ class AddressNormalizer:
                 result["numero"] = number.group(1)
         if not result["cidade"]:
             result["cidade"] = next((city for city in ("João Pessoa", "Cabedelo", "Bananeiras")
-                                     if normalized(city) in normalized(tail)), "")
+                                     if re.search(r"\s*".join(map(re.escape, normalized(city).split())), normalized(tail))), "")
         district = cls.district(result["bairro"] or tail, result["cidade"])
         if district:
             result["bairro"], result["cidade"] = district, "João Pessoa"
         result["cidade"] = canonical_city(result["cidade"]) or result["cidade"]
+        if result["cidade"] == "Bananeiras":
+            # Business catalog rule supplied by the operator; retain the raw
+            # locality in endereco and postal evidence, not in the main bairro.
+            result["bairro"] = "Centro"
         if result["cidade"]:
             result["uf"] = result["uf"] or "PB"
         return result

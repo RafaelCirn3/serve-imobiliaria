@@ -19,6 +19,16 @@ class DocumentFacts:
                 parts = [part.strip() for part in facts["endereco"].split(",")]
                 if len(parts) >= 3:
                     facts["bairro"] = parts[-1]
+            elif "endereco" not in facts:
+                lines = page.text.splitlines()
+                for index, line in enumerate(lines):
+                    if re.match(r"^\s*(?:Rua\s+|R\.\s*|Av\.\s*|Avenida\s+)", line, re.I):
+                        value = re.split(r"Registro de Incorpora|Previs[aã]o de Entrega", line, flags=re.I)[0].strip()
+                        if value.endswith(",") and index + 1 < len(lines):
+                            value += " " + lines[index+1].strip()
+                        facts["endereco"] = value
+                        evidence.append({"page":page.number,"method":page.method,"excerpt":value})
+                        break
             if delivery:
                 name, year = delivery.groups()
                 month = int(name) if name.isdigit() else cls.MONTHS.get(name.lower()[:3])

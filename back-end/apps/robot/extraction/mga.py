@@ -8,6 +8,8 @@ from statistics import median
 
 from apps.robot.profiles import normalize
 from .document_facts import DocumentFacts
+from .defaults import CommercialDefaults
+from apps.locations.addressing import AddressNormalizer
 
 
 HEADER_ALIASES = {
@@ -60,7 +62,7 @@ class DeveloperTableParser(ABC):
 
 
 class MGATableParser(DeveloperTableParser):
-    version = "mga-1.4.0"
+    version = "mga-1.6.0"
 
     def header(self, cells):
         mapping = {}
@@ -91,6 +93,7 @@ class MGATableParser(DeveloperTableParser):
         mapping = {}
         other_headers = {}
         last_floor = ""
+        area_kind = ""
 
         def with_floor(values):
             nonlocal last_floor
@@ -107,17 +110,25 @@ class MGATableParser(DeveloperTableParser):
                 values["andar_original"] = original
                 values["andar_origem"] = "celula_mesclada_da_grade"
             return values
+
+        def with_metadata(values):
+            if area_kind:
+                values["natureza_area_documento"] = area_kind
+            return with_floor(values)
         for index, cells in enumerate(table):
             header = self.header(cells)
             if header:
                 mapping = header
+                area_kind = next(("total" if normalize(str(cells[column]),metadata=True)=="area total" else "privativa"
+                                  for column,key in mapping.items() if key=="area_informada" and
+                                  normalize(str(cells[column]),metadata=True) in ("area total","area privativa")), "")
                 other_headers = {column: str(cell or "").split("\n")[0].strip() for column, cell in enumerate(cells)
                                  if column not in mapping and str(cell or "").split("\n")[0].strip()}
                 # Algumas grades unem o cabeçalho e a primeira unidade.
                 remainder = ["\n".join(str(cell or "").split("\n")[1:]) for cell in cells]
                 values = {key: text(remainder[column]) for column, key in mapping.items()}
                 if values.get("unidade"):
-                    yield index + 1, with_floor(values), 1.0
+                    yield index + 1, with_metadata(values), 1.0
                 continue
             if mapping:
                 values = {key: text(cells[column]) for column, key in mapping.items() if column < len(cells)}
@@ -126,7 +137,7 @@ class MGATableParser(DeveloperTableParser):
                     # sinal/mensais com valor total do imóvel.
                     values["condicoes_originais"] = list(cells)
                     values["condicoes_pagamento"] = {label: text(cells[column]) for column, label in other_headers.items() if column < len(cells)}
-                    yield index + 1, with_floor(values), 1.0
+                    yield index + 1, with_metadata(values), 1.0
 
     def word_rows(self, page):
         words = page.words
@@ -189,7 +200,7 @@ class MGATableParser(DeveloperTableParser):
                 "tipo": "", "cidade": "", "bairro": "", "uf": "PB", "finalidade": "aluguel" if rental else "venda" if "vendas" in page_text else context.get("document_purpose", ""),
                 "origem_comercial": "MGA Construções", "construtora": context.get("construtora", "")}
         description = normalize(data["descricao"] + " " + unit + " " + raw.get("tipologia", ""), metadata=True)
-        if re.search(r"\b(loja|lojas|sala comercial)\b", description) or rental:
+        if re.search(r"\b(loja|lojas|sala comercial)\b", description) or rental or normalize(raw.get("tipologia", ""), metadata=True) == "sala":
             data["tipo"] = "comercial"
         elif "cobertura" in description:
             data["tipo"] = "cobertura"
@@ -199,6 +210,9 @@ class MGATableParser(DeveloperTableParser):
             data["tipo"] = "apartamento"
         elif "studio" in description or "flat" in description:
             data["tipo"] = "flat"
+        elif re.fullmatch(r"\d+",unit) and "apartamentos mondo" in page_text:
+            data["tipo"] = "apartamento"
+            raw["tipo_origem"] = "cabecalho_apartamentos_mondo"
         if not data["endereco"]:
             for line in page.text.splitlines():
                 if re.match(r"\s*(?:R\.|Rua |Av\.|Avenida |Rodovia )", line, re.I):
@@ -226,15 +240,21 @@ class MGATableParser(DeveloperTableParser):
                 data[key] = value
         if context.get("document_evidence"):
             raw["documento"] = context["document_evidence"]
-        if context.get("natureza_area") and data["area_informada"]:
-            data["area_total" if context["natureza_area"] == "total" else "area_privativa"] = data["area_informada"]
-            raw["natureza_area_contexto"] = context["natureza_area"]
+        area_kind=context.get("natureza_area") or raw.get("natureza_area_documento")
+        if area_kind and data["area_informada"]:
+            data["area_total" if area_kind == "total" else "area_privativa"] = data["area_informada"]
+            raw["natureza_area_contexto"] = area_kind
         if "mobiliada" in description or "mobiliado" in description:
             data["mobiliado"] = True
         # Contexto fornecido pelo operador é explícito e permanece na auditoria.
         for key in ("cidade", "bairro", "tipo", "finalidade", "construtora", "endereco"):
             if context.get(key):
                 data[key] = context[key]
+        data, decisions = CommercialDefaults.apply(data, avulso=context.get("avulso", False))
+        if decisions:
+            raw["regras_padrao"] = decisions
+        if data["cidade"] == "Bananeiras":
+            data["bairro"] = "Centro"
         warnings = [f"CAMPO_PENDENTE:{key}" for key in ("empreendimento", "unidade", "valor", "tipo", "finalidade", "cidade", "bairro") if not data.get(key)]
         if rental and context.get("finalidade") == "venda":
             warnings.append("CONFLITO_FINALIDADE")
@@ -252,6 +272,12 @@ class MGATableParser(DeveloperTableParser):
 
     def parse(self, pages, context):
         context = dict(context)
+        from apps.robot.project_context import canonical_project, verified_context
+        if context.get("empreendimento"):
+            context["empreendimento"] = canonical_project(context["empreendimento"])
+            context.update(verified_context(context["empreendimento"]))
+        if not context.get("empreendimento") and any("empreendimento" in self.header(row).values() for page in pages for table in page.tables for row in table):
+            context["avulso"] = True
         # Operator-approved interpretation of this project's generic area column.
         if normalize(context.get("empreendimento", "")) == "elevare":
             context.setdefault("natureza_area", "total")
@@ -259,6 +285,13 @@ class MGATableParser(DeveloperTableParser):
         if context.get("empreendimento") and not any("empreendimento" in self.header(row).values() for page in pages for table in page.tables for row in table):
             context["document_facts"], context["document_evidence"] = DocumentFacts.extract(pages)
         if any("vendas" in normalize(page.text, metadata=True) for page in pages):
+            context["document_purpose"] = "venda"
+        elif any("sinal" in normalize(page.text, metadata=True) and
+                 ("parcela final" in normalize(page.text, metadata=True) or "parcelas" in normalize(page.text, metadata=True)) for page in pages):
+            context["document_purpose"] = "venda"
+        elif context.get("empreendimento") == "Mondo" and any("valor total" in normalize(page.text,metadata=True) for page in pages):
+            # Mondo's total sale-price sections are distinct from its explicit
+            # "Locação Mensal" section, which takes precedence per page.
             context["document_purpose"] = "venda"
         results = []
         seen = set()

@@ -67,9 +67,9 @@ def search_address(city, street):
 
 def normalize_postal(data):
     data = dict(data)
-    district = AddressNormalizer.district(data.get("bairro", ""), data.get("localidade", ""))
+    district = "Centro" if canonical_city(data.get("localidade", "")) == "Bananeiras" else AddressNormalizer.district(data.get("bairro", ""), data.get("localidade", ""))
     if district and district != data.get("bairro"):
-        data["bairro_original"] = data["bairro"]
+        data["bairro_original"] = data.get("bairro", "")
         data["bairro"] = district
     return data
 

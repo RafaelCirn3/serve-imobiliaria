@@ -139,7 +139,9 @@ registra `ACERVO_SEM_VARIACAO_DE_SEQUENCIA`, sem usar material de outro imóvel.
   16 arquivos de origem responderam HTTP 200. A repetição preservou todos os
   IDs e sequências sem novos downloads. Interiores sem identificação de planta
   continuam como imagens ilustrativas do empreendimento, pendentes de vistoria.
-- O Mondo 2 encontrado na auditoria anterior ainda não foi homologado/importado.
+- O Mondo 2 foi confirmado pelo operador como o mesmo Mondo, no Bessa.
+  A sincronização descrita em `robot-mga-sincronizacao.md` reúne as duas tabelas
+  na mesma identidade e permite compartilhar seu acervo de imagens.
 
 ## Endereço, região, CEP e localização
 

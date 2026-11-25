@@ -105,7 +105,7 @@ class ContextRegressionTests(SimpleTestCase):
                 self.assertEqual({normalize(item["project_identity"]["name"]) for item in tables}, {"alameda dos ventos", "terraco das dunas"})
             if index == 5:
                 names = {normalize(item["project_identity"]["name"]) for item in tables}
-                self.assertTrue({"mondo 2", "arian", "mirai", "new wave"} <= names)
+                self.assertTrue({"mondo", "arian", "mirai", "new wave"} <= names)
 
     def test_commercial_mimes_and_no_extension(self):
         for mime in TABLE_MIMES:

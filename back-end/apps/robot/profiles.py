@@ -95,6 +95,8 @@ class SourceProfile:
 
     def identity(self, name):
         name = self.config.get("project_name") or project_name(name)
+        if "mga" in self.config.get("related_companies",[]) and normalize(name) in ("mondo","mondo 2"):
+            return ProjectIdentity("mga:mondo","Mondo",("mga",),"alta")
         entries = [entry for entry in self.config.get("canonical_projects", [])
                    if normalize(name) in {normalize(alias) for alias in [entry["name"], *entry.get("aliases", [])]}]
         if len({(entry["key"], tuple(entry.get("companies", []))) for entry in entries}) > 1:

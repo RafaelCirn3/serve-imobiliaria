@@ -61,7 +61,7 @@ def drive_service():
     return build("drive", "v3", credentials=credentials, cache_discovery=False)
 
 
-def scan_source(service, source):
+def scan_source(service, source, progress=None):
     """Retorna pastas e arquivos sem omitir páginas nem atravessar atalhos."""
     profile = get_profile(source)
     project_depth = profile.depth if profile else 1
@@ -80,6 +80,8 @@ def scan_source(service, source):
         if folder_id in visited:
             continue
         visited.add(folder_id)
+        if progress and (len(visited) == 1 or len(visited) % 20 == 0):
+            progress(f"{source.nome}: {len(visited)} pastas consultadas, {len(files)} arquivos encontrados.")
         path = f"{parent_path}/{folder['name']}" if parent_path else folder["name"]
         project_id = folder_id if depth == project_depth else project_id
         folders.append({
