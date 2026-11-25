@@ -132,5 +132,6 @@ class MGAUnitViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     @action(detail=True, methods=["post"], url_path="importar")
     def import_property(self, request, pk=None):
         property, created = commit_unit(self.get_object().pk)
+        property.refresh_from_db()
         return Response({"imovel_id": property.pk, "criado": created, "status": property.status,
                          "dados_existentes_alterados": False, "gallery": TableUnitSerializer(self.get_object()).data["gallery"]}, status=201 if created else 200)

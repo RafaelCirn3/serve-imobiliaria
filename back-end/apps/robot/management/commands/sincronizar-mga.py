@@ -24,5 +24,6 @@ class Command(BaseCommand):
         snapshot=json.loads(options["snapshot"].read_text(encoding="utf-8-sig")) if options["snapshot"] else engine.inventory(settings.BASE_DIR/"reports/mga/sync-inventory-live.json")
         report=engine.run(snapshot,options["output"],apply=options["aplicar"])
         progress(f"Concluído: {report['created']} criados, {report['existing']} existentes, {report['pending']} pendentes; {len(report['errors'])} erros.")
+        progress(f"Publicação automática: {report['published']} novos imóveis publicados; {report['publication_pending']} rascunhos pendentes.")
         if report["errors"] or report["source_errors"]:
             raise CommandError("Sincronização parcial. Consulte o relatório e repita para retomar.")

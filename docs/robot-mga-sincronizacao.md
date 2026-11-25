@@ -37,8 +37,47 @@ posteriores, execute novamente sem `--snapshot`.
 O acompanhamento autenticado está disponível em
 `GET /api/admin/robot/mga/extracoes/sincronizacao/` e na ferramenta MCP
 `mga_consultar_sincronizacao`. Esses recursos consultam o andamento; o comando
-inicia a execução. Novas unidades entram como rascunhos, e anúncios publicados
-mantêm seu status e preço. Alterações manuais e galerias manuais são preservadas.
+inicia a execução. Novas unidades começam como rascunhos e, após a montagem
+da galeria e resolução de endereço, são publicadas automaticamente quando
+atendem ao padrão abaixo. Anúncios publicados mantêm seu status e preço.
+Alterações manuais e galerias manuais são preservadas.
+
+## Publicação automática pelo padrão aprovado
+
+A classe `MGAPublicationPolicy` centraliza a versão `mga-publication-1.0`.
+O padrão foi conferido contra os 223 imóveis já aprovados: todos atendem.
+É executado na sincronização completa e após a montagem das imagens nas
+importações por CLI, API e MCP. A decisão e suas pendências ficam na evidência
+do candidato (`publication`) e no relatório de sincronização por unidade.
+
+São necessários: origem MGA, dados da tabela válidos, preço positivo,
+cidade/bairro/logradouro, área positiva e quartos ou suítes para apartamentos.
+Avisos de OCR, preço suspeito, indisponibilidade, duplicidade ou conflitos
+exigem revisão explícita do candidato. CEP e coordenadas não são inventados
+nem bloqueiam por si só a divulgação, conforme o catálogo aprovado.
+
+A galeria precisa ter ao menos seis fotos locais existentes, até duas fachadas,
+quatro de lazer e três de interiores, sem ultrapassar os limites por categoria.
+Isso permite até nove fotos. A ordem é Fachada → Lazer → Internos, com uma única
+capa, na primeira foto de fachada. A inspeção é de metadados e arquivos;
+o marcador de vistoria visual pendente é preservado.
+
+Os rascunhos incompletos permanecem em revisão. Imóveis inativos, vendidos,
+alugados ou já publicados não têm o status alterado por essa política.
+O agrupamento, preços exatos, chamada arredondada “a partir de”, privacidade
+de unidade/andar e destaques existentes continuam seguindo suas regras.
+A publicação automática não marca todo imóvel como destaque.
+
+Para conferir ou aplicar o padrão nos rascunhos já importados:
+
+```powershell
+docker compose exec -T api python manage.py publicar-mga
+docker compose exec -T api python manage.py publicar-mga --aplicar
+```
+
+Em 25/11/2026, a aplicação da política manteve os 223 imóveis publicados e
+os 41 rascunhos pendentes. O relatório fica em
+`back-end/reports/mga/publication-policy.json`.
 
 O fluxo busca texto nativo antes de OCR, reutiliza extrações por hash,
 identifica unidades entre versões e ignora cópias idênticas das tabelas.
@@ -56,7 +95,8 @@ locais conferidos. A repetição criou zero imóveis, reconheceu 264 existentes
 e terminou sem erros de processamento ou download.
 
 Mondo reúne 63 unidades, todas com bairro Bessa e logradouro preenchido.
-O banco conserva 124 unidades publicadas e 140 rascunhos.
+Após a aprovação solicitada pelo operador, o banco conserva 223 unidades
+publicadas (91 anúncios agrupados) e 41 rascunhos.
 
 Pendências que impedem considerar todo o acervo pronto para divulgação:
 

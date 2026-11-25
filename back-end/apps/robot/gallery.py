@@ -316,6 +316,10 @@ def attach_after_commit(unit_id):
     """A falha de imagens não desfaz o imóvel já importado."""
     try:
         attach_images(unit_id)
+        from .publication import MGAPublicationPolicy
+        unit = TableUnit.objects.get(pk=unit_id)
+        if unit.imported_property_id:
+            MGAPublicationPolicy().apply(unit.imported_property_id)
     except Exception as exc:
         unit = TableUnit.objects.get(pk=unit_id)
         selection, _ = PropertyImageSelection.objects.get_or_create(property_id=unit.imported_property_id, defaults={"seed": secrets.randbits(63)})

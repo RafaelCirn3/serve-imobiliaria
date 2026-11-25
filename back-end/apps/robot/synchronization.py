@@ -116,7 +116,8 @@ class MGASynchronizer:
     def run(self, snapshot, output, *, apply=False):
         inventories = [(SimpleNamespace(**row["source"]),row["folders"],row["files"]) for row in snapshot["inventories"]]
         report={"started_at":timezone.now().isoformat(),"applied":apply,"source_errors":snapshot.get("errors",[]),
-                "documents":[],"duplicates":[],"units":[],"errors":[],"created":0,"existing":0,"pending":0}
+                "documents":[],"duplicates":[],"units":[],"errors":[],"created":0,"existing":0,"pending":0,
+                "published":0,"publication_pending":0}
         if apply:
             report["indexed_images"] = index_inventories(inventories)
         items=[]
@@ -172,6 +173,13 @@ class MGASynchronizer:
                             report["created" if created else "existing"]+=1
                             row.update(property_id=property.pk,status=property.status)
                             row["gallery"]=attach_images(unit.pk,progress=self.progress)
+                            from .publication import MGAPublicationPolicy
+                            row["publication"] = MGAPublicationPolicy().apply(property.pk)
+                            row["status"] = row["publication"]["status"]
+                            if row["publication"].get("published"):
+                                report["published"] += 1
+                            elif row["status"] == "rascunho":
+                                report["publication_pending"] += 1
                         except ValidationError as exc:
                             report["pending"]+=1
                             row["issues"]=exc.detail
