@@ -1,5 +1,13 @@
 # Motor de fontes do Drive V2
 
+O adaptador SETAI Sandro Barros reutiliza a extração e as galerias compartilhadas.
+Fontes, limites e execução local: [`docs/robot-setai.md`](../../../docs/robot-setai.md).
+
+ICON/MOSS usa o mesmo núcleo e o adaptador DWV, com conferência de continuação
+entre páginas: [`docs/robot-icon.md`](../../../docs/robot-icon.md).
+O [quadro de cobertura das três construtoras](../../../docs/robot-cobertura-construtoras.md)
+distingue unidades mapeadas, cadastros e publicação.
+
 Galerias dos imóveis importados: consulte
 [`docs/robot-galerias.md`](../../../docs/robot-galerias.md). O comando
 `vincular-imagens` aplica seleção sortida por categoria e vínculo específico de avulsos.

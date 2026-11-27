@@ -1,4 +1,4 @@
-"""Publication standard approved by the operator for MGA imports."""
+"""Shared publication checks, with the existing MGA behavior preserved."""
 
 from collections import Counter
 
@@ -11,21 +11,32 @@ from apps.properties.serializers import AdminPropertySerializer
 from .models import TableUnit
 
 
-class MGAPublicationPolicy:
-    version = "mga-publication-1.1"
+class DeveloperPublicationPolicy:
+    version = "developer-publication-1.0"
+    developer_profile = ""
+    origin_issue = "ORIGEM_FONTE_NAO_CONFIRMADA"
     review_warnings = {
         "OCR_REQUER_CONFERENCIA", "UNIDADE_NAO_DISPONIVEL",
         "UNIDADE_DUPLICADA_NO_DOCUMENTO", "BAIXA_CONFIANCA_OCR",
         "CONFLITO_FINALIDADE", "CONFLITO_TIPOLOGIA", "PRECO_SUSPEITO",
+        "VIGENCIA_NAO_CONFIRMADA", "DISPONIBILIDADE_NAO_CONFIRMADA",
+        "DATA_TABELA_NAO_IDENTIFICADA", "NATUREZA_AREA_NAO_CONFIRMADA", "PRECO_NAO_IDENTIFICADO",
     }
+
+    def __init__(self, developer_profile=None):
+        if developer_profile is not None:
+            from .extraction.registry import get_parser
+            get_parser(developer_profile)
+            self.developer_profile = developer_profile
+            self.version = f"{developer_profile}-publication-1.0"
 
     def evaluate(self, property):
         from .extraction.service import validation_issues
 
         issues = []
         origins = list(property.table_origins.select_related("document"))
-        if not origins or any(u.document.developer_profile != "mga" for u in origins):
-            issues.append("ORIGEM_MGA_NAO_CONFIRMADA")
+        if not origins or any(u.document.developer_profile != self.developer_profile for u in origins):
+            issues.append(self.origin_issue)
         for unit in origins:
             if validation_issues(unit):
                 issues.append("DADOS_DA_TABELA_PENDENTES")
@@ -79,3 +90,14 @@ class MGAPublicationPolicy:
                 unit.evidence = {**unit.evidence, "publication": result}
                 unit.save(update_fields=["evidence"])
             return result
+
+
+class MGAPublicationPolicy(DeveloperPublicationPolicy):
+    version = "mga-publication-1.1"
+    developer_profile = "mga"
+    origin_issue = "ORIGEM_MGA_NAO_CONFIRMADA"
+    review_warnings = {
+        "OCR_REQUER_CONFERENCIA", "UNIDADE_NAO_DISPONIVEL",
+        "UNIDADE_DUPLICADA_NO_DOCUMENTO", "BAIXA_CONFIANCA_OCR",
+        "CONFLITO_FINALIDADE", "CONFLITO_TIPOLOGIA", "PRECO_SUSPEITO",
+    }

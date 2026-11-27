@@ -157,6 +157,28 @@ def upgrade_profile(config):
         "materiais aqua manaira": "Aqua",
     } if config["code"] == "04" else {}
     config.setdefault("project_aliases", aliases)
+    if config["code"] == "05":
+        from .asset_reviews import ICON_MOSS_REVIEWS
+        reviews = config.setdefault("visual_reviews", {})
+        for file_id, review in ICON_MOSS_REVIEWS.items():
+            reviews.setdefault(file_id, review)
+        if "revista" not in config["exclude"]:
+            config["exclude"].append("revista")
+    if config["code"] == "04":
+        aliases_by_category = config.setdefault("keyword_aliases", {})
+        for category, words in {"fachada": ["imagem drone frontal"],
+                                "lazer": ["spa", "lobby", "bar oval", "cinema"],
+                                "internos": ["apto decorado"]}.items():
+            configured_words = aliases_by_category.setdefault(category, [])
+            for word in words:
+                if word not in configured_words:
+                    configured_words.append(word)
+        config["project_aliases"].setdefault("materiais san. cabo branco", "SETAI Sandro Barros")
+        entries = config.setdefault("canonical_projects", [])
+        if not any(entry.get("key") == "setai:sandro-barros" for entry in entries):
+            entries.append({"key": "setai:sandro-barros", "name": "SETAI Sandro Barros",
+                            "aliases": ["Sandro Barros", "MATERIAIS SAN. CABO BRANCO"],
+                            "companies": ["setai"], "confidence": "alta"})
     config.setdefault("central_tables", config["code"] in ("BASE-01", "02", "04"))
     return config
 

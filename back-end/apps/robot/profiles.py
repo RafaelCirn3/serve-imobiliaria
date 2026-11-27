@@ -142,6 +142,19 @@ class SourceProfile:
         if not any(rule.compatible(mime) for rule in rules.values()):
             return reject("UNSUPPORTED_MIME", mime, "mime_type")
 
+        review = self.config.get("visual_reviews", {}).get(item.get("id"))
+        if mime in IMAGE_MIMES and review and review.get("md5") == item.get("md5_checksum"):
+            category = review.get("category")
+            if category is None:
+                return reject("VISUAL_REVIEW_EXCLUDED", review["reason"], name)
+            if category in active:
+                evidence("CHECKSUM_BOUND_VISUAL_REVIEW", review["reason"], name)
+                result.update(categoria=category, pontuacao=100, revisao=False,
+                              motivo="CHECKSUM_BOUND_VISUAL_REVIEW", vistoria_visual=True,
+                              requires_conversion=False)
+                result["confianca_categoria"] = confidence(100, result["evidencias"], result["motivo"], review["reason"])
+                return result
+
         local_exceptions = self.config.get("exclusion_exceptions", ["sala de video", "sala de podcast"])
         if not any(contains(name, term) for term in local_exceptions):
             exclusions = [*self.config.get("exclude", []), "planta", "book", "descritivo", "institucional"]

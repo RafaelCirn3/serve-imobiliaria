@@ -13,7 +13,7 @@ from apps.properties.serializers import AdminPropertySerializer
 from apps.robot.models import ImportedUnitIdentity, TableImport, TableUnit
 from apps.robot.profiles import normalize
 from .document import DocumentExtractor, ExtractionError
-from .mga import MGATableParser
+from .registry import get_parser
 from .defaults import CommercialDefaults
 
 
@@ -23,7 +23,7 @@ EDITABLE_FIELDS |= {"previsao_entrega", "registro_incorporacao"}
 EDITABLE_FIELDS |= {"area_total", "area_privativa", "logradouro", "numero", "complemento", "cep"}
 
 
-def inspect_table(content, filename, context=None, allow_ocr=True, extractor=None):
+def inspect_table(content, filename, context=None, allow_ocr=True, extractor=None, developer_profile="mga"):
     context = context or {}
     if set(context) - CONTEXT_FIELDS:
         raise ExtractionError("Contexto contém campos desconhecidos.")
@@ -31,9 +31,10 @@ def inspect_table(content, filename, context=None, allow_ocr=True, extractor=Non
         raise ExtractionError("Contexto deve conter textos de até 255 caracteres.")
     if context.get("natureza_area") not in (None, "total", "privativa"):
         raise ExtractionError("Natureza da área deve ser total ou privativa.")
+    parser = get_parser(developer_profile)
     pages = (extractor or DocumentExtractor()).extract(content, filename, allow_ocr=allow_ocr)
-    units = MGATableParser().parse(pages, {**context, "avulso": "avulsos" in normalize(filename, metadata=True)})
-    return {"parser_version": MGATableParser.version, "content_sha256": hashlib.sha256(content).hexdigest(),
+    units = parser.parse(pages, {**context, "avulso": "avulsos" in normalize(filename, metadata=True)})
+    return {"developer_profile": developer_profile, "parser_version": parser.version, "content_sha256": hashlib.sha256(content).hexdigest(),
             "filename": filename, "context": context, "pages": [asdict(page) for page in pages],
             "units": [unit.as_dict() for unit in units], "warnings": [] if units else ["LAYOUT_NAO_RECONHECIDO_OU_SEM_UNIDADES"]}
 
@@ -43,7 +44,7 @@ def stage_table(result, source_folder_id="", drive_file_id=""):
     identity = hashlib.sha256(json.dumps([result["content_sha256"], result["parser_version"], result["context"]], sort_keys=True).encode()).hexdigest()
     document, created = TableImport.objects.get_or_create(identity=identity, defaults={
         "content_sha256": result["content_sha256"], "filename": result["filename"][:255], "source_folder_id": source_folder_id,
-        "drive_file_id": drive_file_id, "parser_version": result["parser_version"], "context": result["context"],
+        "drive_file_id": drive_file_id, "developer_profile": result.get("developer_profile", "mga"), "parser_version": result["parser_version"], "context": result["context"],
         "extraction": {"pages": [{key: page[key] for key in ("number", "method", "text", "width", "height")} for page in result["pages"]], "warnings": result["warnings"]},
     })
     if created:
