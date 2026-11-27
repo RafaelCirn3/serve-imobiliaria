@@ -1,4 +1,4 @@
-from django.db.models import Q, Max, Count
+from django.db.models import Q, Max, Count, OuterRef, Subquery, Case, When, F, DecimalField
 from rest_framework import status, viewsets, serializers
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
@@ -13,7 +13,7 @@ from django.db import transaction
 
 from .models import Property, PropertyImage
 from .serializers import AdminPropertySerializer, PropertyImageSerializer, PublicPropertySerializer
-from .serializers import MapPropertySerializer
+from .serializers import MapPropertySerializer, PublicUnitSerializer
 from django.conf import settings
 
 
@@ -27,6 +27,53 @@ class PublicPropertyViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         return Property.objects.prefetch_related("imagens").filter(status=Property.Status.PUBLICADO)
+
+    def filter_queryset(self, queryset):
+        # Filter units first, so a matching unit never disappears just because
+        # another unit represents its tower. Then emit only one card per group.
+        queryset = super().filter_queryset(queryset)
+        representative = queryset.filter(grupo_publicacao=OuterRef("grupo_publicacao")).order_by("id").values("pk")[:1]
+        queryset = queryset.filter(Q(grupo_publicacao="") | Q(pk=Subquery(representative)))
+        ordering = queryset.query.order_by
+        if any(field.lstrip("-") == "valor" for field in ordering):
+            minimum = Property.objects.filter(status=Property.Status.PUBLICADO,
+                grupo_publicacao=OuterRef("grupo_publicacao")).order_by("valor").values("valor")[:1]
+            queryset = queryset.annotate(publication_price=Case(
+                When(grupo_publicacao="", then=F("valor")), default=Subquery(minimum),
+                output_field=DecimalField(max_digits=14, decimal_places=2)))
+            queryset = queryset.order_by(*(field.replace("valor", "publication_price") if field.lstrip("-") == "valor" else field for field in ordering), "pk")
+        return queryset
+
+    def retrieve(self, request, *args, **kwargs):
+        property = self.public_property(kwargs["slug"])
+        if property.grupo_publicacao:
+            property = self.get_queryset().filter(grupo_publicacao=property.grupo_publicacao).order_by("id").first()
+        return Response(self.get_serializer(property).data)
+
+    def public_property(self, slug):
+        from django.shortcuts import get_object_or_404
+        import re
+
+        suffix = slug.rsplit("-", 1)[-1]
+        if re.fullmatch(r"[a-f0-9]{64}", suffix):
+            return get_object_or_404(self.get_queryset().filter(grupo_publicacao=suffix).order_by("id")[:1])
+        return get_object_or_404(self.get_queryset(), slug=slug)
+
+    @action(detail=True, methods=["get"], url_path="unidades")
+    def units(self, request, slug=None):
+        from django.shortcuts import get_object_or_404
+
+        property = self.public_property(slug)
+        queryset = self.get_queryset().filter(grupo_publicacao=property.grupo_publicacao) if property.grupo_publicacao else self.get_queryset().filter(pk=property.pk)
+        # Exact prices remain available independently of the rounded headline.
+        rows = PublicUnitSerializer(queryset.order_by("valor"), many=True).data
+        seen, options = set(), []
+        for row in rows:
+            signature = tuple(row.items())
+            if signature not in seen:
+                seen.add(signature)
+                options.append(row)
+        return Response(options)
 
     @action(detail=False, methods=["get"], url_path="mapa")
     def map_properties(self, request):
@@ -42,7 +89,7 @@ class PublicPropertyViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="destaques")
     def destaques(self, request):
-        queryset = self.filter_queryset(self.get_queryset().filter(destaque=True))
+        queryset = self.filter_queryset(self.get_queryset().filter(destaque=True).order_by("-valor"))
         return Response({"count": queryset.count(), "next": None, "previous": None,
                          "results": self.get_serializer(queryset, many=True).data})
 

@@ -28,10 +28,10 @@ import { PhotoComponent } from '@shared/components/photo.component';
       <div class="property-grid">
         @for (property of properties; track property.id) {
           <article class="card property-tile">
-            <a class="tile-photo" [routerLink]="['/admin/imoveis',property.id,'editar']" [attr.aria-label]="'Editar ' + property.titulo"><app-photo [src]="cover(property)" [alt]="property.titulo" [eager]="true" /><span class="photo-count">{{ property.imagens.length }} foto(s)</span></a>
+            <a class="tile-photo card-media" [routerLink]="['/admin/imoveis',property.id,'editar']" [attr.aria-label]="'Editar ' + property.titulo"><app-photo [src]="cover(property)" [alt]="property.titulo" [eager]="true" /><span class="photo-count">{{ property.imagens.length }} foto(s)</span></a>
             <div class="tile-body"><div class="tile-meta"><span class="admin-badge" [attr.data-status]="property.status">{{ statusLabel(property.status) }}</span><span class="muted">#{{ property.id }}</span></div>
               <h2><a [routerLink]="['/admin/imoveis',property.id,'editar']">{{ property.titulo }}</a></h2>
-              <p class="muted">{{ property.bairro }} · {{ property.cidade }}</p><strong class="tile-price">{{ numberValue(property.valor) | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</strong>
+              <p class="muted">{{ property.bairro }} · {{ property.cidade }}</p><strong class="tile-price">@if (property.valor != null) { {{ numberValue(property.valor) | currency:'BRL':'symbol':'1.0-0':'pt-BR' }} } @else { Valor sob consulta }</strong>
               <p class="tile-details">{{ typeLabel(property.tipo) }} · {{ property.finalidade === 'venda' ? 'Venda' : 'Aluguel' }}</p>
               @if (!property.imagens.length) { <p class="photo-warning">! Adicione fotos para apresentar este imóvel.</p> }
               <div class="tile-actions"><a class="btn btn-primary" [routerLink]="['/admin/imoveis',property.id,'editar']">Editar imóvel</a>@if (property.status === 'publicado') { <a class="btn btn-secondary" [routerLink]="['/imoveis',property.slug]" target="_blank" rel="noopener">Ver no site ↗</a> }<button class="clear" type="button" [disabled]="property.status === 'inativo'" (click)="selected = property">Inativar</button></div>
@@ -49,8 +49,7 @@ import { PhotoComponent } from '@shared/components/photo.component';
   .clear { border: 0; background: transparent; color: #53616d; min-height: 44px; text-decoration: underline; }
   .list-heading,.tile-meta,.pagination { display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:13px; }
   .property-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
-  .property-tile { overflow:hidden; display:flex; flex-direction:column; }
-  .tile-photo { position:relative; display:block; aspect-ratio:16/10; }
+  .property-tile { overflow:hidden; display:flex; flex-direction:column; min-width:0; }
   .photo-count { position:absolute; bottom:12px; right:12px; background:#111a; color:white; border-radius:6px; padding:5px 8px; font-size:12px; }
   .tile-body { display:flex; flex-direction:column; gap:12px; padding:20px; flex:1; }
   h2 { font-size:17px; line-height:1.4; margin:0; } p { margin:0; font-size:13px; line-height:1.6; } .tile-price { font-size:21px; font-weight:750; }

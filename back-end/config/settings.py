@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "apps.leads",
     "apps.locations",
     "apps.banners",
+    "apps.robot",
 ]
 
 MIDDLEWARE = [
@@ -136,6 +137,18 @@ GEOCODER_URL = env("GEOCODER_URL", "https://nominatim.openstreetmap.org/search")
 MAP_TILE_URL = env("MAP_TILE_URL", "https://tile.openstreetmap.org/{z}/{x}/{y}.png")
 MAP_TILE_ATTRIBUTION = env("MAP_TILE_ATTRIBUTION", '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors')
 MAP_RESULT_LIMIT = env_int("MAP_RESULT_LIMIT", 2000)
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = None
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_BEAT_SCHEDULE = {
+    "consultar-fontes-drive-a-cada-24h": {
+        "task": "apps.robot.tasks.consultar_fontes_drive",
+        "schedule": timedelta(hours=24),
+    },
+}
+GOOGLE_DRIVE_CREDENTIALS_FILE = env("GOOGLE_DRIVE_CREDENTIALS_FILE", "")
+GOOGLE_DRIVE_CREDENTIALS_JSON = env("GOOGLE_DRIVE_CREDENTIALS_JSON", "")
+GOOGLE_DRIVE_API_KEY = env("GOOGLE_DRIVE_API_KEY", "")
 CACHES = {"default": {
     "BACKEND": env("CACHE_BACKEND", "django.core.cache.backends.locmem.LocMemCache"),
     "LOCATION": env("CACHE_LOCATION", "serve-location"),

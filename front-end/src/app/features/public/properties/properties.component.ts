@@ -22,17 +22,30 @@ import { MapResponse } from '@core/models/api.models';
   template: `
     <div class="page-shell">
       <app-header />
-      <main class="section container" data-site-page="properties">
-        <div appSiteSection="properties.intro"><span class="eyebrow">{{site.text('properties','label')}}</span>
+      <main class="section container catalog-page" data-site-page="properties">
+        <div class="catalog-intro" appSiteSection="properties.intro"><span class="eyebrow">{{site.text('properties','label')}}</span>
         <h1 class="section-title">{{site.text('properties','title').replace('{cidade}',filters.cidade || site.text('properties','default_cities'))}}</h1></div>
         <div class="layout" appSiteSection="properties.catalog">
-          <aside class="filters-column">
+          <aside class="filters-column" aria-label="Filtros de imóveis">
             <app-filter-sidebar [initialFilters]="filters" (filtersChanged)="applyFilters($event)" />
           </aside>
           <section class="results-column">
+            <div class="catalog-toolbar">
             <div class="view-switch" aria-label="Visualização dos imóveis">
               <button type="button" class="btn btn-secondary" [attr.aria-pressed]="view === 'lista'" (click)="changeView('lista')">{{site.text('properties','list_label')}}</button>
               <button type="button" class="btn btn-secondary" [attr.aria-pressed]="view === 'mapa'" (click)="changeView('mapa')">{{site.text('properties','map_label')}}</button>
+            </div>
+            @if (!loading && !error) {
+              <div class="result-meta">
+                <span aria-live="polite">{{ total }} resultado(s)</span>
+                @if (view === 'lista' && (hasNext || page > 1)) {
+                  <nav aria-label="Páginas de imóveis">
+                    <button class="btn btn-secondary" type="button" (click)="loadPage(page - 1)" [disabled]="page <= 1">Anterior</button>
+                    <button class="btn btn-secondary" type="button" (click)="loadPage(page + 1)" [disabled]="!hasNext">Próxima</button>
+                  </nav>
+                }
+              </div>
+            }
             </div>
             @if (loading) {
               <app-loading />
@@ -47,11 +60,6 @@ import { MapResponse } from '@core/models/api.models';
             } @else if (mapError && view === 'mapa') {
               <p role="alert">{{ mapError }}</p><button class="btn btn-secondary" type="button" (click)="changeView('lista')">Ver lista</button>
             } @else if (properties.length) {
-              <div class="result-meta">
-                <span>{{ total }} resultado(s)</span>
-                <button class="btn btn-secondary" type="button" (click)="loadPage(page - 1)" [disabled]="page <= 1">Anterior</button>
-                <button class="btn btn-secondary" type="button" (click)="loadPage(page + 1)" [disabled]="!hasNext">Próxima</button>
-              </div>
               <div class="property-grid">
                 @for (property of properties; track property.id) {
                   <app-property-card [property]="property" />
@@ -67,29 +75,30 @@ import { MapResponse } from '@core/models/api.models';
     </div>
   `,
   styles: [`
-    main {
-      padding-top: 54px;
-    }
-    .view-switch { display: flex; gap: 10px; margin-bottom: 20px; }
+    .catalog-page { width: min(1560px, calc(100% - 64px)); padding-top: 36px; }
+    .catalog-intro .section-title { font-size: clamp(1.8rem, 2.7vw, 2.75rem); max-width: 1100px; margin: 8px 0 0; }
+    .catalog-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+    .view-switch { display: flex; gap: 8px; }
     .view-switch button[aria-pressed="true"] { border-color: white; background: #ffffff20; }
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
+      grid-template-columns: 248px minmax(0, 1fr);
       gap: 24px;
       align-items: start;
-      margin-top: 28px;
+      margin-top: 24px;
     }
 
     .filters-column,
     .results-column {
       min-width: 0;
     }
+    .filters-column { position: sticky; top: 100px; max-height: calc(100dvh - 120px); overflow-y: auto; scrollbar-width: thin; }
 
     .property-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
-      gap: 18px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px 20px;
       align-items: stretch;
     }
 
@@ -99,34 +108,29 @@ import { MapResponse } from '@core/models/api.models';
       align-items: center;
       flex-wrap: wrap;
       gap: 10px;
-      margin-bottom: 16px;
       color: #b8b8b8;
     }
+    .result-meta nav { display: flex; gap: 8px; }
 
     button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
 
-    @media (max-width: 1080px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
+    @media (max-width: 1199px) {
+      .layout { grid-template-columns: 224px minmax(0, 1fr); gap: 20px; }
+      .property-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
-
-    @media (max-width: 560px) {
-      main {
-        padding-top: 34px;
-      }
-
-      .result-meta {
-        justify-content: stretch;
-      }
-
-      .result-meta span,
-      .result-meta button {
-        width: 100%;
-      }
+    @media (max-width: 899px) {
+      .catalog-page { width: calc(100% - 32px); }
+      .layout { grid-template-columns: minmax(0, 1fr); }
+      .filters-column { position: static; max-height: none; overflow: visible; }
+    }
+    @media (max-width: 599px) {
+      .catalog-page { padding-top: 28px; }
+      .property-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+      .catalog-toolbar { gap: 12px; }
+      .result-meta { font-size: .85rem; }
     }
   `],
 })

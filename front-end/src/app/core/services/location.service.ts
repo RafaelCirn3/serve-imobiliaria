@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
+import { Property } from '@core/models/api.models';
 
 export interface PostalAddress { cep: string; localidade: string; uf: string; bairro: string; logradouro: string; complemento?: string; }
 
@@ -20,5 +21,8 @@ export class LocationService {
   }
   geocode(payload: Record<string, unknown>): Observable<{ latitude: number; longitude: number; localizacao_exata: boolean; descricao: string }> {
     return this.http.post<{ latitude: number; longitude: number; localizacao_exata: boolean; descricao: string }>(`${this.url}/geocodificar/`, payload);
+  }
+  organize(payload: Record<string, unknown>): Observable<{fields: Partial<Property>; warnings: string[]}> {
+    return this.http.post<{fields: Partial<Property>; warnings: string[]}>(`${this.url}/organizar/`, payload);
   }
 }

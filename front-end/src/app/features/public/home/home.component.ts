@@ -27,9 +27,6 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
           @if (banners.length && banners[heroIndex]; as activeBanner) {
             <h1>{{ activeBanner.titulo || content.hero_title }}</h1>
             <p>{{ activeBanner.subtitulo || content.hero_subtitle }}</p>
-            @if (activeBanner.botao_link && activeBanner.botao_texto) {
-              <a class="btn btn-primary hero-cta" [href]="activeBanner.botao_link">{{ activeBanner.botao_texto }}</a>
-            }
           } @else {
             <h1>{{ content.hero_title }}</h1>
             <p>{{ content.hero_subtitle }}</p>
@@ -136,7 +133,7 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
             <div class="region-grid">
               @for (region of regions; track region.id) {
                 <article class="region-card card">
-                  <img [src]="regionImage(region)" [alt]="region.nome">
+                  <figure class="card-media"><img [src]="regionImage(region)" [alt]="region.nome"></figure>
                   <div><h3>{{ region.nome }}</h3><p>{{ region.descricao || 'Região estratégica para morar ou investir em ' + region.cidade + '.' }}</p></div>
                 </article>
               }
@@ -204,7 +201,6 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
     .hero-slide.visible { opacity: 1; }
     .hero-slide::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10,20,26,.68), rgba(10,20,26,.12) 75%), linear-gradient(0deg, rgba(10,20,26,.75), transparent 65%); }
     .hero > .container, .hero-controls { position: relative; z-index: 1; }
-    .hero-cta { width: fit-content; }
     .owner-hero-cta { justify-self:start; max-width:100%; border:1px solid #ffffff50; border-radius:28px; background:#f5f5f5; color:#111417; padding:14px 20px; font-weight:800; box-shadow:0 6px 28px #0006; white-space:normal; }
     .hero-controls { display:flex; justify-content:center; align-items:center; gap:18px; z-index:2; }
     .hero-controls button { border:1px solid #aaa; background:#171c20c9; color:white; border-radius:50%; width:40px; height:40px; font-size:26px; }
@@ -348,12 +344,6 @@ import { SaleDialogService } from '@core/services/sale-dialog.service';
 
     .region-card {
       overflow: hidden;
-    }
-
-    .region-card img {
-      width: 100%;
-      aspect-ratio: 1.55;
-      object-fit: cover;
     }
 
     .region-card div {

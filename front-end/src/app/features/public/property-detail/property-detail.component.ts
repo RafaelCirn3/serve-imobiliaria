@@ -6,7 +6,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { environment } from '@env/environment';
-import { Property } from '@core/models/api.models';
+import { Property, PropertyUnit } from '@core/models/api.models';
 import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/property-options';
 import { LeadService } from '@core/services/lead.service';
 import { NotificationService } from '@core/services/notification.service';
@@ -47,25 +47,47 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
             </div>
           </section>
 
-          <section class="content" style="order:2">
+          <section class="content">
             <div appSiteSection="detail.description">
               <span class="eyebrow">{{ property.bairro }} · {{ property.cidade }}</span>
               <h1>{{ property.titulo }}</h1>
-              <strong class="price">{{ numberValue(property.valor) | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</strong>
+              <strong class="price">@if (property.valor_exibicao ?? property.valor; as price) { @if (property.agrupado) { <span>A partir de: </span> }{{ numberValue(price) | currency:'BRL':'symbol':'1.0-0':'pt-BR' }} } @else { Valor sob consulta }</strong>
               <div class="features">
                 <span>{{ typeLabel(property.tipo) }}</span>
-                <span>{{ property.quartos }} quartos</span>
-                <span>{{ property.suites }} suítes</span>
-                <span>{{ property.banheiros }} banheiros</span>
-                <span>{{ parkingLabel(property) }}</span>
-                <span>{{ area.label }}: {{ area.value ?? '—' }} m²</span>
+                @if (property.torre) { <span>Torre {{ property.torre }}</span> }
+                @if (property.situacao_obra === 'em_construcao') { <span>Em construção</span> }
+                @if (property.previsao_entrega) { <span>Entrega prevista: {{ property.previsao_entrega.slice(5) }}/{{ property.previsao_entrega.slice(0,4) }}</span> }
+                @if (property.quartos > 0) { <span>{{ property.quartos }} quartos</span> }
+                @if (property.suites > 0) { <span>{{ property.suites }} suítes</span> }
+                @if (property.banheiros > 0) { <span>{{ property.banheiros }} banheiros</span> }
+                @if (property.vagas > 0 || property.vagas_rotativas || property.vagas_max) { <span>{{ parkingLabel(property) }}</span> }
+                @if (hasArea) { <span>{{ area.label }}: {{ area.value }} m²</span> }
               </div>
               <p class="description">{{ property.descricao }}</p>
+              @if (property.agrupado) {
+                <section class="unit-options" aria-label="Unidades disponíveis">
+                  <h2>Opções disponíveis</h2>
+                  @if (property.valor_exibicao != null) { <p class="muted">O valor “a partir de” é arredondado para baixo. Confira os valores totais.</p> }
+                  @if (unitsError) {
+                    <p role="status">Não foi possível carregar as unidades. Consulte nossa equipe.</p>
+                  } @else if (unitsLoading) {
+                    <p role="status">Carregando unidades…</p>
+                  } @else {
+                    <div class="unit-table-scroll"><table>
+                      <thead><tr><th>Torre</th><th>Tipologia</th><th>Área</th><th>Vagas</th><th>Valor total</th></tr></thead>
+                      <tbody>@for (unit of units; track $index) {
+                        <tr><td data-label="Torre">{{ unit.torre || '—' }}</td><td data-label="Tipologia">@if (unit.quartos) { {{ unit.quartos }} quartos } @else { {{ typeLabel(unit.tipo) }} } @if (unit.suites) { ({{ unit.suites }} suítes) }</td><td data-label="Área">{{ unit.area_privativa || unit.area_total || unit.area_informada }} m²</td><td data-label="Vagas">{{ unit.vagas || '—' }}</td><td data-label="Valor total">@if (unit.valor != null) { {{ numberValue(unit.valor) | currency:'BRL':'symbol':'1.2-2':'pt-BR' }} } @else { Sob consulta }</td></tr>
+                      }</tbody>
+                    </table></div>
+                  }
+                </section>
+              }
               @if (property.latitude != null && property.longitude != null) {
                 <h2>Localização {{ property.localizacao_exata ? 'confirmada' : 'aproximada' }}</h2>
                 <app-property-map [properties]="[property]" />
               }
             </div>
+          </section>
 
             <aside class="lead-card card" appSiteSection="detail.interest">
               <h2>{{site.text('detail','interest_title')}}</h2>
@@ -78,7 +100,6 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
               </form>
               <a class="btn btn-secondary whatsapp" [href]="whatsappLink" target="_blank" rel="noopener noreferrer" aria-label="Conversar pelo WhatsApp" title="Conversar pelo WhatsApp"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 32 32" fill="currentColor"><path d="M16 .8A15.1 15.1 0 0 0 3.04 23.7L.9 31l7.5-2A15.2 15.2 0 1 0 16 .8Zm0 27.6a12.4 12.4 0 0 1-6.3-1.7l-.45-.27-4.45 1.17 1.2-4.34-.3-.47a12.45 12.45 0 1 1 10.3 5.61Zm6.82-9.27c-.37-.19-2.21-1.1-2.55-1.22-.34-.12-.59-.19-.83.19-.25.37-.96 1.22-1.18 1.46-.22.25-.43.28-.8.1-.37-.19-1.57-.58-2.99-1.85-1.1-.99-1.85-2.21-2.07-2.58-.22-.37-.02-.57.16-.75.17-.17.37-.43.56-.65.19-.22.25-.37.37-.62.12-.25.06-.46-.03-.65-.09-.19-.83-2.01-1.14-2.76-.3-.72-.6-.62-.83-.63h-.7c-.25 0-.65.09-.99.46-.34.37-1.3 1.27-1.3 3.1s1.33 3.6 1.51 3.84c.19.25 2.6 3.97 6.3 5.57.88.38 1.57.61 2.11.78.89.28 1.7.24 2.34.15.71-.11 2.21-.9 2.52-1.77.31-.87.31-1.61.22-1.77-.09-.15-.34-.25-.71-.43Z"/></svg></a>
             </aside>
-          </section>
 
           @if (similar.length) {
             <section class="section" appSiteSection="detail.similar">
@@ -96,22 +117,33 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
     </div>
   `,
   styles: [`
-    .detail {
-      padding: 40px 0 0;
+    .detail[data-site-page] {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      grid-template-areas: 'gallery interest' 'content interest' 'similar similar';
+      align-items: start;
+      gap: 28px 32px;
+      padding: 28px 0 0;
     }
 
     .back-button {
+      position: absolute;
+      top: 8px;
+      left: -32px;
+      z-index: 5;
       display: inline-flex;
       align-items: center;
       gap: 8px;
       min-height: 42px;
       border: 1px solid rgba(255, 255, 255, 0.38);
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.07);
+      background: rgba(17, 20, 23, 0.88);
+      backdrop-filter: blur(10px);
       color: #e6e8eb;
       font-weight: 900;
       padding: 0 16px;
-      margin-bottom: 18px;
+      margin: 0;
       transition: background 0.18s ease, transform 0.18s ease;
     }
 
@@ -121,6 +153,8 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
     }
 
     .gallery {
+      grid-area: gallery;
+      min-width: 0;
       display: grid;
       gap: 12px;
       animation: fadeUp 0.45s ease both;
@@ -173,10 +207,8 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
     }
 
     .content {
-      display: grid;
-      grid-template-columns: 1fr 360px;
-      gap: 32px;
-      margin-top: 34px;
+      grid-area: content;
+      min-width: 0;
       animation: fadeUp 0.5s ease both;
       animation-delay: 0.08s;
     }
@@ -199,6 +231,12 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
       margin: 22px 0;
     }
 
+    .price span { font-size: .7em; }
+    .unit-table-scroll { overflow-x: auto; }
+    .unit-options table { width: 100%; min-width: 0; border-collapse: collapse; }
+    .unit-options th, .unit-options td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #30363d; }
+    .unit-options th:last-child, .unit-options td:last-child { text-align: right; white-space: nowrap; }
+
     .features span {
       border: 1px solid #30363d;
       border-radius: 999px;
@@ -213,6 +251,9 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
 
     .map,
     .lead-card {
+      grid-area: interest;
+      min-width: 0;
+      align-self: start;
       padding: 20px;
     }
 
@@ -251,8 +292,13 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
       gap: 18px;
     }
 
+    .detail > .section { grid-area: similar; min-width: 0; }
+
+    @media (max-width: 1280px) {
+      .back-button { left: 8px; }
+    }
+
     @media (max-width: 900px) {
-      .content,
       .similar-grid {
         grid-template-columns: 1fr;
       }
@@ -261,7 +307,9 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
         position: static;
       }
 
-      .detail {
+      .detail[data-site-page] {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: 'gallery' 'content' 'interest' 'similar';
         padding-top: 22px;
       }
 
@@ -273,6 +321,15 @@ import { PropertyMapComponent } from '@shared/components/property-map.component'
       .thumbs button {
         scroll-snap-align: start;
       }
+    }
+
+    @media (max-width: 600px) {
+      .unit-options table, .unit-options tbody { display: block; }
+      .unit-options thead { display: none; }
+      .unit-options tr { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #30363d; border-radius: 8px; margin-bottom: 12px; padding: 8px; }
+      .unit-options td { border: 0; }
+      .unit-options td::before { content: attr(data-label); display: block; font-size: .75rem; color: #aaa; margin-bottom: 5px; }
+      .unit-options td:last-child { grid-column: 1 / -1; text-align: left; }
     }
 
     @keyframes fadeUp {
@@ -293,6 +350,8 @@ export class PropertyDetailComponent implements OnInit {
   readonly typeLabel = propertyTypeLabel;
   readonly parkingLabel = parkingLabel;
 
+  get hasArea() { return Number(this.area.value) > 0; }
+
   get area() {
     return this.property ? propertyArea(this.property) : { value: null, label: 'Área' };
   }
@@ -304,6 +363,9 @@ export class PropertyDetailComponent implements OnInit {
   private readonly location = inject(Location);
 
   property: Property | null = null;
+  units: PropertyUnit[] = [];
+  unitsLoading = false;
+  unitsError = false;
   similar: Property[] = [];
   mainImage = '';
   private swipeStart: { x: number; y: number; pointerId: number } | null = null;
@@ -342,6 +404,13 @@ export class PropertyDetailComponent implements OnInit {
     this.propertyService.getPropertyBySlug(slug).subscribe({
       next: (property) => {
         this.property = property;
+        if (property.agrupado) {
+          this.unitsLoading = true;
+          this.propertyService.getUnits(property.slug).subscribe({
+            next: (units) => { this.units = units; this.unitsLoading = false; },
+            error: () => { this.unitsError = true; this.unitsLoading = false; },
+          });
+        }
         this.mainImage = property.imagens?.find(image=>image.imagem_capa)?.imagem || property.imagens?.[0]?.imagem || '';
         this.loading = false;
         this.loadSimilar(property);

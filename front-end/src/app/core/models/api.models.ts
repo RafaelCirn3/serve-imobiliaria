@@ -6,7 +6,7 @@ export interface PaginatedResponse<T> {
 }
 
 export type PropertyStatus = 'rascunho' | 'publicado' | 'vendido' | 'alugado' | 'inativo';
-export type PropertyType = 'apartamento' | 'casa' | 'cobertura' | 'terreno' | 'comercial' | 'condominio' | 'flat' | 'lancamento';
+export type PropertyType = 'apartamento' | 'casa' | 'cobertura' | 'terreno' | 'comercial' | 'condominio' | 'flat' | 'lancamento' | 'em_construcao' | 'novo' | 'pronto';
 export type PropertyPurpose = 'venda' | 'aluguel';
 export type LeadStatus = 'novo' | 'em_atendimento' | 'finalizado' | 'descartado';
 
@@ -20,6 +20,10 @@ export interface PropertyImage {
 }
 
 export interface Property {
+  empreendimento?: string; construtora?: string; unidade?: string; andar?: string; torre?: string;
+  tipologia?: string; area_informada?: string | number | null; agrupar_publicacao?: boolean;
+  previsao_entrega?: string; situacao_obra?: string; registro_incorporacao?: string;
+  vagas_min?: number; vagas_max?: number;
   id: number;
   titulo: string;
   slug: string;
@@ -28,7 +32,10 @@ export interface Property {
   finalidade: PropertyPurpose;
   status?: PropertyStatus;
   destaque: boolean;
-  valor: string | number;
+  valor: string | number | null;
+  agrupado?: boolean;
+  quantidade_unidades?: number;
+  valor_exibicao?: string | number | null;
   valor_condominio?: string | number | null;
   valor_iptu?: string | number | null;
   regiao?: number | null;
@@ -95,13 +102,21 @@ export interface PropertyFilters {
 }
 
 export interface MapProperty {
-  id: number; titulo: string; slug: string; valor: string | number; cidade: string; bairro: string;
+  agrupado?: boolean; valor_exibicao?: string | number | null; quantidade_unidades?: number;
+  id: number; titulo: string; slug: string; valor: string | number | null; cidade: string; bairro: string;
   latitude?: string | number | null; longitude?: string | number | null; localizacao_exata?: boolean;
   foto?: string | null; imagens?: PropertyImage[];
 }
 
 export interface MapResponse {
   count: number; geolocalizados: number; sem_coordenadas: number; limite: number; truncado: boolean; results: MapProperty[];
+}
+
+export interface PropertyUnit {
+  torre: string; tipo: PropertyType; finalidade: PropertyPurpose;
+  valor: string | number | null; area_informada: string | number | null;
+  area_total: string | number | null; area_privativa: string | number | null;
+  quartos: number; suites: number; banheiros: number; vagas: number;
 }
 
 export interface Lead {

@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
@@ -15,6 +16,9 @@ class Property(models.Model):
         CONDOMINIO = "condominio", "Condomínio fechado"
         FLAT = "flat", "Flat"
         LANCAMENTO = "lancamento", "Lançamento"
+        EM_CONSTRUCAO = "em_construcao", "Em construção"
+        NOVO = "novo", "Novo"
+        PRONTO = "pronto", "Pronto"
 
     class Finalidade(models.TextChoices):
         VENDA = "venda", "Venda"
@@ -28,13 +32,26 @@ class Property(models.Model):
         INATIVO = "inativo", "Inativo"
 
     titulo = models.CharField(max_length=180)
+    empreendimento = models.CharField(max_length=180, blank=True)
+    unidade = models.CharField(max_length=80, blank=True)
+    torre = models.CharField(max_length=80, blank=True)
+    andar = models.CharField(max_length=40, blank=True)
+    tipologia = models.CharField(max_length=80, blank=True)
+    previsao_entrega = models.CharField(max_length=7, blank=True, validators=[RegexValidator(r"^\d{4}-(0[1-9]|1[0-2])$")])
+    registro_incorporacao = models.CharField(max_length=80, blank=True)
+    construtora = models.CharField(max_length=180, blank=True)
+    origem_comercial = models.CharField(max_length=180, blank=True)
+    agrupar_publicacao = models.BooleanField(default=False)
+    grupo_publicacao = models.CharField(max_length=64, blank=True, editable=False, db_index=True)
+    medidas = models.CharField(max_length=80, blank=True)
+    area_informada = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     slug = models.SlugField(max_length=220, unique=True, blank=True)
     descricao = models.TextField()
     tipo = models.CharField(max_length=20, choices=Tipo.choices)
     finalidade = models.CharField(max_length=20, choices=Finalidade.choices)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.RASCUNHO)
     destaque = models.BooleanField(default=False)
-    valor = models.DecimalField(max_digits=14, decimal_places=2)
+    valor = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     valor_condominio = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     valor_iptu = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     regiao = models.ForeignKey(
@@ -88,6 +105,12 @@ class Property(models.Model):
     def __str__(self):
         return self.titulo
 
+    @property
+    def situacao_obra(self):
+        if not self.previsao_entrega:
+            return ""
+        return "em_construcao" if self.previsao_entrega >= timezone.localdate().strftime("%Y-%m") else "entrega_a_confirmar"
+
     def clean(self):
         super().clean()
         if self.finalidade == self.Finalidade.VENDA and self.status == self.Status.ALUGADO:
@@ -96,6 +119,11 @@ class Property(models.Model):
             raise ValidationError({"status": "Imóvel com finalidade de aluguel não pode ter status vendido."})
 
     def save(self, *args, **kwargs):
+        from .publications import PublicationPolicy
+
+        self.grupo_publicacao = PublicationPolicy.key(self)
+        if kwargs.get("update_fields"):
+            kwargs["update_fields"] = set(kwargs["update_fields"]) | {"grupo_publicacao"}
         for field in ("cidade", "bairro", "logradouro"):
             setattr(self, f"{field}_busca", normalized(getattr(self, field)))
         if kwargs.get("update_fields"):
@@ -125,10 +153,20 @@ class PropertyImage(models.Model):
     legenda = models.CharField(max_length=180, blank=True)
     ordem = models.PositiveIntegerField(default=0)
     imagem_capa = models.BooleanField(default=False)
+    categoria = models.CharField(max_length=16, blank=True, choices=[("fachada", "Fachada"), ("lazer", "Área de lazer"), ("internos", "Ambientes internos")])
+    origem_drive_id = models.CharField(max_length=128, blank=True)
+    origem_drive_url = models.URLField(max_length=500, blank=True)
+    origem_pasta_id = models.CharField(max_length=128, blank=True)
+    conteudo_sha256 = models.CharField(max_length=64, blank=True)
+    vistoria_pendente = models.BooleanField(default=False)
     criado_em = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["ordem", "id"]
+        constraints = [
+            models.UniqueConstraint(fields=["imovel", "origem_drive_id"], condition=~models.Q(origem_drive_id=""), name="unique_property_drive_image"),
+            models.UniqueConstraint(fields=["imovel", "conteudo_sha256"], condition=~models.Q(conteudo_sha256=""), name="unique_property_image_content"),
+        ]
 
     def __str__(self):
         return f"Imagem {self.id} - {self.imovel}"

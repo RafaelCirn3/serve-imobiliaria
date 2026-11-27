@@ -11,6 +11,7 @@ from rest_framework.exceptions import APIException, NotFound, ValidationError
 from rest_framework.exceptions import Throttled
 
 from .normalization import canonical_city
+from .addressing import AddressNormalizer
 
 
 class LocationUnavailable(APIException):
@@ -50,7 +51,7 @@ def lookup_cep(value):
         raise LocationUnavailable()
     if data.get("erro"):
         raise NotFound("CEP não encontrado. Preencha o endereço manualmente.")
-    return data
+    return normalize_postal(data)
 
 
 def search_address(city, street):
@@ -61,7 +62,16 @@ def search_address(city, street):
     data = cached_json(f"https://viacep.com.br/ws/PB/{quote(city, safe='')}/{quote(street, safe='')}/json/")
     if not isinstance(data, list):
         raise LocationUnavailable()
-    return data[:50]
+    return [normalize_postal(item) for item in data[:50]]
+
+
+def normalize_postal(data):
+    data = dict(data)
+    district = "Centro" if canonical_city(data.get("localidade", "")) == "Bananeiras" else AddressNormalizer.district(data.get("bairro", ""), data.get("localidade", ""))
+    if district and district != data.get("bairro"):
+        data["bairro_original"] = data.get("bairro", "")
+        data["bairro"] = district
+    return data
 
 
 def geocode_address(data):

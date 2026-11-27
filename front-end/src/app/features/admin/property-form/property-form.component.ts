@@ -46,7 +46,7 @@ import { MapProperty } from '@core/models/api.models';
         <div [hidden]="tab !== 'basic'">
           <div class="form-grid">
             <label class="field">Título *<input formControlName="titulo"><app-control-hint [control]="form.controls.titulo" [required]="true" /></label>
-            <label class="field">Valor *<input type="number" min="0" step="0.01" inputmode="decimal" formControlName="valor"><app-control-hint [control]="form.controls.valor" [required]="true" /></label>
+            <label class="field">Valor (opcional)<input type="number" min="0.01" step="0.01" inputmode="decimal" formControlName="valor"><app-control-hint [control]="form.controls.valor" /></label>
             <label class="field full">Descrição *<textarea formControlName="descricao"></textarea><app-control-hint [control]="form.controls.descricao" [required]="true" /></label>
             <label class="field">Tipo<select formControlName="tipo">
               @for (type of propertyTypes; track type.value) { <option [value]="type.value">{{ type.label }}</option> }
@@ -54,6 +54,16 @@ import { MapProperty } from '@core/models/api.models';
             <label class="field">Finalidade<select formControlName="finalidade"><option value="venda">Venda</option><option value="aluguel">Aluguel</option></select><app-control-hint [control]="form.controls.finalidade" [required]="false" /></label>
             <label class="field">Condomínio<input type="number" min="0" step="0.01" inputmode="decimal" formControlName="valor_condominio"><app-control-hint [control]="form.controls.valor_condominio" [required]="false" /></label>
             <label class="field">IPTU<input type="number" min="0" step="0.01" inputmode="decimal" formControlName="valor_iptu"><app-control-hint [control]="form.controls.valor_iptu" [required]="false" /></label>
+            <label class="field">Empreendimento<input formControlName="empreendimento"></label>
+            <label class="field">Construtora<input formControlName="construtora"></label>
+            <label class="field">Torre<input formControlName="torre"></label>
+            <label class="field">Unidade (somente admin)<input formControlName="unidade"></label>
+            <label class="field">Andar (somente admin)<input formControlName="andar"></label>
+            <label class="field">Tipologia da tabela<input formControlName="tipologia"></label>
+            <label class="field">Previsão de entrega<input type="month" formControlName="previsao_entrega"></label>
+            <label class="field">Registro de incorporação<input formControlName="registro_incorporacao"></label>
+            <label class="field">Área informada (m²)<input type="number" step="0.01" min="0.01" formControlName="area_informada"></label>
+            <label class="check"><input type="checkbox" formControlName="agrupar_publicacao"> Agrupar publicação por torre, quartos/suítes e área</label>
           </div>
         </div>
 
@@ -69,6 +79,7 @@ import { MapProperty } from '@core/models/api.models';
             <app-control-hint [control]="form.controls.regiao" [required]="false" /></label>
             <app-address-editor [form]="form" listId="admin-address" />
             <label class="field full">Endereço anterior / referência<input formControlName="endereco"><app-control-hint [control]="form.controls.endereco" [required]="false" /></label>
+            <button type="button" class="btn btn-secondary" [disabled]="geocoding || saving || loading" (click)="organizeAddress()">{{ geocoding ? 'Consultando endereço…' : 'Organizar endereço, CEP e localização' }}</button>
             <label class="field">Latitude<input formControlName="latitude"><app-control-hint [control]="form.controls.latitude" [required]="false" /></label>
             <label class="field">Longitude<input formControlName="longitude"><app-control-hint [control]="form.controls.longitude" [required]="false" /></label>
             <button type="button" class="btn btn-secondary" [disabled]="geocoding" (click)="geocode()">{{ geocoding ? 'Localizando…' : 'Localizar endereço no mapa' }}</button>
@@ -120,7 +131,7 @@ import { MapProperty } from '@core/models/api.models';
       </form>
       <aside class="card property-preview" aria-label="Resumo do imóvel">
         <div class="preview-heading"><strong>Apresentação do imóvel</strong><span class="admin-badge" [attr.data-status]="form.controls.status.value">{{ form.controls.status.value === 'publicado' ? 'Publicado' : 'Rascunho / gestão' }}</span></div>
-        <div class="preview-cover"><app-photo [src]="previewCover" [alt]="form.controls.titulo.value || 'Prévia do imóvel'" [eager]="true" /></div>
+        <div class="preview-cover card-media"><app-photo [src]="previewCover" [alt]="form.controls.titulo.value || 'Prévia do imóvel'" [eager]="true" /></div>
         <div class="preview-body"><span class="muted">{{ images.length }} foto(s) salva(s){{ pendingImages.length ? ' · ' + pendingImages.length + ' aguardando envio' : '' }}</span><h2>{{ form.controls.titulo.value || 'Seu imóvel aparece aqui' }}</h2><p>{{ form.controls.bairro.value || 'Bairro' }} · {{ form.controls.cidade.value }}</p>
           <button class="btn btn-secondary" type="button" (click)="tab = 'photos'">{{ images.length ? 'Gerenciar fotos' : 'Adicionar fotos' }}</button>
           <div class="preview-checks"><strong>Antes de publicar</strong><span [class.done]="completedRequired === requiredFields.length">{{ completedRequired === requiredFields.length ? '✓' : '○' }} Informações obrigatórias</span><span [class.done]="!!(images.length + pendingImages.length)">{{ images.length + pendingImages.length ? '✓' : '○' }} Fotos do imóvel <small>(recomendado)</small></span><span [class.done]="form.controls.status.value === 'publicado'">{{ form.controls.status.value === 'publicado' ? '✓' : '○' }} Status definido como Publicado</span></div>
@@ -142,11 +153,11 @@ import { MapProperty } from '@core/models/api.models';
     .property-workspace {display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start;}
     .form-card {padding:28px;min-width:0;}.full {grid-column:1/-1;}.check{display:flex;align-items:center;gap:8px;}.error-summary button{background:transparent;border:0;color:inherit;text-align:left;text-decoration:underline;padding:8px;}
     .step-actions {display:flex;justify-content:space-between;gap:12px;margin-top:24px;padding-top:20px;border-top:1px solid #e8edf0;}
-    .property-preview {position:sticky;top:100px;overflow:hidden;}.preview-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:16px;font-size:11px;}.preview-cover{aspect-ratio:16/11;}.preview-body{display:grid;gap:14px;padding:20px;}.preview-body>span,.preview-body>p{font-size:12px;line-height:1.6;margin:0;}.preview-body h2{font-size:17px;line-height:1.4;margin:0;}.preview-checks{border-top:1px solid #edf0f2;padding-top:18px;display:grid;gap:12px;font-size:12px;color:#8a7861;}.preview-checks strong{color:#536573;}.preview-checks .done{color:#286747;}.save-guidance{color:#7b8790;}
+    .property-preview {position:sticky;top:100px;overflow:hidden;}.preview-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:16px;font-size:11px;}.preview-body{display:grid;gap:14px;padding:20px;}.preview-body>span,.preview-body>p{font-size:12px;line-height:1.6;margin:0;}.preview-body h2{font-size:17px;line-height:1.4;margin:0;}.preview-checks{border-top:1px solid #edf0f2;padding-top:18px;display:grid;gap:12px;font-size:12px;color:#8a7861;}.preview-checks strong{color:#536573;}.preview-checks .done{color:#286747;}.save-guidance{color:#7b8790;}
     @media(max-width:1150px){.property-workspace{grid-template-columns:minmax(0,1fr) 245px;gap:16px;}.form-card{padding:20px;}}
-    @media(max-width:1000px){.property-workspace{grid-template-columns:1fr;}.property-preview{position:static;display:grid;grid-template-columns:180px 1fr;}.preview-heading{grid-column:1/-1;}.preview-cover{aspect-ratio:auto;min-height:160px;}.preview-checks,.save-guidance{display:none;}.preview-body{padding:16px;}.property-preview{grid-row:1;}.tabs button{min-width:110px;}.tabs small{display:none;}}
-    @media(max-width:560px){.tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}.tabs button{min-width:0;padding:12px;font-size:11px;}.tabs button>span:last-child{min-width:0;overflow-wrap:anywhere;}.property-preview{display:block;}.preview-cover{height:160px;min-height:0;}.preview-body{gap:10px;}}
-    @media(max-width:480px){.property-preview{grid-template-columns:100px 1fr;}.preview-cover{min-height:150px;}.preview-body h2{font-size:14px;}.form-card{padding:18px;}.step-actions .btn{font-size:11px;padding:0 10px;}}
+    @media(max-width:1000px){.property-workspace{grid-template-columns:1fr;}.property-preview{position:static;display:grid;grid-template-columns:180px 1fr;}.preview-heading{grid-column:1/-1;}.preview-checks,.save-guidance{display:none;}.preview-body{padding:16px;}.property-preview{grid-row:1;}.tabs button{min-width:110px;}.tabs small{display:none;}}
+    @media(max-width:560px){.tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));}.tabs button{min-width:0;padding:12px;font-size:11px;}.tabs button>span:last-child{min-width:0;overflow-wrap:anywhere;}.property-preview{display:block;}.preview-body{gap:10px;}}
+    @media(max-width:480px){.property-preview{grid-template-columns:100px 1fr;}.preview-body h2{font-size:14px;}.form-card{padding:18px;}.step-actions .btn{font-size:11px;padding:0 10px;}}
   `],
 })
 export class PropertyFormComponent implements OnInit, OnDestroy {
@@ -159,13 +170,16 @@ export class PropertyFormComponent implements OnInit, OnDestroy {
   private readonly notification = inject(NotificationService);
   private readonly locations = inject(LocationService);
   private readonly destroyRef = inject(DestroyRef);
-  readonly requiredFields = ['titulo','descricao','valor','cidade','bairro'] as const;
+  get requiredFields(): Array<'titulo'|'descricao'|'cidade'|'bairro'> {
+    return this.form.controls.agrupar_publicacao.value && this.form.controls.status.value === 'rascunho'
+      ? ['titulo','descricao'] : ['titulo','descricao','cidade','bairro'];
+  }
   loading = false; loadError = ''; private pendingPreview = '';
   get completedRequired(): number { return this.requiredFields.filter(field => this.form.controls[field].valid).length; }
   get previewCover(): string { return this.pendingPreview || this.images.find(image=>image.imagem_capa)?.imagem || this.images[0]?.imagem || ''; }
   sectionComplete(id: string): boolean {
     if (this.tabHasErrors(id)) return false;
-    if (id === 'basic') return ['titulo','descricao','valor'].every(field=>this.form.get(field)?.valid);
+    if (id === 'basic') return ['titulo','descricao'].every(field=>this.form.get(field)?.valid);
     if (id === 'location') return ['cidade','bairro'].every(field=>this.form.get(field)?.valid);
     if (id === 'photos') return !!(this.images.length + this.pendingImages.length);
     if (id === 'seo') return this.form.controls.status.value === 'publicado';
@@ -175,6 +189,26 @@ export class PropertyFormComponent implements OnInit, OnDestroy {
   moveStep(direction:number):void { const index=this.tabs.findIndex(item=>item.id===this.tab);this.tab=this.tabs[Math.min(this.tabs.length-1,Math.max(0,index+direction))].id; }
   ngOnDestroy():void { if(this.pendingPreview) URL.revokeObjectURL(this.pendingPreview); }
   geocoding = false;
+  organizeAddress(): void {
+    const snapshot = this.form.getRawValue();
+    this.geocoding = true;
+    const source = snapshot.endereco.trim() ? {...snapshot, logradouro:'', numero:'', bairro:''} : snapshot;
+    this.locations.organize({...source, latitude:null, longitude:null, localizacao_exata:false}).subscribe({
+      next: (result) => {
+        const current = this.form.getRawValue();
+        const keys = ['endereco','logradouro','numero','bairro','cidade','uf','cep'] as const;
+        if (keys.some(key => snapshot[key] !== current[key])) {
+          this.notification.show({type:'error',text:'O endereço mudou durante a consulta. Consulte novamente.'});
+        } else {
+          this.form.patchValue(result.fields as never);
+          this.form.markAsDirty();
+          this.notification.show({type:result.warnings.length ? 'error' : 'success',text:result.warnings.length ? 'Endereço organizado. Confira os campos de CEP e localização que ficaram pendentes.' : 'Endereço, CEP e localização preenchidos. Salve para aplicar.'});
+        }
+        this.geocoding = false;
+      },
+      error: () => { this.geocoding=false; this.notification.show({type:'error',text:'Não foi possível consultar. Você pode preencher os campos manualmente.'}); },
+    });
+  }
   saving = false;
   pendingImages: File[] = [];
   private previewKey = '';
@@ -210,8 +244,17 @@ export class PropertyFormComponent implements OnInit, OnDestroy {
       if (draft) { this.form.patchValue(JSON.parse(draft)); this.draftRestored = true; }
     } catch { /* Storage may be unavailable in private browsing. */ }
     this.form.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.updateLocationRequirements();
       try { sessionStorage.setItem(this.draftKey, JSON.stringify(this.form.getRawValue())); } catch { /* Keep in-memory values. */ }
     });
+    this.updateLocationRequirements();
+  }
+  private updateLocationRequirements(): void {
+    const draft = this.form.controls.agrupar_publicacao.value && this.form.controls.status.value === 'rascunho';
+    this.form.controls.cidade.setValidators(draft ? [] : [Validators.required]);
+    this.form.controls.bairro.setValidators(draft ? [Validators.maxLength(120)] : [Validators.required, Validators.pattern(/\S/), Validators.maxLength(120)]);
+    this.form.controls.cidade.updateValueAndValidity({emitEvent:false});
+    this.form.controls.bairro.updateValueAndValidity({emitEvent:false});
   }
   discardDraft(): void {
     this.form.patchValue(this.loadedValues);
@@ -239,12 +282,15 @@ export class PropertyFormComponent implements OnInit, OnDestroy {
 
   readonly form = this.fb.nonNullable.group({
     titulo: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(180)]],
+    empreendimento: [''], construtora: [''], torre: [''], unidade: [''], andar: [''], tipologia: [''],
+    area_informada: [null as number | null], agrupar_publicacao: [false],
+    previsao_entrega: [''], registro_incorporacao: [''],
     descricao: ['', [Validators.required, Validators.pattern(/\S/)]],
     tipo: ['apartamento'],
     finalidade: ['venda'],
     status: ['rascunho'],
     destaque: [false],
-    valor: [0, [Validators.required, Validators.min(0)]],
+    valor: [null as number | null, Validators.min(0.01)],
     valor_condominio: [null as number | null, Validators.min(0)],
     valor_iptu: [null as number | null, Validators.min(0)],
     regiao: [null as number | null],

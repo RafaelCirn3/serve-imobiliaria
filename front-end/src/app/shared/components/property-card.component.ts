@@ -11,7 +11,7 @@ import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/prop
   imports: [PhotoComponent, RouterLink, CurrencyPipe],
   template: `
     <article class="property-card card">
-      <a [routerLink]="['/imoveis', property.slug]" class="media">
+      <a [routerLink]="['/imoveis', property.slug]" class="media card-media">
         <app-photo [src]="coverImage" [alt]="property.titulo" />
         @if (property.destaque) {
           <span>Destaque</span>
@@ -21,12 +21,15 @@ import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/prop
         <p class="location">{{ property.bairro }} · {{ property.cidade }}</p>
         <span class="muted">{{ typeLabel(property.tipo) }}</span>
         <h3><a [routerLink]="['/imoveis', property.slug]">{{ property.titulo }}</a></h3>
-        <strong class="price">{{ numericPrice | currency:'BRL':'symbol':'1.0-0':'pt-BR' }}</strong>
+        <strong class="price">@if (numericPrice !== null) { @if (property.agrupado) { <span>A partir de: </span> }{{ numericPrice | currency:'BRL':'symbol':'1.0-0':'pt-BR' }} } @else { Valor sob consulta }</strong>
+        @if (property.agrupado) { <small class="muted">{{ property.quantidade_unidades }} unidade(s) disponível(is)</small> }
         <div class="features">
-          <span>{{ property.quartos }} quartos</span>
-          <span>{{ property.suites }} suítes</span>
-          <span>{{ parkingLabel(property) }}</span>
-          <span>{{ area.label }}: {{ area.value ?? '—' }} m²</span>
+          @if (property.torre) { <span>Torre {{ property.torre }}</span> }
+          @if (property.situacao_obra === 'em_construcao') { <span>Em construção</span> }
+          @if (property.quartos > 0) { <span>{{ property.quartos }} quartos</span> }
+          @if (property.suites > 0) { <span>{{ property.suites }} suítes</span> }
+          @if (property.vagas > 0 || property.vagas_rotativas || property.vagas_max) { <span>{{ parkingLabel(property) }}</span> }
+          @if (hasArea) { <span>{{ area.label }}: {{ area.value }} m²</span> }
         </div>
       </div>
     </article>
@@ -53,16 +56,10 @@ import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/prop
     }
 
     .media {
-      position: relative;
-      display: block;
-      aspect-ratio: 1.38;
       background: #111417;
     }
 
     app-photo {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
       transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), filter 0.2s ease;
     }
 
@@ -88,13 +85,14 @@ import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/prop
       flex: 1;
       flex-direction: column;
       min-width: 0;
-      padding: 18px;
+      padding: 16px;
+      gap: 8px;
     }
 
     .location {
-      margin: 0 0 8px;
+      margin: 0;
       color: #ffffff;
-      font-size: 0.82rem;
+      font-size: 0.72rem;
       font-weight: 800;
       text-transform: uppercase;
       overflow: hidden;
@@ -103,9 +101,10 @@ import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/prop
     }
 
     h3 {
-      margin: 0 0 12px;
-      font-size: 1.15rem;
-      line-height: 1.25;
+      margin: 0;
+      min-height: 2.7em;
+      font-size: 1.05rem;
+      line-height: 1.35;
       overflow-wrap: anywhere;
     }
 
@@ -113,23 +112,26 @@ import { propertyArea, propertyTypeLabel, parkingLabel } from '@core/models/prop
       display: block;
       color: #e6e8eb;
       font-size: 1.25rem;
-      margin-bottom: 14px;
+      margin: 0;
       overflow-wrap: anywhere;
     }
+    .price > span { display: block; font-size: .78rem; font-weight: 600; color: #b8b8b8; margin-bottom: 2px; }
 
     .features {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      margin-top: auto;
+      gap: 6px;
+      margin-top: 8px;
+      padding-top: 12px;
+      border-top: 1px solid #30363d;
     }
 
     .features span {
       border: 1px solid #30363d;
       border-radius: 999px;
       color: #b8b8b8;
-      padding: 5px 9px;
-      font-size: 0.78rem;
+      padding: 4px 8px;
+      font-size: 0.72rem;
     }
   `],
 })
@@ -139,6 +141,7 @@ export class PropertyCardComponent {
   @Input({ required: true }) property!: Property;
 
   get area() { return propertyArea(this.property); }
+  get hasArea() { return Number(this.area.value) > 0; }
 
   get coverImage(): string {
     return this.property.imagens?.find((image) => image.imagem_capa)?.imagem
@@ -146,8 +149,9 @@ export class PropertyCardComponent {
       || '';
   }
 
-  get numericPrice(): number {
-    return Number(this.property.valor || 0);
+  get numericPrice(): number | null {
+    const value = this.property.valor_exibicao ?? this.property.valor;
+    return value == null ? null : Number(value);
   }
 }
 

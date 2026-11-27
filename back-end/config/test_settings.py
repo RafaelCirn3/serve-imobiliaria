@@ -2,6 +2,9 @@
 
 from .settings import *  # noqa: F403
 
+DEBUG = True
+SECURE_SSL_REDIRECT = False
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",

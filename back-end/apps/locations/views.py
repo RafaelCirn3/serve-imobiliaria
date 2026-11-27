@@ -44,6 +44,14 @@ class LocationViewSet(viewsets.ViewSet):
     def geocode(self, request):
         return Response(geocode_address(request.data))
 
+    @action(detail=False, methods=["post"], url_path="organizar", permission_classes=[IsAdminUserOnly])
+    def organize(self, request):
+        from .resolution import AddressResolver
+        from .serializers import AddressOrganizationSerializer
+        serializer = AddressOrganizationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(AddressResolver().resolve(serializer.validated_data))
+
     def published_in_city(self, request):
         city = canonical_city(request.query_params.get("cidade", ""))
         if not city:

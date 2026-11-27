@@ -2,7 +2,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
-import { PaginatedResponse, Property, PropertyFilters, PropertyImage, PropertyPayload } from '../models/api.models';
+import { PaginatedResponse, Property, PropertyFilters, PropertyImage, PropertyPayload, PropertyUnit } from '../models/api.models';
 import { toHttpParams } from './api-utils';
 import { MapResponse } from '../models/api.models';
 
@@ -22,6 +22,10 @@ export class PropertyService {
 
   getPropertyBySlug(slug: string): Observable<Property> {
     return this.http.get<Property>(`${this.baseUrl}/${slug}/`);
+  }
+
+  getUnits(slug: string): Observable<PropertyUnit[]> {
+    return this.http.get<PropertyUnit[]>(`${this.baseUrl}/${slug}/unidades/`);
   }
 
   getFeaturedProperties(): Observable<PaginatedResponse<Property>> {
